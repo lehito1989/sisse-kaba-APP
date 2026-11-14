@@ -1,7 +1,4 @@
-# SISSÊ~KABA – Simulateur 2027–2029 FEED-SEED
-
-SOLEVO Côte d’Ivoire • Programme SISSÊ~KABA (maïs – éleveurs).
-
-Site : https://lehito1989.github.io/sisse-kaba-APP/
-
-Version web autonome : calculs, présentations, formulation MG2MIX et documents téléchargeables. La base visiteurs partagée et les envois Gmail automatiques fonctionnent uniquement dans la version claude.ai.
+# SISSÊ~KABA · Vitrine publique
+Cette branche contient uniquement la vitrine, un comparateur local et une présentation publique indicative. Aucun modèle financier SOLEVO, annuaire, export interne ou collecte de prospects.
+Déploiement GitHub Pages : branche public/vitrine, dossier racine. Les autres branches et l’historique antérieur ne deviennent pas privés par cette opération. Les outils internes doivent être hébergés dans un dépôt privé avec contrôle d’accès.
+Date et lieu de lancement : informations fournies par le porteur du projet.
