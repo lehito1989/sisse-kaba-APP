@@ -1,0 +1,5 @@
+Séquence « SELAB SHOW 2026 » de la vidéo du stand.
+Déposer 3 à 5 photos (JPG, 1600 px de large maximum) dans ce dossier, puis créer photos.json :
+{ "lead": "Stand SOLEVO • 20, 21 et 22 novembre 2026 • Parc des sports d’Abidjan",
+  "photos": [ { "src": "photo1.jpg", "cap": "Accueil des visiteurs", "sub": "20 novembre" } ] }
+Sans photos.json (ou avec moins de 3 photos), la séquence ne s'affiche pas.
