@@ -115,7 +115,7 @@ TRANSITION : « Voici où nous voulons aller d’ici 2029. »` },
 CHIFFRES : de {{prod27}} producteurs en 2027 à {{prod29}} en 2029 ; de {{eleveursMix27}} à {{eleveursMix29}} éleveurs ; {{mais29}} t de maïs valorisées en 2029.
 TRANSITION : « Et maintenant, comment nous rejoindre ? »` },
       { type: 'content', title: 'Rejoignez SISSÊ~KABA', sub: 'Inscrivez-vous dès aujourd’hui sur notre stand', full: true,
-        blocks: [{ k: 'qr', h: 'Scannez pour vous inscrire', t: 'Le QR code ouvre la fiche d’inscription dans votre navigateur, sans application. Remplissez-la, puis envoyez-la : votre table vous est indiquée en retour.', lines: [{ v: '+225 07 77 19 09 94', l: 'Inscription par WhatsApp' }, { v: '07 10 47 14 02 • 07 87 87 73 54', l: 'Elvis LEHITO (élevage, FEED) • Arnaud AGOHI (maïs, SEED)' }, { v: 'elvis.lehito@solevogroup.com', l: 'E-mail (arnaud.agohi@solevogroup.com pour le maïs)' }], sign: PRES + ' • ' + PRES_R }],
+        blocks: [{ k: 'qr', h: 'Scannez pour vous inscrire', t: 'Le QR code ouvre la fiche d’inscription dans votre navigateur, sans application. Remplissez-la, puis envoyez-la : votre table vous est indiquée en retour.', lines: [{ v: '+225 07 10 47 14 02', l: 'Inscription par WhatsApp' }, { v: '07 10 47 14 02 • 07 87 87 73 54', l: 'Elvis LEHITO (élevage, FEED) • Arnaud AGOHI (maïs, SEED)' }, { v: 'elvis.lehito@solevogroup.com', l: 'E-mail (arnaud.agohi@solevogroup.com pour le maïs)' }], sign: PRES + ' • ' + PRES_R }],
         notes: `OBJECTIF : transformer l’intérêt en inscriptions.
 APPEL À L’ACTION : inviter chacun à scanner le QR code (fiche d’inscription en ligne, sans application) ou à laisser ses coordonnées à l’équipe du stand.
 À NOTER POUR CHAQUE INSCRIT : nom, téléphone, localité, producteur ou éleveur, surface ou cheptel.
@@ -393,7 +393,7 @@ TRANSITION : « Inscrivez-vous maintenant. »` },
 CONSEIL : laisser le visiteur lire la citation, puis préciser le contexte (élevage, cheptel, durée dans le programme). Si le témoin est présent sur le stand, le présenter.
 TRANSITION : « Vous aussi, inscrivez-vous. »` },
       { type: 'content', title: 'Inscrivez-vous maintenant', sub: 'Un technicien SOLEVO vous rappelle après le salon', full: true,
-        blocks: [{ k: 'qr', h: 'Scannez pour vous inscrire', t: 'Le QR code ouvre la fiche d’inscription dans votre navigateur, sans application. Remplissez-la, puis envoyez-la : votre table vous est indiquée en retour.', lines: [{ v: '+225 07 77 19 09 94', l: 'Inscription par WhatsApp' }, { v: '07 10 47 14 02', l: 'Elvis LEHITO, Key Account Manager FEED' }, { v: 'elvis.lehito@solevogroup.com', l: 'E-mail' }], sign: 'Elvis LEHITO • Key Account Manager FEED • techniciens élevage : Ibrahim OUATTARA, Kouassi François KOUADIO' }],
+        blocks: [{ k: 'qr', h: 'Scannez pour vous inscrire', t: 'Le QR code ouvre la fiche d’inscription dans votre navigateur, sans application. Remplissez-la, puis envoyez-la : votre table vous est indiquée en retour.', lines: [{ v: '+225 07 10 47 14 02', l: 'Inscription par WhatsApp' }, { v: '07 10 47 14 02', l: 'Elvis LEHITO, Key Account Manager FEED' }, { v: 'elvis.lehito@solevogroup.com', l: 'E-mail' }], sign: 'Elvis LEHITO • Key Account Manager FEED • techniciens élevage : Ibrahim OUATTARA, Kouassi François KOUADIO' }],
         notes: `OBJECTIF : obtenir l’inscription sur place.
 À NOTER : nom, téléphone, localité, type d’élevage, cheptel, dépôt le plus proche.
 CONCLUSION : remettre la plaquette, remercier, proposer une visite du technicien.` },
@@ -446,7 +446,7 @@ TRANSITION : « Inscrivez-vous maintenant. »` },
 CONSEIL : laisser le visiteur lire la citation, puis préciser le contexte (surface, rendement, durée dans le programme). Si le témoin est présent sur le stand, le présenter.
 TRANSITION : « Vous aussi, inscrivez-vous. »` },
       { type: 'content', title: 'Inscrivez-vous maintenant', sub: 'Un technicien SOLEVO vous rappelle après le salon', full: true,
-        blocks: [{ k: 'qr', h: 'Scannez pour vous inscrire', t: 'Le QR code ouvre la fiche d’inscription dans votre navigateur, sans application. Remplissez-la, puis envoyez-la : votre table vous est indiquée en retour.', lines: [{ v: '+225 07 77 19 09 94', l: 'Inscription par WhatsApp' }, { v: '07 87 87 73 54', l: 'Arnaud AGOHI, Key Account Manager SEED' }, { v: 'arnaud.agohi@solevogroup.com', l: 'E-mail' }], sign: 'Arnaud AGOHI • Key Account Manager SEED • technicien semence : Aubin Ghislain KOFFI' }],
+        blocks: [{ k: 'qr', h: 'Scannez pour vous inscrire', t: 'Le QR code ouvre la fiche d’inscription dans votre navigateur, sans application. Remplissez-la, puis envoyez-la : votre table vous est indiquée en retour.', lines: [{ v: '+225 07 10 47 14 02', l: 'Inscription par WhatsApp' }, { v: '07 87 87 73 54', l: 'Arnaud AGOHI, Key Account Manager SEED' }, { v: 'arnaud.agohi@solevogroup.com', l: 'E-mail' }], sign: 'Arnaud AGOHI • Key Account Manager SEED • technicien semence : Aubin Ghislain KOFFI' }],
         notes: `OBJECTIF : obtenir l’inscription sur place.
 À NOTER : nom, téléphone, localité, surface en maïs, coopérative éventuelle.
 CONCLUSION : remercier et proposer une visite du technicien avant la prochaine campagne.` },

@@ -191,7 +191,7 @@
     const titre = o.valide ? 'VOTRE SIMULATION VALIDÉE AVEC SOLEVO' : 'VOS COÛTS AVEC LES PRÉMIX SOLEVO MG2MIX';
     const intro = (o.nom ? 'Bonjour ' + o.nom + ',' : 'Bonjour,') + ' ' + (o.valide ? 'voici la simulation commentée et validée avec votre conseiller SOLEVO.' : 'voici vos coûts calculés avec les prix que vous avez indiqués' + (o.localite ? ' (' + o.localite + ')' : '') + '. Votre conseiller SOLEVO les commentera avec vous lors de l’entretien.');
     const note = 'Estimation indicative issue du modèle SOLEVO, avant impôts et frais financiers ; les prix appliqués lors de l’achat peuvent varier. 1 € = 656 FCFA.';
-    const contact = 'SOLEVO Côte d’Ivoire – Elvis LEHITO, Key Account Manager FEED – 07 77 19 09 94 – elvis.lehito@solevogroup.com';
+    const contact = 'SOLEVO Côte d’Ivoire – Elvis LEHITO, Key Account Manager FEED – WhatsApp +225 07 10 47 14 02 – elvis.lehito@solevogroup.com';
     const text = ['*' + titre + '*', intro].concat(sec.flatMap((x) => ['', '*' + x.t + '*', '_' + x.f + '_'].concat(x.ph.map(([a, b]) => '• ' + a + ' : ' + b), x.kv.map(([a, b]) => '• ' + a + ' : *' + b + '*')))).concat(['', note, contact]).join('\n');
     const H = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
     const html = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1a1a1a;max-width:640px"><div style="background:#002060;color:#fff;padding:14px 16px;border-bottom:4px solid #37A028"><b style="font-size:17px">${H(titre)}</b><br><span style="font-size:13px">Stand SOLEVO – SELAB SHOW 2026 • Programme SISSÊ~KABA</span></div><p>${H(intro)}</p>` +

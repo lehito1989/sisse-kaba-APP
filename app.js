@@ -682,7 +682,7 @@
   const capOf = (t) => (t.cap === 0 || t.cap === '0' ? 0 : (parseInt(t.cap, 10) || (/^Salle/i.test(t.lieu || '') ? 0 : CAP_DEF)));
   const occOf = (n) => state.pros.filter((r) => String(r.table) === String(n) && r.etat === 'En entretien').reduce((a, r) => a + nbP(r), 0);
   const accLab = (r) => { const a = r.accueil || []; if (!a.length) return ''; const n = nbP(r); return a.map((x) => (n > 1 ? n + ' ' : '') + (x === 'Eau' ? (n > 1 ? 'bouteilles d’eau' : '1 bouteille d’eau') : (n > 1 ? 'cafés' : '1 café'))).join(' + '); };
-  const SOLEVO_TEL = '+225 07 77 19 09 94', SOLEVO_TEL2 = '07 10 47 14 02', SOLEVO_MAIL = 'elvis.lehito@solevogroup.com';
+  const SOLEVO_TEL = '+225 07 10 47 14 02', SOLEVO_TEL2 = '07 77 19 09 94', SOLEVO_MAIL = 'elvis.lehito@solevogroup.com';
   const CFG_DEFAULT = {
     v: 8, qrMode: 'nav', testMode: false, rep: {},
     tables: [{ n: 1, lieu: 'Table 1', agent: 'Ibrahim OUATTARA, agent technique élevage', pour: 'Éleveurs', cap: 4 }, { n: 2, lieu: 'Table 2', agent: 'Kouassi François KOUADIO, agent technique élevage', pour: 'Éleveurs' }, { n: 3, lieu: 'Table 3', agent: 'Aubin Ghislain KOFFI, agent technique semence', pour: 'Producteurs' },
@@ -1190,7 +1190,7 @@
     const txt = [`BILAN DE TABLE SISSÊ~KABA – ${tLab(n)} – ${today().fr}`, `Agent : ${t.agent || ''}`, `Visiteurs : ${L.length} (personnes : ${L.reduce((a, r) => a + nbP(r), 0)})`, `Entretiens terminés : ${d.length}`, `Inscrits au projet : ${d.filter((r) => r.inscription === 'Oui').length}`, `Intérêts forts : ${d.filter((r) => r.interet === 'Fort').length}`, `Transferts vers un KAM : ${L.filter((r) => r.transfert).length}`, '', 'Détail :']
       .concat(d.map((r) => `- ${r.nom} • ${r.tel} • ${r.localite || ''} • ${activite(r)} • intérêt ${r.interet || '—'} • inscription ${r.inscription || '—'} • ${r.action || ''}`)).join('\n');
     const to = ['elvis.lehito@solevogroup.com', 'arnaud.agohi@solevogroup.com'];
-    const b = modal('Bilan de la ' + tLab(n), `<pre class="bjout" style="white-space:pre-wrap">${esc(txt)}</pre><div class="mbar"><button type="button" id="tbM">Envoyer aux Key Account Managers (e-mail)</button><a class="bk-btn alt" target="_blank" rel="noopener" href="${waLink(SOLEVO_TEL2, txt)}">WhatsApp à Elvis LEHITO</a><a class="bk-btn alt" target="_blank" rel="noopener" href="${waLink(TM.agohi.tel, txt)}">WhatsApp à Arnaud AGOHI</a><button type="button" id="tbX">Fermer</button></div>`, true);
+    const b = modal('Bilan de la ' + tLab(n), `<pre class="bjout" style="white-space:pre-wrap">${esc(txt)}</pre><div class="mbar"><button type="button" id="tbM">Envoyer aux Key Account Managers (e-mail)</button><a class="bk-btn alt" target="_blank" rel="noopener" href="${waLink(SOLEVO_TEL, txt)}">WhatsApp à Elvis LEHITO</a><a class="bk-btn alt" target="_blank" rel="noopener" href="${waLink(TM.agohi.tel, txt)}">WhatsApp à Arnaud AGOHI</a><button type="button" id="tbX">Fermer</button></div>`, true);
     $('#tbX', b).addEventListener('click', modalClose);
     $('#tbM', b).addEventListener('click', async () => {
       if (!state.mcp) { location.href = 'mailto:' + to.join(',') + '?subject=' + encodeURIComponent('SISSÊ~KABA – Bilan ' + tLab(n) + ' – ' + today().fr) + '&body=' + encodeURIComponent(txt); return; }
@@ -2148,7 +2148,7 @@
       (ch ? c : p).invest ? `Investissement bâtiment + équipements : ${fEurT((ch ? c : p).invest)}` : 'Bâtiment existant : pas d’investissement compté',
       `À prévoir pour démarrer : ${fEurT((ch ? c : p).demarrage)}`,
       ch ? `Prémix MG2MIX chair nécessaire : ${fr(c.premix.chair, 0)} kg par bande` : `Prémix MG2MIX nécessaire : ${fr(p.premix.chair, 0)} kg chair-poulette + ${fr(p.premix.ponte, 0)} kg ponte par cycle`,
-      'Estimation indicative : les prix appliqués lors de l’achat peuvent varier. SOLEVO Côte d’Ivoire – 07 77 19 09 94'];
+      'Estimation indicative : les prix appliqués lors de l’achat peuvent varier. SOLEVO Côte d’Ivoire – WhatsApp +225 07 10 47 14 02'];
     return L.filter(Boolean).join('\n');
   }
   async function formulOpen(id) {
@@ -2272,7 +2272,7 @@
         { table: { headerRows: 1, widths: ['*'].concat(X.phases.map(() => 'auto')), body }, layout: 'lightHorizontalLines' },
         { text: 'Comparatif des formules : ' + R.comp[inp.sp].map((c) => c.nom + ' ' + fr(c.marge) + ' F' + (c.best ? ' (la plus rentable)' : '')).join(' • ') + (ch ? ' (marge / poulet)' : ' (marge / plaquette)'), fontSize: 8.5, margin: [0, 8, 0, 0], color: '#333' },
         { text: 'Estimation indicative issue du modèle SOLEVO, avant impôts et frais financiers ; les prix appliqués lors de l’achat peuvent varier. 1 € = 656 FCFA.', fontSize: 8, italics: true, color: '#666', margin: [0, 10, 0, 0] },
-        { text: 'Contacts SOLEVO Côte d’Ivoire : Elvis LEHITO – 07 77 19 09 94 – elvis.lehito@solevogroup.com', fontSize: 9, bold: true, color: '#002060', margin: [0, 6, 0, 0] }] };
+        { text: 'Contacts SOLEVO Côte d’Ivoire : Elvis LEHITO – WhatsApp +225 07 10 47 14 02 – elvis.lehito@solevogroup.com', fontSize: 9, bold: true, color: '#002060', margin: [0, 6, 0, 0] }] };
     const blob = await pdfMake.createPdf(dd).getBlob();
     if (asBytes) return new Uint8Array(await blob.arrayBuffer());
     const nm = (inp.client.nom || 'client').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '');
@@ -2422,7 +2422,7 @@
         .concat([row(ch ? 'Charges d’une bande' : 'Charges du cycle', ch ? X.chargesBande : X.chargesCycle), row('À prévoir pour démarrer', X.demarrage, true), row('Chiffre d’affaires par an', X.caAn), row('Marge brute par an', X.margeBruteAn), row('Marge annuelle après amortissement', X.margeAn, true)]);
       h = hd(s.title + ` – ${fr(X.effectif)} ${ch ? 'poulets' : 'pondeuses'}`, `Devis estimatif calculé avec le modèle SOLEVO • ${who}`) + `<div class="pz-blocks"><div class="pz-fxdv">${T(['Poste', 'FCFA', 'Euros'], rows, 'pz-dv')}<div class="pz-grid one">${K(X.retour ? fr(X.retour * 12, 0) + ' mois' : '—', 'retour sur investissement')}${K(fr(X.mensuel / 1e3, 0) + ' k', 'FCFA de marge par mois', eurS(X.mensuel))}</div></div></div><p class="pz-note">Devis indicatif : les prix des matériaux, des poussins et de l’aliment varient selon la zone et la date d’achat. Devis Excel détaillé disponible auprès de votre conseiller SOLEVO.</p>`;
     } else if (s.fx === 'besoin') {
-      h = hd(s.title, 'Prémix MG2MIX 2 % nécessaire pour les élevages simulés') + `<div class="pz-blocks"><div class="pz-grid">${K(fr(c.premix.chair) + ' kg', 'prémix chair par bande de ' + fr(c.effectif) + ' poulets', fr(c.premix.chair * c.bandes / 1000, 2) + ' t par an')}${K(fr(p.premix.chair + p.premix.ponte) + ' kg', 'prémix par cycle de ' + fr(p.effectif) + ' pondeuses', fr(p.premix.chair) + ' kg chair + ' + fr(p.premix.ponte) + ' kg ponte')}${K(fr(c.sacs + p.sacs), 'sacs d’aliment de 50 kg fabriqués', 'chair ' + fr(c.sacs) + ' • pondeuses ' + fr(p.sacs))}</div><div class="pz-cta"><b>Prochaine étape</b><span>Votre technicien SOLEVO valide la formule sur votre élevage et organise la première livraison de MG2MIX depuis le dépôt le plus proche.</span><em>Elvis LEHITO • Key Account Manager FEED • +225 07 77 19 09 94</em></div></div>`;
+      h = hd(s.title, 'Prémix MG2MIX 2 % nécessaire pour les élevages simulés') + `<div class="pz-blocks"><div class="pz-grid">${K(fr(c.premix.chair) + ' kg', 'prémix chair par bande de ' + fr(c.effectif) + ' poulets', fr(c.premix.chair * c.bandes / 1000, 2) + ' t par an')}${K(fr(p.premix.chair + p.premix.ponte) + ' kg', 'prémix par cycle de ' + fr(p.effectif) + ' pondeuses', fr(p.premix.chair) + ' kg chair + ' + fr(p.premix.ponte) + ' kg ponte')}${K(fr(c.sacs + p.sacs), 'sacs d’aliment de 50 kg fabriqués', 'chair ' + fr(c.sacs) + ' • pondeuses ' + fr(p.sacs))}</div><div class="pz-cta"><b>Prochaine étape</b><span>Votre technicien SOLEVO valide la formule sur votre élevage et organise la première livraison de MG2MIX depuis le dépôt le plus proche.</span><em>Elvis LEHITO • Key Account Manager FEED • WhatsApp +225 07 10 47 14 02</em></div></div>`;
     }
     return h + `<div class="pz-dots">${d.slides.map((_, j) => `<i class="${j === PZ.i ? 'on' : ''}"></i>`).join('')}</div>`;
   }
