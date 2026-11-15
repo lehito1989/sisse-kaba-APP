@@ -352,7 +352,7 @@ CONCLUSION : proposer un atelier de cadrage avec l’IT dans les deux semaines s
     name: 'Stand SOLEVO : visiteur éleveur (5 diapos)', menu: 'Visiteur ÉLEVEUR', aud: 'Éleveurs de poulets de chair, de pondeuses et de porcs',
     foot: 'Stand SOLEVO Côte d’Ivoire • SELAB SHOW, 20–22 novembre 2026 • Parc des sports d’Abidjan',
     slides: [
-      { type: 'cover', slogan: 'Dépensez moins, gagnez plus', sloganSub: 'Prémix et intrants SOLEVO : −30 à 40 % sur vos coûts de production', pres: 'Elvis LEHITO', presSub: 'Key Account Manager FEED • SOLEVO Côte d’Ivoire\nAvec Ibrahim OUATTARA et Kouassi François KOUADIO', theme: 'eleveur', tag: 'Stand SOLEVO • Espace éleveurs', title: 'Votre maïs, sécurisé', sub: 'Un maïs moins cher et régulier, un prémix adapté et un technicien à vos côtés',
+      { type: 'cover', slogan: 'Dépensez moins, gagnez plus', sloganSub: 'Prémix et intrants SOLEVO : −30 à 40 % sur vos coûts de production', rule: '1 sac MG2MIX de 20 kg = 1 tonne d’aliment', ruleSub: 'Démarrage poulet de chair : 22 kg par tonne (1 sac + 2 kg)', pres: 'Elvis LEHITO', presSub: 'Key Account Manager FEED • SOLEVO Côte d’Ivoire\nAvec Ibrahim OUATTARA et Kouassi François KOUADIO', theme: 'eleveur', tag: 'Stand SOLEVO • Espace éleveurs', title: 'Votre maïs, sécurisé', sub: 'Un maïs moins cher et régulier, un prémix adapté et un technicien à vos côtés',
         aud: 'Éleveurs de chair, de pondeuses et de porcs', band: 'SELAB SHOW • 20–22 novembre 2026 • Stand SOLEVO',
         figs: [{ v: '−15 %', l: 'sur le prix du maïs' }, { v: '{{econAnChair}} M', l: 'FCFA économisés par an (élevage de {{placesFerme}} poulets)' }, { v: '3 + {{depNew}}', l: 'dépôts de prémix près de chez vous' }],
         notes: `OBJECTIF : accrocher l’éleveur en moins de 30 secondes.

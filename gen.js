@@ -224,9 +224,14 @@
       c.push({ text: F(cv.sloganSub || ''), fontSize: 8.5, bold: true, color: 'white', absolutePosition: { x: 24, y: 215 }, width: 370 });
     }
     c.push({ columns: cv.figs.map((f) => box(f.v, f.l)), columnGap: 8, absolutePosition: { x: 24, y: 266 }, width: W - 48 });
-    if (images.qr) c.push({ image: images.qr, width: 150, absolutePosition: { x: 24, y: 350 } });
+    const qy = cv.rule ? 374 : 350;
+    if (cv.rule) {
+      c.push({ canvas: [{ type: 'rect', x: 0, y: 0, w: W - 48, h: 38, r: 5, color: GREEN }], absolutePosition: { x: 24, y: 324 } });
+      c.push({ stack: [{ text: F(cv.rule), bold: true, fontSize: 12 }, { text: F(cv.ruleSub || ''), fontSize: 7.5, margin: [0, 1, 0, 0] }], color: 'white', absolutePosition: { x: 34, y: 329 }, width: W - 68 });
+    }
+    if (images.qr) c.push({ image: images.qr, width: 150, absolutePosition: { x: 24, y: qy } });
     c.push({ stack: [{ text: F(qr.h), fontSize: 15, bold: true, color: NAVY }, { text: F(qr.t), fontSize: 8.5, color: '#595959', margin: [0, 3, 0, 10] }]
-      .concat(qr.lines.map((l) => ({ text: [{ text: F(l.v) + '\n', bold: true, fontSize: 11.5, color: BLUE }, { text: F(l.l), fontSize: 7.5, color: '#595959' }], margin: [0, 0, 0, 7] }))), absolutePosition: { x: 190, y: 360 }, width: 210 });
+      .concat(qr.lines.map((l) => ({ text: [{ text: F(l.v) + '\n', bold: true, fontSize: 11.5, color: BLUE }, { text: F(l.l), fontSize: 7.5, color: '#595959' }], margin: [0, 0, 0, 7] }))), absolutePosition: { x: 190, y: qy + 10 }, width: 210 });
     c.push({ canvas: [{ type: 'rect', x: 0, y: 0, w: W, h: 40, color: '#000B22' }], absolutePosition: { x: 0, y: H - 40 } });
     c.push({ text: [{ text: 'SOLEVO Côte d’Ivoire', bold: true }, '   •   SELAB SHOW, 20–22 novembre 2026   •   Parc des sports d’Abidjan'], fontSize: 7.5, color: 'white', absolutePosition: { x: 24, y: H - 26 } });
     // ---------- verso ----------
@@ -244,7 +249,7 @@
     c.push({ text: F(st.title), fontSize: 13, bold: true, color: NAVY, margin: [0, 6, 0, 6] });
     c.push({ table: { widths: [18, '*'], body: st.blocks[0].items.map((it, i) => [{ text: String(i + 1), color: 'white', bold: true, fillColor: GREEN, alignment: 'center', fontSize: 10 }, { text: [{ text: F(it.h) + ' : ', bold: true, color: NAVY }, F(it.t)], fontSize: 8.5 }]) }, layout: { hLineColor: 'white', vLineColor: 'white', hLineWidth: () => 3, vLineWidth: () => 0, paddingTop: () => 3, paddingBottom: () => 3 }, margin: [0, 0, 0, 10] });
     c.push({ text: 'Gains et économies attendus si les conditions du programme sont réunies ; ils ne sont pas garantis. Chiffres du scénario « ' + F('{{scenario}}') + ' », prix du maïs illustratif ' + F('{{P}}') + ' FCFA/kg.', fontSize: 6.5, color: '#808080', margin: [0, 0, 0, 6] });
-    c.push({ text: F(qr.sign) + ' • +225 07 77 19 09 94 • elvis.lehito@solevogroup.com', fontSize: 7.5, bold: true, color: NAVY });
+    c.push({ text: F(qr.sign) + ' • WhatsApp +225 07 10 47 14 02 • elvis.lehito@solevogroup.com', fontSize: 7.5, bold: true, color: NAVY });
     return { pageSize: 'A5', pageOrientation: 'portrait', pageMargins: [24, 24, 24, 30], content: c, defaultStyle: { font: 'Roboto' },
       info: { title: 'Fiche stand SOLEVO — ' + deck.menu, author: 'SOLEVO Côte d’Ivoire', subject: F('{{scenario}}') },
       footer: (p) => (p === 2 ? { text: 'SISSÊ~KABA • ' + deck.menu + ' • ' + F('{{date}}'), fontSize: 6.5, color: '#808080', margin: [24, 10, 24, 0] } : '') };
@@ -300,16 +305,22 @@
       c.push({ text: F(cv.sloganSub || ''), fontSize: 70, bold: true, color: '#B5E07A', absolutePosition: P(60, 632), width: 780 * mm });
       c.push({ text: F(cv.slogan), fontSize: 112, bold: true, color: 'white', absolutePosition: P(36, 697), width: 640 * mm });
     }
+    const fs = cv.rule ? 132 : 150, fh = cv.rule ? 118 : 130;
     cv.figs.forEach((f, i) => {
-      const y = 800 + i * 150;
-      c.push({ canvas: [{ type: 'rect', x: 0, y: 0, w: 730 * mm, h: 130 * mm, color: '#F4F7FB' }, { type: 'rect', x: 0, y: 0, w: 14 * mm, h: 130 * mm, color: GREEN }], absolutePosition: P(60, y) });
-      c.push({ text: F(f.v), fontSize: 175, bold: true, color: BLUE, absolutePosition: P(100, y + 12), width: 680 * mm });
-      c.push({ text: F(f.l), fontSize: 64, color: '#595959', absolutePosition: P(100, y + 85), width: 680 * mm });
+      const y = (cv.rule ? 790 : 800) + i * fs;
+      c.push({ canvas: [{ type: 'rect', x: 0, y: 0, w: 730 * mm, h: fh * mm, color: '#F4F7FB' }, { type: 'rect', x: 0, y: 0, w: 14 * mm, h: fh * mm, color: GREEN }], absolutePosition: P(60, y) });
+      c.push({ text: F(f.v), fontSize: cv.rule ? 160 : 175, bold: true, color: BLUE, absolutePosition: P(100, y + 10), width: 680 * mm });
+      c.push({ text: F(f.l), fontSize: 64, color: '#595959', absolutePosition: P(100, y + (cv.rule ? 76 : 85)), width: 680 * mm });
     });
+    if (cv.rule) {
+      c.push({ canvas: [{ type: 'rect', x: 0, y: 0, w: 730 * mm, h: 92 * mm, r: 10 * mm, color: GREEN }], absolutePosition: P(60, 1190) });
+      c.push({ text: F(cv.rule), fontSize: 96, bold: true, color: 'white', alignment: 'center', absolutePosition: P(60, 1200), width: 730 * mm });
+      c.push({ text: F(cv.ruleSub || ''), fontSize: 56, color: 'white', alignment: 'center', absolutePosition: P(60, 1248), width: 730 * mm });
+    }
     // QR vectoriel
     const M = images.qrMatrix || []; const n = M.length;
     if (n) {
-      const size = 430, q = 4, cell = size / (n + 2 * q), x0 = (850 - size) / 2, y0 = 1260;
+      const size = cv.rule ? 390 : 430, q = 4, cell = size / (n + 2 * q), x0 = (850 - size) / 2, y0 = cv.rule ? 1318 : 1260;
       const rects = [{ type: 'rect', x: 0, y: 0, w: size * mm, h: size * mm, color: 'white' }];
       M.forEach((row, r) => { let c0 = -1; for (let k = 0; k <= n; k++) { const on = row[k] === '1'; if (on && c0 < 0) c0 = k; if (!on && c0 >= 0) { rects.push({ type: 'rect', x: (q + c0) * cell * mm, y: (q + r) * cell * mm, w: (k - c0) * cell * mm + 0.3, h: cell * mm + 0.3, color: 'black' }); c0 = -1; } } });
       c.push({ canvas: [{ type: 'rect', x: 0, y: 0, w: (size + 40) * mm, h: (size + 40) * mm, r: 16 * mm, color: GREEN }], absolutePosition: P(x0 - 20, y0 - 20) });
