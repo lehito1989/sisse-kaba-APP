@@ -46,32 +46,34 @@ pre{white-space:pre-wrap;font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;ba
   function fallback(text) { $('fb').hidden = false; $('wa').href = 'https://wa.me/' + ((C && C.whatsapp_secours) || '2250710471402') + '?text=' + encodeURIComponent(text); }
   function build() {
     var P = C.produits.reduce(function (a, p) { a[p.id] = p; return a; }, {});
-    var d = (O.date || new Date().toISOString()).slice(0, 10), promo = d >= C.promo_selab.debut && d <= C.promo_selab.fin;
+    var d = (O.date || new Date().toISOString()).slice(0, 10), idc = String(O.idClient || ('V' + String(O.tel || '').replace(/\D/g, '').slice(-10))).replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 14);
     var L = (O.lignes || []).filter(function (l) { return P[l.id] && +l.qte > 0; }).map(function (l) {
-      var p = P[l.id], q = Math.min(100000, Math.floor(+l.qte)), rem = promo ? p.remise_selab : 0;
-      return { nom: p.nom, qte: q, pu: p.prix_ht - rem, rem: rem, ht: q * (p.prix_ht - rem) };
+      var p = P[l.id], q = Math.min(100000, Math.floor(+l.qte)), rem = (d >= p.promo_debut && d <= p.promo_fin) ? p.remise : 0;
+      return { id: p.id, nom: p.nom, qte: q, pu: p.prix_ht - rem, rem: rem, ht: q * (p.prix_ht - rem), code: rem ? 'SLB-' + p.code + '-' + idc + '-' + String(O.id).slice(-4) : '' };
     });
     var ht = L.reduce(function (a, l) { return a + l.ht; }, 0), rem = L.reduce(function (a, l) { return a + l.qte * l.rem; }, 0), tva = ht * C.tva, ttc = ht + tva;
     var zone = esc(O.zone), dest = [], seen = {};
-    C.agents.forEach(function (a) { if ((a.zones.indexOf('*') >= 0 || a.zones.indexOf(zone) >= 0) && !seen[a.email]) { seen[a.email] = 1; dest.push(a); } });
-    var agentsZone = dest.filter(function (a) { return a.zones.indexOf('*') < 0; });
-    var lignesTxt = L.map(function (l) { return l.nom + ' : ' + l.qte + ' sac(s) × ' + fr(l.pu) + ' FCFA HT = ' + fr(l.ht) + ' FCFA HT'; }).join(' | ');
-    var text = 'COMMANDE MG2MIX ' + esc(O.id) + '\n' + L.map(function (l) { return '• ' + l.nom + ' : ' + l.qte + ' sac(s) × ' + fr(l.pu) + ' FCFA HT'; }).join('\n') +
-      '\nTotal HT : ' + fr(ht) + ' FCFA' + (rem ? ' (remise SELAB −' + fr(rem) + ' FCFA)' : '') + '\nTVA 9 % : ' + fr(tva) + ' FCFA\nTotal TTC : ' + fr(ttc) + ' FCFA (≈ ' + (ttc / C.fcfa_par_euro).toFixed(2).replace('.', ',') + ' €)' +
+    C.agents.forEach(function (a) { if (!seen[a.email]) { seen[a.email] = 1; dest.push(a); } });
+    var agentsZone = dest.filter(function (a) { return a.zones.indexOf(zone) >= 0; });
+    var lignesTxt = L.map(function (l) { return l.nom + ' : ' + l.qte + ' sac(s) × ' + fr(l.pu) + ' FCFA HT = ' + fr(l.ht) + ' FCFA HT' + (l.code ? ' (remise −' + fr(l.qte * l.rem) + ' FCFA, code ' + l.code + ')' : ''); }).join(' | ');
+    var text = 'COMMANDE MG2MIX ' + esc(O.id) + '\nIdentifiant client : ' + idc + '\n' + L.map(function (l) { return '• ' + l.nom + ' : ' + l.qte + ' sac(s) × ' + fr(l.pu) + ' FCFA HT' + (l.code ? ' • remise −' + fr(l.qte * l.rem) + ' FCFA • code promo ' + l.code : ''); }).join('\n') +
+      '\nTotal HT : ' + fr(ht) + ' FCFA' + (rem ? ' (remise promo −' + fr(rem) + ' FCFA)' : '') + '\nTVA 9 % : ' + fr(tva) + ' FCFA\nTotal TTC : ' + fr(ttc) + ' FCFA (≈ ' + (ttc / C.fcfa_par_euro).toFixed(2).replace('.', ',') + ' €)' +
       '\n\nClient : ' + esc(O.nom) + '\nTéléphone : ' + esc(O.tel) + (O.email ? '\nE-mail : ' + esc(O.email) : '') + (O.ferme ? '\nFerme : ' + esc(O.ferme) : '') + '\nZone : ' + zone + ' • ' + esc(O.ville) + '\nMode : ' + esc(O.mode) + (O.dateSouhaitee ? '\nDate souhaitée : ' + esc(O.dateSouhaitee) : '') + (O.message ? '\nMessage : ' + esc(O.message) : '');
     var body = {
-      'Commande': esc(O.id), 'Date': new Date(O.date || Date.now()).toLocaleString('fr-FR', { timeZone: 'Africa/Abidjan' }), 'Client': esc(O.nom), 'Téléphone WhatsApp': esc(O.tel),
+      'Commande': esc(O.id), 'Identifiant client': idc, 'Date': new Date(O.date || Date.now()).toLocaleString('fr-FR', { timeZone: 'Africa/Abidjan' }), 'Client': esc(O.nom), 'Téléphone WhatsApp': esc(O.tel),
       'email': esc(O.email || ''), 'Ferme': esc(O.ferme || ''), 'Zone': zone, 'Ville': esc(O.ville), 'Mode': esc(O.mode), 'Date souhaitée': esc(O.dateSouhaitee || ''),
-      'Produits': lignesTxt, 'Sacs': L.reduce(function (a, l) { return a + l.qte; }, 0), 'Remise SELAB (FCFA)': fr(rem), 'Total HT (FCFA)': fr(ht), 'TVA 9 % (FCFA)': fr(tva), 'Total TTC (FCFA)': fr(ttc),
+      'Produits': lignesTxt, 'Sacs': L.reduce(function (a, l) { return a + l.qte; }, 0), 'Remise promo (FCFA)': fr(rem), 'Codes promo': L.filter(function (l) { return l.code; }).map(function (l) { return l.code; }).join(', ') || 'aucun', 'Total HT (FCFA)': fr(ht), 'TVA 9 % (FCFA)': fr(tva), 'Total TTC (FCFA)': fr(ttc),
       'Total TTC (€)': (ttc / C.fcfa_par_euro).toFixed(2), 'Message': esc(O.message || ''),
       'Agent(s) de la zone': agentsZone.map(function (a) { return a.nom; }).join(', ') || 'Aucun agent paramétré : traitement par le KAM FEED',
       '_subject': 'Commande MG2MIX ' + esc(O.id) + ' • ' + zone + ' • ' + esc(O.nom) + ' • ' + fr(ttc) + ' FCFA TTC',
+      'Données pour le report automatique (ne pas modifier)': 'SKCMD' + JSON.stringify({ id: O.id, date: O.date, idc: idc, nom: esc(O.nom), tel: esc(O.tel), zone: zone, ville: esc(O.ville), agent: agentsZone.map(function (a) { return a.nom; }).join(', '), mode: esc(O.mode), l: L.map(function (l) { return [l.id, l.qte, l.pu, l.rem, l.code]; }), ttc: Math.round(ttc) }) + 'SKFIN',
       '_template': 'table', '_captcha': 'false'
     };
     var cc = dest.map(function (a) { return a.email; }).filter(function (e) { return e !== C.destinataire_principal; });
+    if (C.archive && cc.indexOf(C.archive) < 0) cc.push(C.archive);
     if (cc.length) body._cc = cc.join(',');
     if (O.email) { body._replyto = esc(O.email); body._autoresponse = 'Bonjour ' + esc(O.nom) + ', SOLEVO Côte d’Ivoire a bien reçu votre commande ' + esc(O.id) + '. Un agent vous recontacte pour confirmer prix, disponibilité et retrait.\n\n' + text; }
-    return { body: body, text: text, agents: agentsZone, ok: L.length > 0 };
+    return { body: body, text: text, agents: agentsZone, idc: idc, ok: L.length > 0 };
   }
   function send(B, force) {
     var key = 'sk_cmd_sent_' + O.id;
@@ -82,7 +84,7 @@ pre{white-space:pre-wrap;font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;ba
       .then(function (j) {
         if (String(j.success) === 'true') {
           try { localStorage.setItem(key, '1'); } catch (e) { /* */ }
-          status('ok', '✓ Commande envoyée à SOLEVO', 'Elle a été transmise par e-mail ' + (B.agents.length ? 'à ' + B.agents.map(function (a) { return a.nom; }).join(', ') + ' et ' : '') + 'au KAM FEED. Un agent vous recontacte sur WhatsApp' + (O.email ? ' ; une copie part à votre adresse e-mail.' : '.'));
+          status('ok', '✓ Commande envoyée à SOLEVO', 'Elle a été transmise par e-mail au KAM FEED, aux agents techniques et à l’ADV' + (B.agents.length ? ' ; agent de votre zone : ' + B.agents.map(function (a) { return a.nom; }).join(', ') : '') + '. Votre identifiant client : ' + B.idc + '. Un agent vous recontacte sur WhatsApp' + (O.email ? ' ; une copie part à votre adresse e-mail.' : '.'));
         } else { status('ko', 'L’envoi par e-mail n’a pas abouti', (j.message || '') + ' Envoyez la commande par WhatsApp : rien n’est perdu.'); fallback(B.text); }
       })
       .catch(function () { status('ko', 'Pas de connexion au service d’envoi', 'Envoyez la commande par WhatsApp, ou réessayez dans un instant.'); fallback(B.text); });

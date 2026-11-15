@@ -1,5 +1,5 @@
 {
-  "_aide": "Paramétrage des destinataires des commandes en ligne MG2MIX. Modifier ce fichier puis pousser sur GitHub : la page de commande le relit à chaque chargement. 'zones' : liste des zones suivies par l'agent ; '*' = reçoit toutes les commandes. Le destinataire principal doit avoir activé FormSubmit une fois (clic sur le lien reçu à la première commande).",
+  "_aide": "Destinataires des commandes en ligne MG2MIX. Chaque commande part au destinataire principal et en copie à TOUS les contacts de 'agents' (ATE, ADV) ; 'zones' indique l'agent responsable du rappel pour la zone ('*' = sans zone). 'archive' : copie lue par la tâche planifiée qui reporte les commandes dans le tableur. Le destinataire principal doit activer FormSubmit une fois (lien reçu à la première commande).",
   "destinataire_principal": "elvis.lehito@solevogroup.com",
   "whatsapp_secours": "2250710471402",
   "agents": [
@@ -7,6 +7,14 @@
       "nom": "Elvis LEHITO",
       "role": "Key Account Manager FEED",
       "email": "elvis.lehito@solevogroup.com",
+      "zones": [
+        "*"
+      ]
+    },
+    {
+      "nom": "Oriane KOFFI",
+      "role": "ADV : traitement des commandes et encaissements",
+      "email": "oriane.koffi@solevogroup.com",
       "zones": [
         "*"
       ]
@@ -53,28 +61,34 @@
   "produits": [
     {
       "id": "ponte",
+      "code": "PON",
       "nom": "Ponte MG2MIX",
       "prix_ht": 26000,
-      "remise_selab": 2000
+      "remise": 2000,
+      "promo_debut": "2026-11-20",
+      "promo_fin": "2026-11-30"
     },
     {
       "id": "porc",
+      "code": "POR",
       "nom": "CMV Porc MG2MIX",
       "prix_ht": 30000,
-      "remise_selab": 2000
+      "remise": 2000,
+      "promo_debut": "2026-11-20",
+      "promo_fin": "2026-11-22"
     },
     {
       "id": "chair",
+      "code": "CHA",
       "nom": "Chair MG2MIX",
       "prix_ht": 29000,
-      "remise_selab": 1000
+      "remise": 1000,
+      "promo_debut": "2026-11-20",
+      "promo_fin": "2026-11-22"
     }
   ],
   "tva": 0.09,
   "fcfa_par_euro": 656,
-  "promo_selab": {
-    "debut": "2026-11-20",
-    "fin": "2026-11-22"
-  },
-  "formulaire": "https://claude.ai/artifact/TUnnsq3KPaGHqWqgX2PpWF#commande"
+  "formulaire": "https://claude.ai/artifact/TUnnsq3KPaGHqWqgX2PpWF#commande",
+  "archive": "lehitognakoury@gmail.com"
 }

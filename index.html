@@ -491,6 +491,7 @@ window.addEventListener('unhandledrejection',function(e){show((e.reason&&(e.reas
 .cmd-err{color:#B42318;font-size:13px;margin:6px 0}
 .cmd-note{font-size:12px;color:#6b7489;margin-top:8px}
 .cmd-rec{white-space:pre-wrap;font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;background:#F6F8FB;border:1px solid #E1E7F0;border-radius:10px;padding:10px;max-height:300px;overflow:auto}
+.cmd-l{display:block;font-style:normal;font-size:13px;color:#002060;margin-top:4px;line-height:1.4}.cmd-p .cmd-l b,.cmd-p .cmd-l span{display:inline}.cmd-l s{color:#98a2b3}.cmd-p .cmd-l .cmd-eco{color:#2E7D1F;font-weight:700;font-size:13px}
 .cmd-id{font-size:20px;font-weight:800;color:#37A028;text-align:center;margin:4px 0 8px}
 </style>
 <div id="cmdView" hidden>
@@ -517,7 +518,7 @@ window.addEventListener('unhandledrejection',function(e){show((e.reason&&(e.reas
         <label class="cmd-f">Message pour l’agent<textarea name="message" placeholder="Effectif, formule utilisée, questions…"></textarea></label>
       </div>
       <div class="cmd-card"><h2>Récapitulatif estimé</h2><div class="cmd-tot" id="cmdTot"></div>
-        <p class="cmd-note">Prix par sac hors TVA ; TVA 9 % calculée sur le prix remisé. Prix, disponibilité et livraison confirmés par l’agent SOLEVO avant toute facturation.</p></div>
+        <p class="cmd-note">Prix par sac hors TVA ; TVA 9 % calculée sur le prix remisé. Remises porc et chair : 20, 21 et 22 novembre 2026 (SELAB SHOW) ; remise ponte : du 20 au 30 novembre 2026. Prix, disponibilité et livraison confirmés par l’agent SOLEVO avant toute facturation.</p></div>
       <label class="cmd-chk"><input type="checkbox" name="consent" required><span>J’accepte que SOLEVO Côte d’Ivoire utilise ces informations pour traiter ma commande et me recontacter. *</span></label>
       <div class="cmd-err" id="cmdErr"></div>
       <button class="cmd-btn cmd-go" type="submit">Vérifier ma commande</button>
@@ -541,21 +542,24 @@ window.addEventListener('unhandledrejection',function(e){show((e.reason&&(e.reas
     relais: 'https://lehito1989.github.io/sisse-kaba-APP/commande/',
     wa: '2250710471402',
     zones: [['Abidjan-Sud', 'Abidjan et Sud (Abidjan, Bingerville, Dabou, Grand-Bassam…)'], ['Centre', 'Centre (Yamoussoukro, Bouaké, Toumodi, Dimbokro…)'], ['Est', 'Est (Abengourou, Agnibilékrou, Bondoukou…)'], ['Nord', 'Nord (Korhogo, Ferkessédougou, Odienné…)'], ['Ouest', 'Ouest et Centre-Ouest (Daloa, Man, San-Pédro, Gagnoa…)']],
-    produits: [{ id: 'ponte', nom: 'Ponte MG2MIX', ht: 26000, rem: 2000 }, { id: 'porc', nom: 'CMV Porc MG2MIX', ht: 30000, rem: 2000 }, { id: 'chair', nom: 'Chair MG2MIX', ht: 29000, rem: 1000 }],
-    tva: 0.09, eur: 656, promo: ['2026-11-20', '2026-11-22']
+    produits: [{ id: 'ponte', code: 'PON', nom: 'Ponte MG2MIX', ht: 26000, rem: 2000, deb: '2026-11-20', fin: '2026-11-30' }, { id: 'porc', code: 'POR', nom: 'CMV Porc MG2MIX', ht: 30000, rem: 2000, deb: '2026-11-20', fin: '2026-11-22' }, { id: 'chair', code: 'CHA', nom: 'Chair MG2MIX', ht: 29000, rem: 1000, deb: '2026-11-20', fin: '2026-11-22' }],
+    tva: 0.09, eur: 656
   };
   var $ = function (s) { return document.getElementById(s); };
   var fr = function (n) { return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '); };
   var today = function () { var d = new Date(); return d.getUTCFullYear() + '-' + ('0' + (d.getUTCMonth() + 1)).slice(-2) + '-' + ('0' + d.getUTCDate()).slice(-2); }; /* Abidjan = UTC */
-  var promoOn = function () { var t = today(); return t >= CFG.promo[0] && t <= CFG.promo[1]; };
+  var promoP = function (p) { var t = today(); return t >= p.deb && t <= p.fin; };
+  var anyPromo = function () { return CFG.produits.some(promoP); };
+  var cid = function (tel) { var d = String(tel || '').replace(/\D/g, ''); return d ? 'V' + d.slice(-10) : ''; };
+  var pcode = function (p, id, oid) { return 'SLB-' + p.code + '-' + id + '-' + String(oid).slice(-4); };
   var built = false, last = null;
   function build() {
     if (built) return; built = true;
-    var P = promoOn();
-    if (P) { $('cmdPromo').hidden = false; $('cmdPromo').innerHTML = '<b>Promotion SELAB SHOW en cours</b> : jusqu’à −2 000 FCFA par sac de prémix (20, 21 et 22 novembre 2026). La remise est déjà appliquée ci-dessous.'; }
+    var on = CFG.produits.filter(promoP);
+    if (on.length) { $('cmdPromo').hidden = false; $('cmdPromo').innerHTML = '<b>Promotion en cours</b> : ' + on.map(function (p) { return p.nom + ' −' + fr(p.rem) + ' FCFA / sac jusqu’au ' + p.fin.slice(8) + '/' + p.fin.slice(5, 7); }).join(' • ') + '. La remise est appliquée automatiquement, avec un code promo à votre nom.'; }
     $('cmdProds').innerHTML = CFG.produits.map(function (p) {
-      var pu = P ? p.ht - p.rem : p.ht;
-      return '<div class="cmd-p"><div><b>' + p.nom + '</b><span>' + (P ? '<s>' + fr(p.ht) + '</s> ' : '') + fr(pu) + ' FCFA HT / sac</span></div><input type="number" min="0" step="1" inputmode="numeric" placeholder="0" data-q="' + p.id + '" aria-label="Sacs ' + p.nom + '"></div>';
+      var P = promoP(p), pu = P ? p.ht - p.rem : p.ht;
+      return '<div class="cmd-p"><div><b>' + p.nom + '</b><span>' + (P ? '<s>' + fr(p.ht) + '</s> <b style="display:inline;color:#2E7D1F">' + fr(pu) + '</b>' : fr(pu)) + ' FCFA HT / sac</span><em class="cmd-l" data-l="' + p.id + '"></em></div><input type="number" min="0" step="1" inputmode="numeric" placeholder="0" data-q="' + p.id + '" aria-label="Sacs ' + p.nom + '"></div>';
     }).join('');
     $('cmdZone').innerHTML = '<option value="">— Choisir —</option>' + CFG.zones.map(function (z) { return '<option value="' + z[0] + '">' + z[1] + '</option>'; }).join('');
     $('cmdForm').addEventListener('input', totals);
@@ -564,21 +568,22 @@ window.addEventListener('unhandledrejection',function(e){show((e.reason&&(e.reas
     $('cmdClose').addEventListener('click', function () { $('cmdView').hidden = true; try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* */ } });
     totals();
   }
-  function lignes() {
-    var P = promoOn();
-    return CFG.produits.map(function (p) {
-      var el = document.querySelector('[data-q="' + p.id + '"]'); var q = Math.max(0, Math.floor(+((el && el.value) || 0)));
-      return { id: p.id, nom: p.nom, qte: q, pu_normal: p.ht, remise: P ? p.rem : 0, pu: P ? p.ht - p.rem : p.ht };
-    }).filter(function (l) { return l.qte > 0; });
+  function lignes(all) {
+    var L = CFG.produits.map(function (p) {
+      var P = promoP(p), el = document.querySelector('[data-q="' + p.id + '"]'); var q = Math.max(0, Math.floor(+((el && el.value) || 0)));
+      return { id: p.id, code: p.code, nom: p.nom, qte: q, pu_normal: p.ht, remise: P ? p.rem : 0, pu: P ? p.ht - p.rem : p.ht };
+    });
+    return all ? L : L.filter(function (l) { return l.qte > 0; });
   }
   function calc(L) { var ht = L.reduce(function (a, l) { return a + l.qte * l.pu; }, 0), rem = L.reduce(function (a, l) { return a + l.qte * l.remise; }, 0), tva = ht * CFG.tva; return { sacs: L.reduce(function (a, l) { return a + l.qte; }, 0), ht: ht, remise: rem, tva: tva, ttc: ht + tva, eur: (ht + tva) / CFG.eur }; }
   function totals() {
+    lignes(true).forEach(function (l) { var e = document.querySelector('[data-l="' + l.id + '"]'); if (!e) return; e.innerHTML = l.qte ? l.qte + ' sac' + (l.qte > 1 ? 's' : '') + ' : <b>' + fr(l.qte * l.pu) + ' FCFA HT</b>' + (l.remise ? ' au lieu de <s>' + fr(l.qte * l.pu_normal) + '</s> • <span class="cmd-eco">vous économisez ' + fr(l.qte * l.remise) + ' FCFA</span>' : '') : ''; });
     var T = calc(lignes());
     $('cmdTot').innerHTML = '<span>Sacs</span><span>' + fr(T.sacs) + '</span>' + (T.remise ? '<span>Remise SELAB</span><span>−' + fr(T.remise) + ' FCFA</span>' : '') + '<span>Total HT</span><span>' + fr(T.ht) + ' FCFA</span><span>TVA 9 %</span><span>' + fr(T.tva) + ' FCFA</span><span class="g">Total TTC</span><span class="g">' + fr(T.ttc) + ' FCFA</span><span>Équivalent</span><span>≈ ' + T.eur.toFixed(2).replace('.', ',') + ' €</span>';
   }
   function b64u(s) { var b = btoa(unescape(encodeURIComponent(s))); return b.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
   function texte(o) {
-    return 'COMMANDE MG2MIX ' + o.id + '\n' + o.lignes.map(function (l) { return '• ' + l.nom + ' : ' + l.qte + ' sac(s) × ' + fr(l.pu) + ' FCFA HT'; }).join('\n') +
+    return 'COMMANDE MG2MIX ' + o.id + '\nIdentifiant client : ' + o.idClient + '\n' + o.lignes.map(function (l) { return '• ' + l.nom + ' : ' + l.qte + ' sac(s) × ' + fr(l.pu) + ' FCFA HT' + (l.codePromo ? ' • remise −' + fr(l.qte * l.remise) + ' FCFA • code promo ' + l.codePromo : ''); }).join('\n') +
       '\nTotal HT : ' + fr(o.totaux.ht) + ' FCFA' + (o.totaux.remise ? ' (remise SELAB −' + fr(o.totaux.remise) + ' FCFA)' : '') + '\nTVA 9 % : ' + fr(o.totaux.tva) + ' FCFA\nTotal TTC : ' + fr(o.totaux.ttc) + ' FCFA (≈ ' + o.totaux.eur.toFixed(2).replace('.', ',') + ' €)' +
       '\n\nClient : ' + o.nom + '\nTéléphone : ' + o.tel + (o.email ? '\nE-mail : ' + o.email : '') + (o.ferme ? '\nFerme : ' + o.ferme : '') + '\nZone : ' + o.zone + ' • ' + o.ville + '\nMode : ' + o.mode + (o.dateSouhaitee ? '\nDate souhaitée : ' + o.dateSouhaitee : '') + (o.message ? '\nMessage : ' + o.message : '');
   }
@@ -594,7 +599,8 @@ window.addEventListener('unhandledrejection',function(e){show((e.reason&&(e.reas
     if (err.length) { $('cmdErr').textContent = 'Merci de compléter : ' + err.join(', ') + '.'; return; }
     $('cmdErr').textContent = '';
     var d = new Date(), id = 'CMD-' + today().replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
-    last = { v: 1, id: id, date: d.toISOString(), source: 'artefact SISSÊ~KABA', nom: v('nom'), tel: v('tel'), email: v('email'), ferme: v('ferme'), zone: v('zone'), ville: v('ville'), mode: v('mode'), dateSouhaitee: v('dateSouhaitee'), message: v('message'), promo: promoOn(), lignes: L, totaux: calc(L) };
+    var idc = cid(v('tel')); L.forEach(function (l) { if (l.remise) l.codePromo = pcode(l, idc, id); });
+    last = { v: 2, id: id, idClient: idc, date: d.toISOString(), source: 'artefact SISSÊ~KABA', nom: v('nom'), tel: v('tel'), email: v('email'), ferme: v('ferme'), zone: v('zone'), ville: v('ville'), mode: v('mode'), dateSouhaitee: v('dateSouhaitee'), message: v('message'), promo: L.some(function (l) { return l.remise > 0; }), lignes: L, totaux: calc(L) };
     var t = texte(last);
     $('cmdId').textContent = id;
     $('cmdRec').textContent = t;
