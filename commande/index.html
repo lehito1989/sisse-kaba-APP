@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Envoi de la commande MG2MIX – SOLEVO Côte d’Ivoire</title>
+<style>
+body{margin:0;background:#F4F7FB;font:15px/1.5 Arial,Helvetica,sans-serif;color:#1d2433}
+.top{background:#002060;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.top img{height:38px;background:#fff;border-radius:8px;padding:4px 8px}.top h1{font-size:17px;margin:0}
+.wrap{max-width:620px;margin:0 auto;padding:16px}
+.card{background:#fff;border:1px solid #DCE3EE;border-radius:14px;padding:16px;margin:0 0 12px}
+.st{font-size:18px;font-weight:700;margin:0 0 6px}.ok{color:#2E7D1F}.ko{color:#B42318}.wait{color:#0B5FA1}
+.id{font-size:22px;font-weight:800;color:#37A028;margin:6px 0}
+.btn{display:block;text-align:center;border:0;border-radius:12px;padding:14px;font:700 16px Arial;text-decoration:none;margin:8px 0;cursor:pointer;width:100%;box-sizing:border-box}
+.wa{background:#25D366;color:#fff}.sec{background:#E8EEF7;color:#002060}
+pre{white-space:pre-wrap;font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;background:#F6F8FB;border:1px solid #E1E7F0;border-radius:10px;padding:10px}
+.note{font-size:12.5px;color:#6b7489}
+</style>
+</head>
+<body>
+<div class="top"><img src="logo.png" alt="SOLEVO"><h1>Commande MG2MIX • SOLEVO Côte d’Ivoire</h1></div>
+<div class="wrap">
+  <div class="card"><p class="st wait" id="st">Envoi de votre commande…</p><div class="id" id="id"></div><p id="msg"></p>
+    <div id="fb" hidden>
+      <a class="btn wa" id="wa" href="#">Envoyer par WhatsApp</a>
+      <button class="btn sec" id="retry" type="button">Réessayer l’envoi par e-mail</button>
+    </div>
+  </div>
+  <div class="card" id="recCard" hidden><pre id="rec"></pre></div>
+  <p class="note">Les informations servent uniquement au traitement de la commande par SOLEVO Côte d’Ivoire. Prix, disponibilité et livraison sont confirmés par l’agent avant facturation. WhatsApp Business SOLEVO : +225 07 10 47 14 02.</p>
+</div>
+<script>
+(function () {
+  var $ = function (s) { return document.getElementById(s); };
+  var fr = function (n) { return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '); };
+  var esc = function (s) { return String(s == null ? '' : s).slice(0, 600); };
+  function status(cls, t, m) { $('st').className = 'st ' + cls; $('st').textContent = t; $('msg').textContent = m || ''; }
+  function decode() {
+    var m = location.hash.match(/d=([A-Za-z0-9_-]+)/); if (!m) return null;
+    var b = m[1].replace(/-/g, '+').replace(/_/g, '/'); while (b.length % 4) b += '=';
+    try { return JSON.parse(decodeURIComponent(escape(atob(b)))); } catch (e) { return null; }
+  }
+  var O = decode(), C = null;
+  function fallback(text) { $('fb').hidden = false; $('wa').href = 'https://wa.me/' + ((C && C.whatsapp_secours) || '2250710471402') + '?text=' + encodeURIComponent(text); }
+  function build() {
+    var P = C.produits.reduce(function (a, p) { a[p.id] = p; return a; }, {});
+    var d = (O.date || new Date().toISOString()).slice(0, 10), promo = d >= C.promo_selab.debut && d <= C.promo_selab.fin;
+    var L = (O.lignes || []).filter(function (l) { return P[l.id] && +l.qte > 0; }).map(function (l) {
+      var p = P[l.id], q = Math.min(100000, Math.floor(+l.qte)), rem = promo ? p.remise_selab : 0;
+      return { nom: p.nom, qte: q, pu: p.prix_ht - rem, rem: rem, ht: q * (p.prix_ht - rem) };
+    });
+    var ht = L.reduce(function (a, l) { return a + l.ht; }, 0), rem = L.reduce(function (a, l) { return a + l.qte * l.rem; }, 0), tva = ht * C.tva, ttc = ht + tva;
+    var zone = esc(O.zone), dest = [], seen = {};
+    C.agents.forEach(function (a) { if ((a.zones.indexOf('*') >= 0 || a.zones.indexOf(zone) >= 0) && !seen[a.email]) { seen[a.email] = 1; dest.push(a); } });
+    var agentsZone = dest.filter(function (a) { return a.zones.indexOf('*') < 0; });
+    var lignesTxt = L.map(function (l) { return l.nom + ' : ' + l.qte + ' sac(s) × ' + fr(l.pu) + ' FCFA HT = ' + fr(l.ht) + ' FCFA HT'; }).join(' | ');
+    var text = 'COMMANDE MG2MIX ' + esc(O.id) + '\n' + L.map(function (l) { return '• ' + l.nom + ' : ' + l.qte + ' sac(s) × ' + fr(l.pu) + ' FCFA HT'; }).join('\n') +
+      '\nTotal HT : ' + fr(ht) + ' FCFA' + (rem ? ' (remise SELAB −' + fr(rem) + ' FCFA)' : '') + '\nTVA 9 % : ' + fr(tva) + ' FCFA\nTotal TTC : ' + fr(ttc) + ' FCFA (≈ ' + (ttc / C.fcfa_par_euro).toFixed(2).replace('.', ',') + ' €)' +
+      '\n\nClient : ' + esc(O.nom) + '\nTéléphone : ' + esc(O.tel) + (O.email ? '\nE-mail : ' + esc(O.email) : '') + (O.ferme ? '\nFerme : ' + esc(O.ferme) : '') + '\nZone : ' + zone + ' • ' + esc(O.ville) + '\nMode : ' + esc(O.mode) + (O.dateSouhaitee ? '\nDate souhaitée : ' + esc(O.dateSouhaitee) : '') + (O.message ? '\nMessage : ' + esc(O.message) : '');
+    var body = {
+      'Commande': esc(O.id), 'Date': new Date(O.date || Date.now()).toLocaleString('fr-FR', { timeZone: 'Africa/Abidjan' }), 'Client': esc(O.nom), 'Téléphone WhatsApp': esc(O.tel),
+      'email': esc(O.email || ''), 'Ferme': esc(O.ferme || ''), 'Zone': zone, 'Ville': esc(O.ville), 'Mode': esc(O.mode), 'Date souhaitée': esc(O.dateSouhaitee || ''),
+      'Produits': lignesTxt, 'Sacs': L.reduce(function (a, l) { return a + l.qte; }, 0), 'Remise SELAB (FCFA)': fr(rem), 'Total HT (FCFA)': fr(ht), 'TVA 9 % (FCFA)': fr(tva), 'Total TTC (FCFA)': fr(ttc),
+      'Total TTC (€)': (ttc / C.fcfa_par_euro).toFixed(2), 'Message': esc(O.message || ''),
+      'Agent(s) de la zone': agentsZone.map(function (a) { return a.nom; }).join(', ') || 'Aucun agent paramétré : traitement par le KAM FEED',
+      '_subject': 'Commande MG2MIX ' + esc(O.id) + ' • ' + zone + ' • ' + esc(O.nom) + ' • ' + fr(ttc) + ' FCFA TTC',
+      '_template': 'table', '_captcha': 'false'
+    };
+    var cc = dest.map(function (a) { return a.email; }).filter(function (e) { return e !== C.destinataire_principal; });
+    if (cc.length) body._cc = cc.join(',');
+    if (O.email) { body._replyto = esc(O.email); body._autoresponse = 'Bonjour ' + esc(O.nom) + ', SOLEVO Côte d’Ivoire a bien reçu votre commande ' + esc(O.id) + '. Un agent vous recontacte pour confirmer prix, disponibilité et retrait.\n\n' + text; }
+    return { body: body, text: text, agents: agentsZone, ok: L.length > 0 };
+  }
+  function send(B, force) {
+    var key = 'sk_cmd_sent_' + O.id;
+    try { if (!force && localStorage.getItem(key)) { status('ok', 'Commande déjà envoyée', 'Cette commande a déjà été transmise depuis cet appareil. Inutile de la renvoyer.'); return; } } catch (e) { /* */ }
+    status('wait', 'Envoi de votre commande…'); $('fb').hidden = true;
+    fetch('https://formsubmit.co/ajax/' + C.destinataire_principal, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(B.body) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (String(j.success) === 'true') {
+          try { localStorage.setItem(key, '1'); } catch (e) { /* */ }
+          status('ok', '✓ Commande envoyée à SOLEVO', 'Elle a été transmise par e-mail ' + (B.agents.length ? 'à ' + B.agents.map(function (a) { return a.nom; }).join(', ') + ' et ' : '') + 'au KAM FEED. Un agent vous recontacte sur WhatsApp' + (O.email ? ' ; une copie part à votre adresse e-mail.' : '.'));
+        } else { status('ko', 'L’envoi par e-mail n’a pas abouti', (j.message || '') + ' Envoyez la commande par WhatsApp : rien n’est perdu.'); fallback(B.text); }
+      })
+      .catch(function () { status('ko', 'Pas de connexion au service d’envoi', 'Envoyez la commande par WhatsApp, ou réessayez dans un instant.'); fallback(B.text); });
+  }
+  if (!O) { status('ko', 'Aucune commande à envoyer', 'Ouvrez le formulaire de commande SOLEVO pour préparer votre commande.'); $('fb').hidden = false; $('wa').textContent = 'Ouvrir le formulaire de commande'; $('wa').href = 'https://claude.ai/artifact/TUnnsq3KPaGHqWqgX2PpWF#commande'; $('retry').hidden = true; return; }
+  $('id').textContent = O.id || '';
+  fetch('agents.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (c) {
+    C = c; var B = build();
+    $('rec').textContent = B.text; $('recCard').hidden = false;
+    if (!B.ok) { status('ko', 'Commande vide', 'Aucun produit valide dans la commande.'); return; }
+    $('retry').onclick = function () { send(B, true); };
+    send(B, false);
+  }).catch(function () { status('ko', 'Paramètres indisponibles', 'Envoyez la commande par WhatsApp.'); fallback('Commande MG2MIX ' + (O.id || '')); });
+})();
+</script>
+</body>
+</html>

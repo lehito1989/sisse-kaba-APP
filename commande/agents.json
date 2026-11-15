@@ -1,0 +1,80 @@
+{
+  "_aide": "Paramétrage des destinataires des commandes en ligne MG2MIX. Modifier ce fichier puis pousser sur GitHub : la page de commande le relit à chaque chargement. 'zones' : liste des zones suivies par l'agent ; '*' = reçoit toutes les commandes. Le destinataire principal doit avoir activé FormSubmit une fois (clic sur le lien reçu à la première commande).",
+  "destinataire_principal": "elvis.lehito@solevogroup.com",
+  "whatsapp_secours": "2250710471402",
+  "agents": [
+    {
+      "nom": "Elvis LEHITO",
+      "role": "Key Account Manager FEED",
+      "email": "elvis.lehito@solevogroup.com",
+      "zones": [
+        "*"
+      ]
+    },
+    {
+      "nom": "Ibrahim OUATTARA",
+      "role": "Agent technique élevage, zone Est (Agnibilékrou)",
+      "email": "ibrahim.ouattara@solevogroup.com",
+      "zones": [
+        "Est"
+      ]
+    },
+    {
+      "nom": "Kouassi François KOUADIO",
+      "role": "Agent technique élevage, zone Centre (Yamoussoukro)",
+      "email": "francois.kouadio@solevogroup.com",
+      "zones": [
+        "Centre"
+      ]
+    }
+  ],
+  "zones": [
+    {
+      "id": "Abidjan-Sud",
+      "label": "Abidjan et Sud (Abidjan, Bingerville, Dabou, Grand-Bassam…)"
+    },
+    {
+      "id": "Centre",
+      "label": "Centre (Yamoussoukro, Bouaké, Toumodi, Dimbokro…)"
+    },
+    {
+      "id": "Est",
+      "label": "Est (Abengourou, Agnibilékrou, Bondoukou…)"
+    },
+    {
+      "id": "Nord",
+      "label": "Nord (Korhogo, Ferkessédougou, Odienné…)"
+    },
+    {
+      "id": "Ouest",
+      "label": "Ouest et Centre-Ouest (Daloa, Man, San-Pédro, Gagnoa…)"
+    }
+  ],
+  "produits": [
+    {
+      "id": "ponte",
+      "nom": "Ponte MG2MIX",
+      "prix_ht": 26000,
+      "remise_selab": 2000
+    },
+    {
+      "id": "porc",
+      "nom": "CMV Porc MG2MIX",
+      "prix_ht": 30000,
+      "remise_selab": 2000
+    },
+    {
+      "id": "chair",
+      "nom": "Chair MG2MIX",
+      "prix_ht": 29000,
+      "remise_selab": 1000
+    }
+  ],
+  "tva": 0.09,
+  "fcfa_par_euro": 656,
+  "promo_selab": {
+    "debut": "2026-11-20",
+    "fin": "2026-11-22"
+  },
+  "formulaire": "https://claude.ai/artifact/TUnnsq3KPaGHqWqgX2PpWF#commande"
+}

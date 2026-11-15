@@ -464,6 +464,150 @@ details.veille{border:1px solid var(--line);border-radius:10px;padding:8px 10px;
 <script>(function(){var n=0;function show(m){var b=document.getElementById('errBan');if(!b||n>3)return;n++;b.style.display='block';b.innerHTML+=(b.innerHTML?'<br>':'')+'⚠ Erreur du simulateur : '+String(m).replace(/</g,'&lt;')+' <button onclick="location.reload()" style="margin-left:8px">Recharger</button>';}
 window.addEventListener('error',function(e){show((e.message||'erreur')+(e.filename?' ('+e.filename.split('/').pop()+':'+e.lineno+')':''));});
 window.addEventListener('unhandledrejection',function(e){show((e.reason&&(e.reason.message||e.reason))||'promesse rejetée');});})();</script>
+<!-- ===== Commande en ligne MG2MIX (#commande) : vue autonome, sans dépendance ===== -->
+<style>
+#cmdView{position:fixed;inset:0;z-index:9000;overflow:auto;background:#F4F7FB;font:15px/1.45 Arial,Helvetica,sans-serif;color:#1d2433;-webkit-text-size-adjust:100%}
+#cmdView[hidden]{display:none}
+.cmd-top{background:#002060;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.cmd-top img{height:38px;background:#fff;border-radius:8px;padding:4px 8px}
+.cmd-top h1{font-size:17px;margin:0;line-height:1.25}.cmd-top small{display:block;font-weight:400;opacity:.85;font-size:12.5px}
+.cmd-x{margin-left:auto;background:transparent;border:1px solid #fff6;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer}
+.cmd-wrap{max-width:640px;margin:0 auto;padding:14px 14px 40px}
+.cmd-promo{background:#EAF6E6;border:1px solid #37A028;border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:14px}
+.cmd-promo b{color:#2E7D1F}
+.cmd-card{background:#fff;border:1px solid #DCE3EE;border-radius:14px;padding:14px;margin:0 0 12px}
+.cmd-card h2{font-size:15px;margin:0 0 10px;color:#002060}
+.cmd-f{display:block;margin:0 0 10px;font-size:13px;color:#44506a}
+.cmd-f input,.cmd-f select,.cmd-f textarea{display:block;width:100%;box-sizing:border-box;margin-top:4px;font:16px Arial,sans-serif;padding:10px;border:1px solid #C9D3E2;border-radius:10px;background:#fff;color:#1d2433}
+.cmd-f textarea{min-height:70px}
+.cmd-p{display:grid;grid-template-columns:1fr 92px;gap:10px;align-items:center;padding:10px 0;border-top:1px solid #EEF2F7}
+.cmd-p:first-of-type{border-top:0}
+.cmd-p b{display:block;color:#002060}.cmd-p span{font-size:13px;color:#5b667c}.cmd-p s{color:#98a2b3}
+.cmd-p input{font:18px Arial;padding:9px;border:1px solid #C9D3E2;border-radius:10px;width:100%;box-sizing:border-box;text-align:center}
+.cmd-tot{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:14px}.cmd-tot .g{font-weight:700;color:#002060;font-size:16px}
+.cmd-chk{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#44506a;margin:6px 0 12px}.cmd-chk input{margin-top:3px;width:18px;height:18px}
+.cmd-btn{display:block;width:100%;box-sizing:border-box;text-align:center;border:0;border-radius:12px;padding:14px;font:700 16px Arial;cursor:pointer;text-decoration:none;margin:8px 0}
+.cmd-go{background:#37A028;color:#fff}.cmd-wa{background:#25D366;color:#fff}.cmd-sec{background:#E8EEF7;color:#002060}
+.cmd-err{color:#B42318;font-size:13px;margin:6px 0}
+.cmd-note{font-size:12px;color:#6b7489;margin-top:8px}
+.cmd-rec{white-space:pre-wrap;font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;background:#F6F8FB;border:1px solid #E1E7F0;border-radius:10px;padding:10px;max-height:300px;overflow:auto}
+.cmd-id{font-size:20px;font-weight:800;color:#37A028;text-align:center;margin:4px 0 8px}
+</style>
+<div id="cmdView" hidden>
+  <div class="cmd-top"><img src="assets/solevo_small.jpg" alt="SOLEVO"><h1>Commander les prémix MG2MIX<small>SOLEVO Côte d’Ivoire • commande en ligne</small></h1><button type="button" class="cmd-x" id="cmdClose" hidden>Fermer</button></div>
+  <div class="cmd-wrap">
+    <div id="cmdPromo" class="cmd-promo" hidden></div>
+    <form id="cmdForm" novalidate>
+      <div class="cmd-card"><h2>1. Vos produits (sacs de 20 kg)</h2><div id="cmdProds"></div></div>
+      <div class="cmd-card"><h2>2. Vos coordonnées</h2>
+        <label class="cmd-f">Nom et prénom *<input name="nom" autocomplete="name" required></label>
+        <label class="cmd-f">Téléphone WhatsApp *<input name="tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="07 00 00 00 00" required></label>
+        <label class="cmd-f">E-mail (pour recevoir la copie de la commande)<input name="email" type="email" autocomplete="email"></label>
+        <label class="cmd-f">Ferme ou structure<input name="ferme"></label>
+        <label class="cmd-f">Zone *<select name="zone" id="cmdZone" required></select></label>
+        <label class="cmd-f">Ville ou localité *<input name="ville" required></label>
+      </div>
+      <div class="cmd-card"><h2>3. Retrait ou livraison</h2>
+        <label class="cmd-f">Mode souhaité *<select name="mode" required>
+          <option value="">— Choisir —</option>
+          <option>Retrait au stand SOLEVO (SELAB SHOW)</option>
+          <option>Retrait au dépôt SOLEVO le plus proche</option>
+          <option>Livraison (conditions à confirmer par l’agent)</option></select></label>
+        <label class="cmd-f">Date souhaitée<input name="dateSouhaitee" type="date"></label>
+        <label class="cmd-f">Message pour l’agent<textarea name="message" placeholder="Effectif, formule utilisée, questions…"></textarea></label>
+      </div>
+      <div class="cmd-card"><h2>Récapitulatif estimé</h2><div class="cmd-tot" id="cmdTot"></div>
+        <p class="cmd-note">Prix par sac hors TVA ; TVA 9 % calculée sur le prix remisé. Prix, disponibilité et livraison confirmés par l’agent SOLEVO avant toute facturation.</p></div>
+      <label class="cmd-chk"><input type="checkbox" name="consent" required><span>J’accepte que SOLEVO Côte d’Ivoire utilise ces informations pour traiter ma commande et me recontacter. *</span></label>
+      <div class="cmd-err" id="cmdErr"></div>
+      <button class="cmd-btn cmd-go" type="submit">Vérifier ma commande</button>
+    </form>
+    <div id="cmdDone" hidden>
+      <div class="cmd-card"><h2>Votre commande est prête à être envoyée</h2>
+        <div class="cmd-id" id="cmdId"></div>
+        <a class="cmd-btn cmd-go" id="cmdSend" href="#" target="_blank" rel="noopener">✉ Envoyer la commande à SOLEVO</a>
+        <p class="cmd-note">Un onglet s’ouvre et transmet la commande par e-mail à l’agent SOLEVO de votre zone. Gardez votre numéro de commande.</p>
+        <a class="cmd-btn cmd-wa" id="cmdWa" href="#" target="_blank" rel="noopener">Envoyer plutôt par WhatsApp</a>
+        <p class="cmd-note">WhatsApp Business SOLEVO : +225 07 10 47 14 02</p>
+        <div class="cmd-rec" id="cmdRec"></div>
+        <button class="cmd-btn cmd-sec" type="button" id="cmdEdit">Modifier la commande</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  var CFG = {
+    relais: 'https://lehito1989.github.io/sisse-kaba-APP/commande/',
+    wa: '2250710471402',
+    zones: [['Abidjan-Sud', 'Abidjan et Sud (Abidjan, Bingerville, Dabou, Grand-Bassam…)'], ['Centre', 'Centre (Yamoussoukro, Bouaké, Toumodi, Dimbokro…)'], ['Est', 'Est (Abengourou, Agnibilékrou, Bondoukou…)'], ['Nord', 'Nord (Korhogo, Ferkessédougou, Odienné…)'], ['Ouest', 'Ouest et Centre-Ouest (Daloa, Man, San-Pédro, Gagnoa…)']],
+    produits: [{ id: 'ponte', nom: 'Ponte MG2MIX', ht: 26000, rem: 2000 }, { id: 'porc', nom: 'CMV Porc MG2MIX', ht: 30000, rem: 2000 }, { id: 'chair', nom: 'Chair MG2MIX', ht: 29000, rem: 1000 }],
+    tva: 0.09, eur: 656, promo: ['2026-11-20', '2026-11-22']
+  };
+  var $ = function (s) { return document.getElementById(s); };
+  var fr = function (n) { return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '); };
+  var today = function () { var d = new Date(); return d.getUTCFullYear() + '-' + ('0' + (d.getUTCMonth() + 1)).slice(-2) + '-' + ('0' + d.getUTCDate()).slice(-2); }; /* Abidjan = UTC */
+  var promoOn = function () { var t = today(); return t >= CFG.promo[0] && t <= CFG.promo[1]; };
+  var built = false, last = null;
+  function build() {
+    if (built) return; built = true;
+    var P = promoOn();
+    if (P) { $('cmdPromo').hidden = false; $('cmdPromo').innerHTML = '<b>Promotion SELAB SHOW en cours</b> : jusqu’à −2 000 FCFA par sac de prémix (20, 21 et 22 novembre 2026). La remise est déjà appliquée ci-dessous.'; }
+    $('cmdProds').innerHTML = CFG.produits.map(function (p) {
+      var pu = P ? p.ht - p.rem : p.ht;
+      return '<div class="cmd-p"><div><b>' + p.nom + '</b><span>' + (P ? '<s>' + fr(p.ht) + '</s> ' : '') + fr(pu) + ' FCFA HT / sac</span></div><input type="number" min="0" step="1" inputmode="numeric" placeholder="0" data-q="' + p.id + '" aria-label="Sacs ' + p.nom + '"></div>';
+    }).join('');
+    $('cmdZone').innerHTML = '<option value="">— Choisir —</option>' + CFG.zones.map(function (z) { return '<option value="' + z[0] + '">' + z[1] + '</option>'; }).join('');
+    $('cmdForm').addEventListener('input', totals);
+    $('cmdForm').addEventListener('submit', submit);
+    $('cmdEdit').addEventListener('click', function () { $('cmdDone').hidden = true; $('cmdForm').hidden = false; window.scrollTo(0, 0); $('cmdView').scrollTop = 0; });
+    $('cmdClose').addEventListener('click', function () { $('cmdView').hidden = true; try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* */ } });
+    totals();
+  }
+  function lignes() {
+    var P = promoOn();
+    return CFG.produits.map(function (p) {
+      var el = document.querySelector('[data-q="' + p.id + '"]'); var q = Math.max(0, Math.floor(+((el && el.value) || 0)));
+      return { id: p.id, nom: p.nom, qte: q, pu_normal: p.ht, remise: P ? p.rem : 0, pu: P ? p.ht - p.rem : p.ht };
+    }).filter(function (l) { return l.qte > 0; });
+  }
+  function calc(L) { var ht = L.reduce(function (a, l) { return a + l.qte * l.pu; }, 0), rem = L.reduce(function (a, l) { return a + l.qte * l.remise; }, 0), tva = ht * CFG.tva; return { sacs: L.reduce(function (a, l) { return a + l.qte; }, 0), ht: ht, remise: rem, tva: tva, ttc: ht + tva, eur: (ht + tva) / CFG.eur }; }
+  function totals() {
+    var T = calc(lignes());
+    $('cmdTot').innerHTML = '<span>Sacs</span><span>' + fr(T.sacs) + '</span>' + (T.remise ? '<span>Remise SELAB</span><span>−' + fr(T.remise) + ' FCFA</span>' : '') + '<span>Total HT</span><span>' + fr(T.ht) + ' FCFA</span><span>TVA 9 %</span><span>' + fr(T.tva) + ' FCFA</span><span class="g">Total TTC</span><span class="g">' + fr(T.ttc) + ' FCFA</span><span>Équivalent</span><span>≈ ' + T.eur.toFixed(2).replace('.', ',') + ' €</span>';
+  }
+  function b64u(s) { var b = btoa(unescape(encodeURIComponent(s))); return b.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  function texte(o) {
+    return 'COMMANDE MG2MIX ' + o.id + '\n' + o.lignes.map(function (l) { return '• ' + l.nom + ' : ' + l.qte + ' sac(s) × ' + fr(l.pu) + ' FCFA HT'; }).join('\n') +
+      '\nTotal HT : ' + fr(o.totaux.ht) + ' FCFA' + (o.totaux.remise ? ' (remise SELAB −' + fr(o.totaux.remise) + ' FCFA)' : '') + '\nTVA 9 % : ' + fr(o.totaux.tva) + ' FCFA\nTotal TTC : ' + fr(o.totaux.ttc) + ' FCFA (≈ ' + o.totaux.eur.toFixed(2).replace('.', ',') + ' €)' +
+      '\n\nClient : ' + o.nom + '\nTéléphone : ' + o.tel + (o.email ? '\nE-mail : ' + o.email : '') + (o.ferme ? '\nFerme : ' + o.ferme : '') + '\nZone : ' + o.zone + ' • ' + o.ville + '\nMode : ' + o.mode + (o.dateSouhaitee ? '\nDate souhaitée : ' + o.dateSouhaitee : '') + (o.message ? '\nMessage : ' + o.message : '');
+  }
+  function submit(e) {
+    e.preventDefault();
+    var f = e.target, v = function (n) { return (f.elements[n].value || '').trim(); }, L = lignes(), err = [];
+    if (!L.length) err.push('indiquez au moins un sac');
+    if (!v('nom')) err.push('votre nom');
+    if (v('tel').replace(/\D/g, '').length < 8) err.push('un téléphone valide');
+    if (v('email') && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v('email'))) err.push('un e-mail valide (ou laissez vide)');
+    if (!v('zone')) err.push('votre zone'); if (!v('ville')) err.push('votre ville'); if (!v('mode')) err.push('le mode de retrait');
+    if (!f.elements.consent.checked) err.push('votre accord pour le traitement');
+    if (err.length) { $('cmdErr').textContent = 'Merci de compléter : ' + err.join(', ') + '.'; return; }
+    $('cmdErr').textContent = '';
+    var d = new Date(), id = 'CMD-' + today().replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+    last = { v: 1, id: id, date: d.toISOString(), source: 'artefact SISSÊ~KABA', nom: v('nom'), tel: v('tel'), email: v('email'), ferme: v('ferme'), zone: v('zone'), ville: v('ville'), mode: v('mode'), dateSouhaitee: v('dateSouhaitee'), message: v('message'), promo: promoOn(), lignes: L, totaux: calc(L) };
+    var t = texte(last);
+    $('cmdId').textContent = id;
+    $('cmdRec').textContent = t;
+    $('cmdSend').href = CFG.relais + '#d=' + b64u(JSON.stringify(last));
+    $('cmdWa').href = 'https://wa.me/' + CFG.wa + '?text=' + encodeURIComponent(t);
+    $('cmdForm').hidden = true; $('cmdDone').hidden = false; $('cmdView').scrollTop = 0;
+  }
+  function route() { if (/^#commande/i.test(location.hash)) { build(); $('cmdView').hidden = false; } }
+  window.SK_CMD_OPEN = function () { build(); $('cmdClose').hidden = false; $('cmdView').hidden = false; $('cmdView').scrollTop = 0; };
+  route(); window.addEventListener('hashchange', route);
+})();
+</script>
+<!-- ===== fin commande en ligne ===== -->
 <div id="app" class="loading">
 <header>
   <img src="assets/solevo_small.jpg" alt="SOLEVO">
@@ -589,6 +733,7 @@ window.addEventListener('unhandledrejection',function(e){show((e.reason&&(e.reas
       <button id="prosKioskWa" type="button">Envoyer le lien à la borne (WhatsApp)</button>
       <button id="prosAgents" type="button" class="pri2">☷ Interface d’entretien</button>
       <button id="prosFiche" type="button" class="pri2">📝 Fiche visiteur</button>
+      <button id="prosCmd" type="button" class="pri2">🛒 Commande en ligne (QR)</button>
       <button id="prosAppel" type="button" class="pri2">📺 Écran d’appel (2e écran)</button>
       <button id="prosBilan" type="button">✉ Bilan de la journée</button>
       <button id="prosFinal" type="button">📊 Rapport final du salon</button>

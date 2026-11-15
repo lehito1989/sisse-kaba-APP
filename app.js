@@ -2393,6 +2393,7 @@
     $('#skModalX').addEventListener('click', modalClose);
     $('#skModal').addEventListener('click', (e) => { if (e.target.id === 'skModal') modalClose(); });
     $('#prosFiche').addEventListener('click', ficheOpen);
+    $('#prosCmd').addEventListener('click', () => { if (window.SK_CMD_OPEN) window.SK_CMD_OPEN(); });
     try {
       const h = decodeURIComponent(location.hash + location.search);
       const m = h.match(/entretien(?:=([^&#]+))?/i);
@@ -2654,10 +2655,14 @@
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Catalogue_WhatsApp_MG2MIX_Porc_2026-11-15_v2.png', 'png', 'Catalogue WhatsApp Business : CMV Porc MG2MIX', true);
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Carte_WhatsApp_Promo_SELAB_2026-11-15.png', 'png', 'Carte WhatsApp : promo SELAB SHOW (ponte −2 000, porc −2 000, chair −1 000 FCFA par sac)', true);
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Story_WhatsApp_Promo_SELAB_2026-11-15.png', 'png', 'Story WhatsApp (1080×1920) : promo SELAB SHOW', true);
+    stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_QR_Commande_MG2MIX_2026-11-15.png', 'png', 'QR code : commande en ligne MG2MIX (ouvre le formulaire de commande)', true);
+    stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Affiche_QR_Commande_MG2MIX_2026-11-15.png', 'png', 'Affiche WhatsApp : commandez vos prémix MG2MIX en ligne (QR)', true);
+    stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Affiche_QR_Commande_MG2MIX_2026-11-15.pdf', 'pdf', 'Affiche à imprimer : commande en ligne MG2MIX (QR)', true);
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_BAT_Visuels_MG2MIX_A5_2026-11-15.pdf', 'pdf', 'BAT des visuels MG2MIX A5 (à valider avant impression)');
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'LIVRET_FORMULES_MG2MIX_PORC_2026-01-13.pdf', 'pdf', 'Livret des formules aliments porc MG2MIX');
     L.push({ cat: 'liens', folder: '10_Documents_en_ligne', name: 'Document en ligne (claude.ai)', kind: 'url', url: 'https://claude.ai/artifact/HTawarRfbzMbzFDSWs151q', label: 'Enquête terrain porc : prix et repères (tableaux à remplir)' });
     L.push({ cat: 'liens', folder: '10_Documents_en_ligne', name: 'Document en ligne (claude.ai)', kind: 'url', url: 'https://claude.ai/artifact/HVtkEajPtWuuuEJXPSDW6Q', label: 'Répétition du parcours visiteur du 19/11/2026' });
+    L.push({ cat: 'liens', folder: '10_Documents_en_ligne', name: 'Formulaire de commande (lien du QR)', kind: 'url', url: 'https://claude.ai/artifact/TUnnsq3KPaGHqWqgX2PpWF#commande', label: 'Commande en ligne MG2MIX : formulaire public, envoi par e-mail à l’agent de la zone' });
     L.push({ cat: 'liens', folder: '10_Documents_en_ligne', name: 'Tableur en ligne (claude.ai)', kind: 'url', url: 'https://claude.ai/artifact/Q8C6SPyYPC9gUuyS1DfD1u', label: 'Suivi et bilan promo SELAB SHOW 2026 : ventes, coût de la remise, conversion QR par produit et par jour' });
     L.push({ cat: 'kit', kit: true, folder: '02_Lancement_SELAB', name: nm('SISSE_KABA_Visuel_carre_WhatsApp_Facebook_1080', 'png'), kind: 'png', label: 'Visuel carré 1080 × 1080 (WhatsApp, Facebook) annonçant le stand', gen: () => squarePng() });
     L.push({ cat: 'kit', kit: true, folder: '02_Lancement_SELAB', name: nm('SISSE_KABA_Visuel_vertical_statut_WhatsApp_1080x1920', 'png'), kind: 'png', label: 'Visuel vertical 1080 × 1920 (statut WhatsApp) annonçant le stand', gen: () => storyPng() });
