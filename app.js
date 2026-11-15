@@ -600,7 +600,7 @@
   /* ---- rendu des diapos ---- */
   function pzBlock(b, F) {
     if (b.k === 'kpis') return `<div class="pz-grid">${b.items.map((it) => k3(F(it.v), F(it.l))).join('')}</div>`;
-    if (b.k === 'cols' || b.k === 'cards') return `<div class="pz-cols">${b.items.map((c) => `<div class="pz-col"><h3>${F(c.h)}</h3>${c.l ? `<ul>${c.l.map((x) => `<li>${F(x)}</li>`).join('')}</ul>` : `<p>${F(c.t)}</p>`}</div>`).join('')}</div>`;
+    if (b.k === 'cols' || b.k === 'cards') return `<div class="pz-cols" style="--n:${b.items.length}">${b.items.map((c) => `<div class="pz-col"><h3>${F(c.h)}</h3>${c.l ? `<ul>${c.l.map((x) => `<li>${F(x)}</li>`).join('')}</ul>` : `<p>${F(c.t)}</p>`}</div>`).join('')}</div>`;
     if (b.k === 'steps') return `<ol class="pz-steps">${b.items.map((it, i) => `<li><em>${i + 1}</em><b>${F(it.h)}</b><span>${F(it.t)}</span></li>`).join('')}</ol>`;
     if (b.k === 'table') return `<table class="pz-tbl${b.left ? ' tl' : ''}${b.rows.length > 8 ? ' dense' : ''}"><thead><tr>${b.head.map((h) => `<th>${F(h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => `<tr class="${STRONG.test(r[0]) ? 'st' : ''}">${r.map((c) => `<td>${F(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
     if (b.k === 'quote') return `<div class="pz-quote"><blockquote><span class="qm">“</span><p>${F(b.q)}</p><footer><b>${F(b.n)}</b><span>${F(b.p)}</span></footer></blockquote><div class="pz-qfig">${b.who && temoPhoto(b.who) ? `<img src="${temoPhoto(b.who)}" alt="">` : ''}<b>${F(b.v)}</b><span>${F(b.l)}</span></div></div>`;
