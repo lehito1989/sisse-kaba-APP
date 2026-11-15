@@ -669,7 +669,7 @@
   const PROFILS = ['Éleveur', 'Producteur de maïs', 'Éleveur et producteur', 'Fabricant d’aliment', 'Autre'];
   const PRIOS = ['Maïs moins cher', 'Prémix SOLEVO', 'Semences et engrais', 'Vendre mon maïs', 'Conseil technique', 'Financement'];
   const CONTACTS = ['WhatsApp', 'SMS', 'Appel', 'E-mail'];
-  const VEILLE = [['mais', 'Maïs', 'FCFA/kg'], ['soja', 'Soja (tourteau)', 'FCFA/kg'], ['son', 'Son de blé', 'FCFA/kg'], ['coq', 'Coquillage', 'FCFA/kg'], ['huile', 'Huile rouge', 'FCFA/litre'], ['pxChair', 'Prémix chair', 'FCFA/sac'], ['pxPonte', 'Prémix ponte', 'FCFA/sac'], ['plaq', 'Plaquette de 30 œufs (vente)', 'FCFA/plaquette'], ['poulet', 'Poulet de chair (vente)', 'FCFA/poulet']];
+  const VEILLE = [['mais', 'Maïs', 'FCFA/kg'], ['soja', 'Soja (tourteau)', 'FCFA/kg'], ['son', 'Son de blé', 'FCFA/kg'], ['coq', 'Coquillage', 'FCFA/kg'], ['huile', 'Huile rouge', 'FCFA/litre'], ['pxChair', 'Prémix chair', 'FCFA/sac'], ['pxPonte', 'Prémix ponte', 'FCFA/sac'], ['pxPorc', 'CMV Porc MG2MIX', 'FCFA/sac'], ['plaq', 'Plaquette de 30 œufs (vente)', 'FCFA/plaquette'], ['poulet', 'Poulet de chair (vente)', 'FCFA/poulet']];
   const SACS = ['1', '20', '25', '50', '100', '120'];
   const nrm = (x) => String(x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]+/g, ' ').trim();
   const VISITES = ['Seul(e)', 'En groupe', 'Délégation de coopérative', 'Association'];
@@ -1381,7 +1381,7 @@
   /* jauge du prémix MG2MIX simulé aujourd’hui (t/an potentielles) face à l’objectif du jour */
   function premixJour() {
     const day = new Date().toISOString().slice(0, 10); const M = simuStats(state.pros.filter((r) => String(r.at).slice(0, 10) === day && !r.test));
-    const obj = +state.standCfg.objPremix > 0 ? +state.standCfg.objPremix : 10; const t = M.tC + M.tP;
+    const obj = +state.standCfg.objPremix > 0 ? +state.standCfg.objPremix : 10; const t = M.tC + M.tP + (M.tK || 0);
     return { M, obj, t, pct: Math.min(100, obj ? t / obj * 100 : 0) };
   }
   function renderAppel(first) {
@@ -1586,16 +1586,16 @@
     const sansSimu = L.filter((r) => !r.simu);
     return { veille: L.filter((r) => r.veille && Object.keys(r.veille).some((k) => +r.veille[k] > 0)).length, n: rows.length, auto: L.filter((r) => /✓/.test(r.simuAuto || '')).length,
       valide: val.length, chair: rows.filter((x) => x.r.simu.sp === 'chair').length, ponte: rows.filter((x) => x.r.simu.sp === 'ponte').length,
-      tC: sum((x) => x.c) / 1000, tP: sum((x) => x.p) / 1000, ca: sum((x) => x.ca), caVal: sum((x) => x.ca, val), tVal: sum((x) => x.c + x.p, val) / 1000,
+      tC: sum((x) => x.c) / 1000, tP: sum((x) => x.p) / 1000, tK: sum((x) => x.k || 0) / 1000, porc: rows.filter((x) => x.r.simu.sp === 'porc' || x.k).length, ca: sum((x) => x.ca), caVal: sum((x) => x.ca, val), tVal: sum((x) => x.c + x.p + (x.k || 0), val) / 1000,
       insVal: ins(val), tauxVal: val.length ? ins(val) / val.length * 100 : null, tauxSans: sansSimu.length ? sansSimu.filter((r) => r.inscription === 'Oui').length / sansSimu.length * 100 : null, rows };
   }
   function simuHtml(M) {
     if (!M.n) return '<h3 style="color:#002060">Simulations MG2MIX</h3><p>Aucune simulation enregistrée sur la période.</p>';
     const p = (x) => (x == null ? 'n.d.' : fr(x, 1) + ' %'); const e = (x) => fr(x) + ' FCFA (' + eurS(x) + ')';
     return `<h3 style="color:#002060">Simulations MG2MIX et volume potentiel de prémix</h3>
-      <p>${M.veille} visiteur(s) ont donné leur veille des prix → <b>${M.n}</b> simulation(s) (${M.chair} chair, ${M.ponte} pondeuses) → ${M.auto} envoyée(s) automatiquement → <b>${M.valide}</b> validée(s) en entretien.</p>
+      <p>${M.veille} visiteur(s) ont donné leur veille des prix → <b>${M.n}</b> simulation(s) (${M.chair} chair, ${M.ponte} pondeuses${M.porc ? ', ' + M.porc + ' porc' : ''}) → ${M.auto} envoyée(s) automatiquement → <b>${M.valide}</b> validée(s) en entretien.</p>
       <table cellpadding="6" border="1" style="border-collapse:collapse;font-size:13px"><tr style="background:#37A028;color:#fff"><th>Indicateur</th><th>Toutes les simulations</th><th>Simulations validées</th></tr>
-      <tr><td>Prémix MG2MIX potentiel / an</td><td><b>${fr(M.tC + M.tP, 1)} t</b> (chair ${fr(M.tC, 1)} t • ponte ${fr(M.tP, 1)} t)</td><td><b>${fr(M.tVal, 1)} t</b></td></tr>
+      <tr><td>Prémix MG2MIX potentiel / an</td><td><b>${fr(M.tC + M.tP + (M.tK || 0), 1)} t</b> (chair ${fr(M.tC, 1)} t • ponte ${fr(M.tP, 1)} t${M.tK ? ' • porc ' + fr(M.tK, 1) + ' t' : ''})</td><td><b>${fr(M.tVal, 1)} t</b></td></tr>
       <tr><td>CA prémix potentiel / an (prix des visiteurs ou de référence)</td><td><b>${e(M.ca)}</b></td><td><b>${e(M.caVal)}</b></td></tr>
       <tr><td>Taux d’inscription au projet</td><td colspan="2">${p(M.tauxVal)} avec simulation validée, contre ${p(M.tauxSans)} sans simulation</td></tr></table>
       <p style="font-size:12px;color:#5b6476">Volume annuel = prémix d’une bande × bandes/an (chair) ou d’un cycle ramené à 365 jours (pondeuses). Potentiel commercial, pas un engagement d’achat.</p>`;
@@ -1625,10 +1625,10 @@
       .concat(S.dests.map((x) => ['Vers ' + x.lab, x.n, x.fin, x.ins, pf(x.taux), x.fort, pf(x.tauxFort)])).concat([['', '', '', '', '', '', '']]).concat(S.from.map((x) => ['Depuis ' + x.lab, x.n, x.fin, x.ins, pf(x.taux), x.fort, pf(x.tauxFort)]))
       .concat([['', '', '', '', '', '', ''], ['Détail : nom', 'De', 'Vers', 'Motif', 'KAM prévenu', 'Inscription', 'Intérêt']]).concat(S.list.map((r) => [r.nom, r.transfert.de, r.transfert.vers, r.transfert.motif, r.kamPrevenu || '', r.inscription || '', r.interet || '']));
     sheets.push({ name: 'Transferts KAM', head: ['Groupe', 'Visiteurs', 'Entretiens terminés', 'Inscrits au projet', 'Taux d’inscription (%)', 'Intérêts forts', 'Taux d’intérêt fort (%)'], rows: trRows, widths: [34, 14, 14, 14, 14, 12, 14] });
-    { const M = F.simu || simuStats(F.L); sheets.push({ name: 'Simulations MG2MIX', head: ['Nom', 'Téléphone', 'Localité', 'Élevage', 'Effectif', 'Formule', 'Coût unitaire (FCFA)', 'Marge unitaire (FCFA)', 'Marge annuelle (FCFA)', 'Marge annuelle (€)', 'Prémix chair / an (kg)', 'Prémix ponte / an (kg)', 'CA prémix potentiel / an (FCFA)', 'CA prémix potentiel / an (€)', 'Envoi auto', 'Validée', 'Inscription projet'],
-      rows: M.rows.map((x) => { const m = x.r.simu; return [x.r.nom, x.r.tel, x.r.localite, m.sp === 'chair' ? 'Poulet de chair' : 'Pondeuses', Math.round(m.effectif || 0), m.formule, Math.round(m.cout || 0), Math.round(m.marge || 0), Math.round(m.margeAn || 0), Math.round((m.margeAn || 0) / 656), Math.round(x.c), Math.round(x.p), Math.round(x.ca), Math.round(x.ca / 656), x.r.simuAuto || '', m.valide ? (x.r.simuValide || 'Oui') : 'Non', x.r.inscription || '']; })
-        .concat([['TOTAL', '', '', '', '', '', '', '', '', '', Math.round(M.tC * 1000), Math.round(M.tP * 1000), Math.round(M.ca), Math.round(M.ca / 656), '', M.valide + ' validée(s)', '']]),
-      widths: [24, 15, 14, 14, 9, 22, 12, 12, 15, 12, 13, 13, 17, 14, 30, 22, 12] }); }
+    { const M = F.simu || simuStats(F.L); sheets.push({ name: 'Simulations MG2MIX', head: ['Nom', 'Téléphone', 'Localité', 'Élevage', 'Effectif', 'Formule', 'Coût unitaire (FCFA)', 'Marge unitaire (FCFA)', 'Marge annuelle (FCFA)', 'Marge annuelle (€)', 'Prémix chair / an (kg)', 'Prémix ponte / an (kg)', 'Prémix porc / an (kg)', 'CA prémix potentiel / an (FCFA)', 'CA prémix potentiel / an (€)', 'Envoi auto', 'Validée', 'Inscription projet'],
+      rows: M.rows.map((x) => { const m = x.r.simu; return [x.r.nom, x.r.tel, x.r.localite, m.sp === 'chair' ? 'Poulet de chair' : m.sp === 'porc' ? 'Porcs' : 'Pondeuses', Math.round(m.effectif || 0), m.formule, Math.round(m.cout || 0), Math.round(m.marge || 0), Math.round(m.margeAn || 0), Math.round((m.margeAn || 0) / 656), Math.round(x.c), Math.round(x.p), Math.round(x.k || 0), Math.round(x.ca), Math.round(x.ca / 656), x.r.simuAuto || '', m.valide ? (x.r.simuValide || 'Oui') : 'Non', x.r.inscription || '']; })
+        .concat([['TOTAL', '', '', '', '', '', '', '', '', '', Math.round(M.tC * 1000), Math.round(M.tP * 1000), Math.round((M.tK || 0) * 1000), Math.round(M.ca), Math.round(M.ca / 656), '', M.valide + ' validée(s)', '']]),
+      widths: [24, 15, 14, 14, 9, 22, 12, 12, 15, 12, 13, 13, 13, 17, 14, 30, 22, 12] }); }
     sheets.push({ name: 'Visiteurs', head: ['Date', 'Source', 'Profil', 'Nom', 'Téléphone', 'E-mail', 'Localité', 'Dépôt', 'Activité', 'Priorités', 'Lieu d’entretien', 'Agent', 'Entretien', 'Intérêt', 'Inscription', 'Action', 'ATE', 'Statut', 'Réponse', 'Note'], rows: vis, widths: [16, 14, 16, 24, 15, 24, 14, 14, 30, 28, 18, 24, 12, 9, 11, 14, 22, 12, 30, 30] });
     return SKG.xlsxBook(JSZip, sheets);
   }
@@ -2128,10 +2128,16 @@
       if (c.autoSimu === false || !r || r.simuAuto || !r.veille || !Object.keys(r.veille).some((k) => +r.veille[k] > 0)) return;
       await skfReady();
       const vf = SKF.inputFromVeille(r.veille, r); const R = SKF.compute(vf.inp);
-      const rep = SKF.report(R, { nom: r.nom, localite: r.localite, sps: vf.sps });
+      const rep = SKF.report(R, { nom: r.nom, localite: r.localite, sps: vf.sps, porc: vf.porc, porcN: vf.porcN });
+      const kPorc = vf.porcN * 250 * 0.02, pxK = +(vf.inp.prix.pxPorc || 0) || (state.V && state.V.N ? state.V.N.prixPorc / state.V.N.sacKg : 1500);
+      if (!vf.sps.length) {
+        await prosUpdate(r.id, { simu: { inp: skfFromRec(r), le: new Date().toISOString(), auto: true, sp: 'porc', formule: 'Livret MG2MIX porc', effectif: vf.porcN, cout: 0, marge: 0, caAn: 0, margeAn: 0, demarrage: 0, premixKg: kPorc, premixC: 0, premixP: 0, an: { c: 0, p: 0, k: kPorc, ca: kPorc * pxK }, resume: rep.text } });
+        const res0 = await simuSend(state.pros.find((x) => x.id === r.id) || r, rep, 'auto');
+        status('Formules porc envoyées à ' + r.nom + ' : ' + res0.out.join(', ') + '.', res0.ok ? 'ok' : 'warn'); return;
+      }
       const X = vf.sps[0] === 'ponte' ? R.ponte : R.chair, ch = vf.sps[0] !== 'ponte';
       const inp = skfFromRec(r); inp.sp = ch ? 'chair' : 'ponte';
-      await prosUpdate(r.id, { simu: { inp, le: new Date().toISOString(), auto: true, sp: inp.sp, formule: X.formule.nom, effectif: X.effectif, cout: ch ? X.coutPoulet : X.coutPlaq, marge: ch ? X.margePoulet : X.margePlaq, caAn: X.caAn, margeAn: X.margeAn, demarrage: X.demarrage, premixKg: X.premix.chair + X.premix.ponte, premixC: X.premix.chair, premixP: X.premix.ponte, an: simuAn(R, vf.sps, vf.inp.prix), resume: rep.text } });
+      await prosUpdate(r.id, { simu: { inp, le: new Date().toISOString(), auto: true, sp: inp.sp, formule: X.formule.nom, effectif: X.effectif, cout: ch ? X.coutPoulet : X.coutPlaq, marge: ch ? X.margePoulet : X.margePlaq, caAn: X.caAn, margeAn: X.margeAn, demarrage: X.demarrage, premixKg: X.premix.chair + X.premix.ponte, premixC: X.premix.chair, premixP: X.premix.ponte, an: ((a) => (vf.porc && vf.porcN ? Object.assign(a, { k: kPorc, ca: a.ca + kPorc * pxK }) : a))(simuAn(R, vf.sps, vf.inp.prix)), resume: rep.text } });
       const res = await simuSend(state.pros.find((x) => x.id === r.id) || r, rep, 'auto');
       status('Coûts MG2MIX envoyés à ' + r.nom + ' : ' + res.out.join(', ') + '.', res.ok ? 'ok' : 'warn');
     } catch (e) { console.error('simuAuto', e); }
@@ -2168,14 +2174,22 @@
     function porcText(L) {
       const t = ['*SOLEVO – Formules MG2MIX porc (CMV Porc MG2MIX 2 %)*', inp.client.nom ? 'Pour : ' + inp.client.nom + (inp.client.localite ? ' (' + inp.client.localite + ')' : '') : '', '1 sac de 20 kg de CMV Porc MG2MIX = 1 tonne d’aliment complet, à tous les stades.']
         .concat(L.map((f) => '• ' + f.nom + ' : ' + (f.prixKg != null ? fr(f.prixKg, 1) + ' FCFA/kg (' + fr(f.prixSac) + ' FCFA le sac de 50 kg)' : 'prix à compléter (' + f.missing.join(', ') + ')')))
+        .concat((() => { if (!inp.porcQ) return []; const Pd = SKF.porcProd(inp.prix, inp.porcQ); return Pd.cout == null ? [] : ['Coût de revient : *' + fr(Pd.cout) + ' FCFA par porc* (' + fr(Pd.coutKgVif) + ' FCFA/kg vif)'].concat(Pd.marge != null ? ['Marge brute : ' + fr(Pd.marge) + ' FCFA par porc • ' + fr(Pd.margeBande) + ' FCFA (≈ ' + fr(Pd.margeBande / 656) + ' €) pour ' + fr(Pd.vendus) + ' porcs'] : []); })())
         .concat(['Besoin pour ' + fr(+inp.porcT || 0) + ' t d’aliment par mois : ' + fr(Math.ceil(+inp.porcT || 0)) + ' sacs de CMV Porc MG2MIX', 'Estimation indicative : les prix appliqués lors de l’achat peuvent varier. SOLEVO Côte d’Ivoire – WhatsApp +225 07 10 47 14 02']);
       return t.filter(Boolean).join('\n');
     }
     function renderPorcIn() {
       const B = SKF.base(); if (inp.porcT == null) inp.porcT = 5;
-      $('#fxIn', b).innerHTML = `<div class="vg"><label>Aliment fabriqué par mois <small>(tonnes)</small><input type="number" min="0" step="any" id="fxPorcT" value="${num(inp.porcT || 5)}"></label></div>
+      if (inp.prix.pxPorc == null && state.V && state.V.N && state.V.N.prixPorc) inp.prix.pxPorc = Math.round(state.V.N.prixPorc / (state.V.N.sacKg || 20));
+      const kgP = state.V && state.V.N && state.V.N.kgPorc ? state.V.N.kgPorc : 250;
+      if (!inp.porcQ) inp.porcQ = { effectif: rec && +rec.porc ? Math.round(+rec.porc) : 100, poidsE: 7, poidsS: 100, ageE: 30, ageS: 210, alP: 36, alC: Math.max(0, kgP - 36), mort: 5, formC: 'charcutier', prixPorcelet: '', prixVif: '', autres: '' };
+      const Q = inp.porcQ, PQ = [['effectif', 'Porcs engraissés par bande', 'porcs'], ['poidsE', 'Poids au sevrage', 'kg'], ['poidsS', 'Poids vif à la vente', 'kg'], ['ageE', 'Âge au sevrage', 'jours'], ['ageS', 'Âge à la vente', 'jours'], ['alP', 'Aliment porcelet par porc', 'kg'], ['alC', 'Aliment charcutier par porc', 'kg'], ['mort', 'Mortalité', '%'], ['prixPorcelet', 'Prix (ou coût) du porcelet sevré', 'FCFA'], ['prixVif', 'Prix de vente du porc vif', 'FCFA/kg'], ['autres', 'Autres charges par porc (soins, eau, main-d’œuvre)', 'FCFA']];
+      $('#fxIn', b).innerHTML = `<details class="veille" open><summary>Engraissement : du porcelet sevré au porc vif <span>(repères modifiables ; prix à saisir)</span></summary><div class="vg">${PQ.map(([k, l, u]) => `<label>${l} <small>(${u})</small><input type="number" min="0" step="any" data-pq="${k}" value="${Q[k] === '' || Q[k] == null ? '' : num(Q[k])}" ${/prix|autres/.test(k) ? 'placeholder="à saisir"' : ''}></label>`).join('')}
+        <label>Formule charcutier<select data-pq="formC"><option value="charcutier" ${Q.formC === 'charcutier' ? 'selected' : ''}>Charcutiers</option><option value="charcPalm" ${Q.formC === 'charcPalm' ? 'selected' : ''}>Charcutiers (avec palmiste)</option></select></label></div></details>
+        <div class="vg"><label>Aliment fabriqué par mois <small>(tonnes)</small><input type="number" min="0" step="any" id="fxPorcT" value="${num(inp.porcT || 5)}"></label></div>
         <details class="veille" open><summary>Prix des matières premières <span>(FCFA/kg ; palmiste et CMV porc à saisir)</span></summary><div class="vg">${SKF.PORC_MP.map(([k, l]) => `<label>${l}${(inp.veille || []).includes(k) ? ' <em class="vtag">veille</em>' : ''}<input type="number" min="0" step="any" data-pmp="${k}" value="${num(inp.prix[k] != null ? inp.prix[k] : (B.prix[k] != null ? B.prix[k] : ''))}" placeholder="à saisir"></label>`).join('')}</div></details>`;
       $('#fxPorcT', b).addEventListener('input', (e) => { inp.porcT = +e.target.value || 0; tick(); });
+      $$('[data-pq]', b).forEach((i) => i.addEventListener('input', () => { inp.porcQ[i.dataset.pq] = i.tagName === 'SELECT' ? i.value : (i.value === '' ? '' : +i.value); tick(); }));
       $$('[data-pmp]', b).forEach((i) => i.addEventListener('input', () => { inp.prix[i.dataset.pmp] = i.value === '' ? undefined : +i.value; tick(); }));
     }
     function renderPorcOut() {
@@ -2188,7 +2202,11 @@
         <tr><td>Hors prémix (FCFA/kg)</td><td></td>${L.map((f) => `<td>${f.horsPremix != null ? fr(f.horsPremix, 1) : '…'}</td>`).join('')}</tr></tbody></table>`;
       const t = +inp.porcT || 0, miss = [...new Set(L.flatMap((f) => f.missing))];
       const k = (v, l, cl) => `<div class="fxk ${cl || ''}"><b>${v}</b><span>${l}</span></div>`;
-      $('#fxOut', b).innerHTML = `<div class="fxks">${k(fr(Math.ceil(t)) + ' sacs', 'CMV Porc MG2MIX de 20 kg par mois (' + fr(t) + ' t d’aliment)', 'mg')}${k('20 kg / t', 'dose unique à tous les stades')}${k(L.filter((f) => f.prixKg != null).length + ' / 5', 'formules chiffrées')}</div>
+      const Pd = SKF.porcProd(inp.prix, inp.porcQ), Qd = Pd.q, need = [];
+      if (Pd.coutAl == null) need.push('prix des matières premières'); if (!(+Qd.prixPorcelet > 0)) need.push('prix du porcelet'); if (!(+Qd.prixVif > 0)) need.push('prix du porc vif');
+      const eu = (x) => fr(x) + ' FCFA <small class="eur">(≈ ' + fr(x / 656) + ' €)</small>';
+      const prod = `<h4 class="fxh">Coût de production du porc charcutier</h4><div class="fxks">${k(Pd.cout != null ? fr(Pd.cout) + ' F' : '…', 'coût de revient par porc vendu')}${k(Pd.coutKgVif != null ? fr(Pd.coutKgVif) + ' F' : '…', 'coût du kg de porc vif')}${k(Pd.coutAl != null ? fr(Pd.coutAl) + ' F' : '…', 'aliment par porc (' + fr(Pd.kgAl) + ' kg)')}${k(Pd.ic != null ? fr(Pd.ic, 2) : '…', 'indice de consommation • GMQ ' + (Pd.gmq != null ? fr(Pd.gmq) + ' g/j' : '…'))}${k(Pd.marge != null ? fr(Pd.marge) + ' F' : '…', 'marge brute par porc' + (Pd.margePct != null ? ' (' + fr(Pd.margePct * 100) + ' %)' : ''), Pd.marge != null ? (Pd.marge < 0 ? 'neg' : 'pos') : '')}${k(Pd.margeBande != null ? eu(Pd.margeBande) : '…', 'marge brute de la bande (' + fr(Pd.vendus) + ' porcs vendus)', Pd.margeBande != null && Pd.margeBande < 0 ? 'neg' : '')}${k(fr(Pd.sacs) + ' sacs', 'CMV Porc MG2MIX de 20 kg par bande', 'mg')}</div>${need.length ? `<p class="note">Pour chiffrer le coût et la marge, saisissez : <b>${esc(need.join(', '))}</b>.</p>` : ''}<p class="note">Repères par défaut à valider avec l’éleveur : sevrage vers 30 jours à 7 kg, vente à 100 kg vif à 7 mois, ${fr(Pd.kgAl)} kg d’aliment par porc (paramètre du simulateur). Coût par porc vendu = (porcelet + aliment + autres charges) ÷ (1 − mortalité).</p>`;
+      $('#fxOut', b).innerHTML = prod + `<h4 class="fxh">Formules et besoin mensuel</h4><div class="fxks">${k(fr(Math.ceil(t)) + ' sacs', 'CMV Porc MG2MIX de 20 kg par mois (' + fr(t) + ' t d’aliment)', 'mg')}${k('20 kg / t', 'dose unique à tous les stades')}${k(L.filter((f) => f.prixKg != null).length + ' / 5', 'formules chiffrées')}</div>
         ${miss.length ? `<p class="note">Saisissez le prix de : <b>${esc(miss.join(', '))}</b> pour chiffrer toutes les formules.</p>` : ''}
         <h4 class="fxh">Livret de formules MG2MIX porc</h4><div class="fxw">${tbl}</div>
         <p class="note">La truie gestante reçoit un aliment fibreux (besoins faibles) ; la truie allaitante un aliment riche en énergie et en protéines pour produire plus de lait. Source : livret de formules MG2MIX porc, SOLEVO Côte d’Ivoire.</p>`;
@@ -2397,6 +2415,7 @@
       { fx: 'marges', title: 'Marges : simulation selon le prix du maïs', notes: 'MESSAGE CLÉ : même avec un maïs plus cher, la marge reste positive ; un maïs sous contrat SISSÊ~KABA sécurise la marge.\nPOINT DE VIGILANCE : estimations avant impôts et frais financiers.' },
       { fx: 'devisChair', title: 'Devis estimatif : poulet de chair', notes: 'OBJECTIF : chiffrer le projet du visiteur selon sa quantité (barre du haut).\nCONSEIL : si le bâtiment existe déjà, choisir « Bâtiment existant ».' },
       { fx: 'devisPonte', title: 'Devis estimatif : pondeuses', notes: 'OBJECTIF : chiffrer un élevage de pondeuses selon la quantité choisie.\nCONSEIL : remettre la fiche PDF ou le devis Excel depuis la fenêtre « Formulation & rentabilité ».' },
+      { fx: 'porc', title: 'Formules MG2MIX porc', notes: 'MESSAGE CLÉ : un seul CMV Porc MG2MIX 2 % pour tous les stades, 1 sac de 20 kg par tonne d’aliment.\nCONSEIL : la truie gestante reçoit un aliment fibreux, la truie allaitante un aliment riche ; les formules sont spécifiques.' },
       { fx: 'besoin', title: 'Votre besoin en prémix MG2MIX', full: true, notes: 'CONCLUSION : inscrire le visiteur et programmer la visite du technicien pour valider la formule sur son élevage.' }] };
   const allDecks = () => SKD.short.concat([FXDECK]);
   PZ.fx = { chair: 1000, ponte: 1000, cf: 1, pf: 1, bat: 'neuf', rec: '' };
@@ -2453,6 +2472,13 @@
       const rows = (X.invest ? [{ c: ['Bâtiment (' + fr(X.surface) + ' m²)', mF(X.batiment), eurS(X.batiment)] }, row('Équipements', X.equipements), row('Investissement total', X.invest, true)] : [{ c: ['Bâtiment et équipements', 'existants', '—'] }])
         .concat([row(ch ? 'Charges d’une bande' : 'Charges du cycle', ch ? X.chargesBande : X.chargesCycle), row('À prévoir pour démarrer', X.demarrage, true), row('Chiffre d’affaires par an', X.caAn), row('Marge brute par an', X.margeBruteAn), row('Marge annuelle après amortissement', X.margeAn, true)]);
       h = hd(s.title + ` – ${fr(X.effectif)} ${ch ? 'poulets' : 'pondeuses'}`, `Devis estimatif calculé avec le modèle SOLEVO • ${who}`) + `<div class="pz-blocks"><div class="pz-fxdv">${T(['Poste', 'FCFA', 'Euros'], rows, 'pz-dv')}<div class="pz-grid one">${K(X.retour ? fr(X.retour * 12, 0) + ' mois' : '—', 'retour sur investissement')}${K(fr(X.mensuel / 1e3, 0) + ' k', 'FCFA de marge par mois', eurS(X.mensuel))}</div></div></div><p class="pz-note">Devis indicatif : les prix des matériaux, des poussins et de l’aliment varient selon la zone et la date d’achat. Devis Excel détaillé disponible auprès de votre conseiller SOLEVO.</p>`;
+    } else if (s.fx === 'porc') {
+      const pxP = state.V && state.V.N && state.V.N.prixPorc ? Math.round(state.V.N.prixPorc / (state.V.N.sacKg || 20)) : null;
+      const P2 = Object.assign({}, inp.prix); if (P2.pxPorc == null && pxP) P2.pxPorc = pxP;
+      const L = SKF.porcCompute(P2), ings = SKF.PORC_MP.filter(([k]) => SKF.PORC_F.some((f) => f.kg[k]));
+      const nm = (x) => x.replace('Tourteau de ', 'T. ').replace('Fibre de pression de palmiste', 'Fibre de palmiste');
+      h = hd(s.title, 'CMV Porc MG2MIX 2 % • 1 sac de 20 kg = 1 tonne d’aliment à tous les stades • ' + who) + `<div class="pz-blocks">${T(['kg par tonne'].concat(L.map((f) => esc(f.nom))),
+        ings.map(([k, n]) => ({ st: k === 'pxPorc', c: [esc(nm(n))].concat(SKF.PORC_F.map((f) => (f.kg[k] ? fr(f.kg[k]) : '–'))) })).concat([{ st: true, c: ['Prix de l’aliment (FCFA/kg)'].concat(L.map((f) => (f.prixKg != null ? fr(f.prixKg, 1) : (f.horsPremix != null ? fr(f.horsPremix, 1) + '*' : '…')))) }]), 'pz-fxt pz-dv')}</div><p class="pz-note">Source : livret de formules MG2MIX porc, SOLEVO Côte d’Ivoire • CMV porc à ${pxP ? fr(pxP) + ' FCFA/kg (prix du simulateur)' : 'chiffrer'} • … = prix du palmiste à saisir dans la fenêtre « Formulation & rentabilité ».</p>`;
     } else if (s.fx === 'besoin') {
       h = hd(s.title, 'Prémix MG2MIX 2 % nécessaire pour les élevages simulés') + `<div class="pz-blocks"><div class="pz-grid">${K(fr(Math.ceil(c.premix.chair / 20)) + ' sacs', 'MG2MIX chair de 20 kg par bande de ' + fr(c.effectif) + ' poulets', fr(c.premix.chair) + ' kg • ' + fr(c.premix.chair * c.bandes / 1000, 2) + ' t par an')}${K(fr(Math.ceil(p.premix.chair / 20) + Math.ceil(p.premix.ponte / 20)) + ' sacs', 'MG2MIX de 20 kg par cycle de ' + fr(p.effectif) + ' pondeuses', fr(Math.ceil(p.premix.chair / 20)) + ' sacs chair + ' + fr(Math.ceil(p.premix.ponte / 20)) + ' sacs ponte')}${K(fr(c.sacs + p.sacs), 'sacs d’aliment de 50 kg fabriqués', 'chair ' + fr(c.sacs) + ' • pondeuses ' + fr(p.sacs))}</div><div class="pz-cta"><b>Prochaine étape</b><span>Votre technicien SOLEVO valide la formule sur votre élevage et organise la première livraison de MG2MIX depuis le dépôt le plus proche.</span><em>Elvis LEHITO • Key Account Manager FEED • WhatsApp +225 07 10 47 14 02</em></div></div>`;
     }
