@@ -54,6 +54,7 @@
   async function getBuf(path) {
     if (state.buffers[path]) return state.buffers[path].slice(0);
     const LAZY = { 'static/Filieres_Elevage_Alimentation_Animale_Cote_Ivoire.pptx': 'static/filieres_pptx.js' };
+    if (/^static\/SOLEVO_Filieres_.*\.pptx$/.test(path)) LAZY[path] = 'static/fil_short_pptx.js';
     if (LAZY[path] && !(window.SK_TPL && window.SK_TPL[path])) await new Promise((ok, ko) => { const sc = document.createElement('script'); sc.src = LAZY[path]; sc.onload = ok; sc.onerror = () => ko(new Error('Chargement impossible : ' + LAZY[path])); document.head.appendChild(sc); });
     if (window.SK_TPL && window.SK_TPL[path]) {
       const bin = atob(window.SK_TPL[path]); const u = new Uint8Array(bin.length);
@@ -2630,6 +2631,14 @@
     stat('filieres', '08_Filieres_elevage_alimentation', 'Filieres_Elevage_Alimentation_Animale_Cote_Ivoire.pdf', 'pdf', 'Filières élevage et alimentation animale (PDF des diapositives)');
     stat('filieres', '08_Filieres_elevage_alimentation', 'Filieres_Elevage_Notes_du_presentateur.pdf', 'pdf', 'Filières élevage : notes du présentateur');
     stat('filieres', '08_Filieres_elevage_alimentation', 'Filieres_Elevage_Bibliographie_detaillee.pdf', 'pdf', 'Filières élevage : bibliographie détaillée et statut de vérification');
+    stat('filieres', '08_Filieres_elevage_alimentation', 'SOLEVO_Filieres_Marche_et_financement_2026-11-15.pptx', 'pptx', 'Version courte SOLEVO : marché et financement (décideurs, ADVANS CI)');
+    stat('filieres', '08_Filieres_elevage_alimentation', 'SOLEVO_Filieres_Volaille_2026-11-15.pptx', 'pptx', 'Version courte SOLEVO : volaille');
+    stat('filieres', '08_Filieres_elevage_alimentation', 'SOLEVO_Filieres_Porc_2026-11-15.pptx', 'pptx', 'Version courte SOLEVO : porc');
+    stat('filieres', '08_Filieres_elevage_alimentation', 'SOLEVO_Filieres_Ruminants_2026-11-15.pptx', 'pptx', 'Version courte SOLEVO : ruminants');
+    stat('filieres', '08_Filieres_elevage_alimentation', 'SOLEVO_Filieres_Matieres_premieres_2026-11-15.pptx', 'pptx', 'Version courte SOLEVO : matières premières et fabrication');
+    stat('filieres', '08_Filieres_elevage_alimentation', 'SOLEVO_Filieres_Rentabilite_et_actions_2026-11-15.pptx', 'pptx', 'Version courte SOLEVO : rentabilité et plan d’action');
+    stat('filieres', '08_Filieres_elevage_alimentation', 'SOLEVO_Filieres_Quiz_et_corrige_2026-11-15.pptx', 'pptx', 'Version courte SOLEVO : quiz et corrigé');
+    stat('filieres', '08_Filieres_elevage_alimentation', 'SOLEVO_Kit_Atelier_Filieres_Elevage_2026-11-15.pdf', 'pdf', 'Kit atelier à imprimer : quiz, corrigé, matrice vierge, tableau de bord');
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Catalogue_WhatsApp_MG2MIX_Chair_2026-11-15_v2.png', 'png', 'Catalogue WhatsApp Business : MG2MIX Chair', true);
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Catalogue_WhatsApp_MG2MIX_Ponte_2026-11-15_v2.png', 'png', 'Catalogue WhatsApp Business : MG2MIX Ponte', true);
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Catalogue_WhatsApp_MG2MIX_Porc_2026-11-15_v2.png', 'png', 'Catalogue WhatsApp Business : CMV Porc MG2MIX', true);
