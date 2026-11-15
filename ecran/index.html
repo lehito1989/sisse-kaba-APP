@@ -568,7 +568,7 @@ body.show-ctrl .ctrl{opacity:1}
   var hideT; function wake() { document.body.classList.add('show-ctrl'); document.body.classList.remove('hide-cursor'); clearTimeout(hideT); hideT = setTimeout(function () { document.body.classList.remove('show-ctrl'); document.body.classList.add('hide-cursor'); }, 2500); }
   addEventListener('mousemove', wake); addEventListener('touchstart', wake, { passive: true }); wake();
   window.SK_ECRAN = { show: function (n) { show(n); }, get count() { return S.length; } };
-  var STATS_CODE = '';
+  var STATS_CODE = 'lehito';
   if (STATS_CODE && location.protocol === 'https:') {
     var src = (location.search.match(/[?&]src=([a-z0-9-]+)/i) || [])[1] || 'ecran';
     window.goatcounter = { path: '/ecran/' + src };
