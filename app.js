@@ -53,6 +53,8 @@
   /* ---------- chargement ---------- */
   async function getBuf(path) {
     if (state.buffers[path]) return state.buffers[path].slice(0);
+    const LAZY = { 'static/Filieres_Elevage_Alimentation_Animale_Cote_Ivoire.pptx': 'static/filieres_pptx.js' };
+    if (LAZY[path] && !(window.SK_TPL && window.SK_TPL[path])) await new Promise((ok, ko) => { const sc = document.createElement('script'); sc.src = LAZY[path]; sc.onload = ok; sc.onerror = () => ko(new Error('Chargement impossible : ' + LAZY[path])); document.head.appendChild(sc); });
     if (window.SK_TPL && window.SK_TPL[path]) {
       const bin = atob(window.SK_TPL[path]); const u = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
@@ -2623,6 +2625,18 @@
     for (const f of ['SISSE_KABA_Contrat_Producteurs_Mais', 'SISSE_KABA_Contrat_Eleveurs']) {
       for (const ext of ['docx', 'pdf']) L.push({ cat: 'contrats', folder: '04_Contrats', name: `${f}.${ext}`, kind: ext, label: (f.includes('Eleveurs') ? 'Contrat éleveurs' : 'Contrat producteurs de maïs') + ' (modèle inchangé)', gen: async () => new Uint8Array(await getBuf('static/' + f + '.' + ext)) });
     }
+    const stat = (cat, folder, f, kind, label, kit) => L.push({ cat, kit: !!kit, folder, name: f, kind, label, gen: async () => new Uint8Array(await getBuf('static/' + f)) });
+    stat('filieres', '08_Filieres_elevage_alimentation', 'Filieres_Elevage_Alimentation_Animale_Cote_Ivoire.pptx', 'pptx', 'Filières élevage et alimentation animale en Côte d’Ivoire (60 diapositives, quiz, bibliographie)');
+    stat('filieres', '08_Filieres_elevage_alimentation', 'Filieres_Elevage_Alimentation_Animale_Cote_Ivoire.pdf', 'pdf', 'Filières élevage et alimentation animale (PDF des diapositives)');
+    stat('filieres', '08_Filieres_elevage_alimentation', 'Filieres_Elevage_Notes_du_presentateur.pdf', 'pdf', 'Filières élevage : notes du présentateur');
+    stat('filieres', '08_Filieres_elevage_alimentation', 'Filieres_Elevage_Bibliographie_detaillee.pdf', 'pdf', 'Filières élevage : bibliographie détaillée et statut de vérification');
+    stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Catalogue_WhatsApp_MG2MIX_Chair_2026-11-15_v2.png', 'png', 'Catalogue WhatsApp Business : MG2MIX Chair', true);
+    stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Catalogue_WhatsApp_MG2MIX_Ponte_2026-11-15_v2.png', 'png', 'Catalogue WhatsApp Business : MG2MIX Ponte', true);
+    stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Catalogue_WhatsApp_MG2MIX_Porc_2026-11-15_v2.png', 'png', 'Catalogue WhatsApp Business : CMV Porc MG2MIX', true);
+    stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_BAT_Visuels_MG2MIX_A5_2026-11-15.pdf', 'pdf', 'BAT des visuels MG2MIX A5 (à valider avant impression)');
+    stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'LIVRET_FORMULES_MG2MIX_PORC_2026-01-13.pdf', 'pdf', 'Livret des formules aliments porc MG2MIX');
+    L.push({ cat: 'liens', folder: '10_Documents_en_ligne', name: 'Document en ligne (claude.ai)', kind: 'url', url: 'https://claude.ai/artifact/HTawarRfbzMbzFDSWs151q', label: 'Enquête terrain porc : prix et repères (tableaux à remplir)' });
+    L.push({ cat: 'liens', folder: '10_Documents_en_ligne', name: 'Document en ligne (claude.ai)', kind: 'url', url: 'https://claude.ai/artifact/HVtkEajPtWuuuEJXPSDW6Q', label: 'Répétition du parcours visiteur du 19/11/2026' });
     L.push({ cat: 'kit', kit: true, folder: '02_Lancement_SELAB', name: nm('SISSE_KABA_Visuel_carre_WhatsApp_Facebook_1080', 'png'), kind: 'png', label: 'Visuel carré 1080 × 1080 (WhatsApp, Facebook) annonçant le stand', gen: () => squarePng() });
     L.push({ cat: 'kit', kit: true, folder: '02_Lancement_SELAB', name: nm('SISSE_KABA_Visuel_vertical_statut_WhatsApp_1080x1920', 'png'), kind: 'png', label: 'Visuel vertical 1080 × 1920 (statut WhatsApp) annonçant le stand', gen: () => storyPng() });
     L.push({ cat: 'kit', kit: true, folder: '02_Lancement_SELAB', name: nm('SISSE_KABA_QR_inscription_tables', 'pdf'), kind: 'pdf', label: 'QR codes d’inscription à imprimer (accueil + une page par table)', gen: () => qrPdfBytes() });
@@ -2666,12 +2680,12 @@
     const blob = await pdfMake.createPdf(dd).getBlob();
     return new Uint8Array(await blob.arrayBuffer());
   }
-  const ICON = { pptx: 'PPT', pdf: 'PDF', docx: 'DOC', xlsx: 'XLS', txt: 'TXT', json: 'JSON', png: 'PNG' };
+  const ICON = { pptx: 'PPT', pdf: 'PDF', docx: 'DOC', xlsx: 'XLS', txt: 'TXT', json: 'JSON', png: 'PNG', url: 'LIEN' };
   function renderDocs() {
     const L = docList();
     const groups = {};
     L.forEach((d, i) => { (groups[d.folder] = groups[d.folder] || []).push([d, i]); });
-    $('#docs').innerHTML = Object.keys(groups).sort().map((g) => `<div class="dgroup"><h4>${g.replace(/^\d+_/, '').replace(/_/g, ' ')}</h4>${groups[g].map(([d, i]) => `<button class="doc" data-i="${i}"><span class="ic ${d.kind}">${ICON[d.kind]}</span><span class="dn">${d.label}<small>${d.name}</small></span></button>`).join('')}</div>`).join('');
+    $('#docs').innerHTML = Object.keys(groups).sort().map((g) => `<div class="dgroup"><h4>${g.replace(/^\d+_/, '').replace(/_/g, ' ')}</h4>${groups[g].map(([d, i]) => d.url ? `<a class="doc" href="${d.url}" target="_blank" rel="noopener"><span class="ic ${d.kind}">${ICON[d.kind]}</span><span class="dn">${d.label}<small>${d.name}</small></span></a>` : `<button class="doc" data-i="${i}"><span class="ic ${d.kind}">${ICON[d.kind]}</span><span class="dn">${d.label}<small>${d.name}</small></span></button>`).join('')}</div>`).join('');
     $$('#docs .doc').forEach((b) => b.addEventListener('click', () => saveOne(L[+b.dataset.i], b)));
   }
   function status(msg, kind) { const s = $('#status'); s.textContent = msg; s.className = 'status ' + (kind || ''); }
@@ -2745,7 +2759,7 @@
 
   /* génère tous les fichiers du scénario + rapport qualité */
   async function buildAll(prefix, cats) {
-    const L = docList().filter((d) => !cats || d.cat === 'scenario' || cats.includes(d.cat) || (cats.includes('kit') && d.kit)); const files = []; const res = [];
+    const L = docList().filter((d) => !d.url).filter((d) => !cats || d.cat === 'scenario' || cats.includes(d.cat) || (cats.includes('kit') && d.kit)); const files = []; const res = [];
     let i = 0;
     for (const d of L) {
       i++; status(`${prefix || 'Génération'} ${i}/${L.length} : ${d.name}`);
