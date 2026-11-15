@@ -521,7 +521,10 @@
 
   /* ---------- présentations plein écran : SELAB (12), CODIR (13), IT SOLEVO (15) — même source que les PowerPoint ---------- */
   const PZ = { i: 0, timer: null, f: 1, deck: 'selab', notes: false, calc: { type: 'chair', n: null, ha: null } };
-  const visSlides = (d) => d.slides.filter((x) => !x.temo || (state.V && state.V.S['temo' + x.temo + 'Ok']));
+  const PROMO = { type: 'content', promo: true, title: 'SELAB SHOW : jusqu’à −2 000 FCFA par sac de prémix', sub: 'Stand SOLEVO • 20, 21 et 22 novembre 2026 • Parc des sports d’Abidjan',
+    blocks: [{ k: 'qr', h: 'Inscrivez-vous maintenant', t: 'Scannez le QR code avec votre téléphone', lines: [{ v: '−2 000 FCFA', l: 'Ponte MG2MIX : 26 000 → 24 000 FCFA HT par sac (26 160 FCFA TTC)' }, { v: '−2 000 FCFA', l: 'CMV Porc MG2MIX : 30 000 → 28 000 FCFA HT par sac (30 520 FCFA TTC)' }, { v: '−1 000 FCFA', l: 'Chair MG2MIX : 29 000 → 28 000 FCFA HT par sac (30 520 FCFA TTC)' }], sign: 'Prix par sac hors TVA ; TVA 9 % en sus • WhatsApp Business +225 07 10 47 14 02' }],
+    comments: [], notes: 'CONCLUSION : faire scanner le QR code d’inscription et annoncer la promotion des 3 jours du SELAB SHOW (20, 21 et 22 novembre 2026) : ponte −2 000 FCFA (26 000 → 24 000 FCFA HT), porc −2 000 FCFA (30 000 → 28 000 FCFA HT), chair −1 000 FCFA (29 000 → 28 000 FCFA HT) par sac ; TVA 9 % en sus, calculée sur le prix remisé.' };
+  const visSlides = (d) => d.slides.filter((x) => !x.promo).filter((x) => !x.temo || (state.V && state.V.S['temo' + x.temo + 'Ok'])).concat(d.noPromo ? [] : [PROMO]);
   const k3 = (v, l, n) => `<div class="pz-k"><b>${v}</b><span>${l}</span>${n ? `<i>${n}</i>` : ''}</div>`;
   const STRONG = /^(Total|CA du programme|Résultat|Producteurs|Éleveurs|Total des éleveurs)/;
   /* ---- QR code d’inscription ---- */
@@ -2475,7 +2478,7 @@
   function fxSlide(s, d, F) {
     const { inp, r } = fxInput(); const R = SKF.compute(inp); const c = R.chair, p = R.ponte;
     const who = r ? 'Prix déclarés par ' + esc(r.nom) + (r.localite ? ' (' + esc(r.localite) + ')' : '') : 'Prix de référence SOLEVO (registre terrain)';
-    const hd = (t, sub) => `<div class="pz-hd"><span>${d.menu}</span><span>${PZ.i + 1} / ${d.slides.length}</span></div>${fxBar()}<h2>${t}</h2><p class="pz-subt">${sub}</p>`;
+    const hd = (t, sub) => `<div class="pz-hd"><span>${d.menu}</span><span>${PZ.i + 1} / ${visSlides(d).length}</span></div>${fxBar()}<h2>${t}</h2><p class="pz-subt">${sub}</p>`;
     const K = (v, l, n) => k3(v, l, n);
     const T = (head, rows, cls) => `<table class="pz-tbl ${cls || ''}"><thead><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((rw) => `<tr class="${rw.st ? 'st' : ''}">${rw.c.map((x) => `<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
     const formT = (X) => { const F2 = X.formule; const main = F2.rows.filter((x) => x.kg.some((k) => k >= 15) || /PREMIX/i.test(x.nom));
@@ -2519,14 +2522,14 @@
     } else if (s.fx === 'besoin') {
       h = hd(s.title, 'Prémix MG2MIX 2 % nécessaire pour les élevages simulés') + `<div class="pz-blocks"><div class="pz-grid">${K(fr(Math.ceil(c.premix.chair / 20)) + ' sacs', 'MG2MIX chair de 20 kg par bande de ' + fr(c.effectif) + ' poulets', fr(c.premix.chair) + ' kg • ' + fr(c.premix.chair * c.bandes / 1000, 2) + ' t par an')}${K(fr(Math.ceil(p.premix.chair / 20) + Math.ceil(p.premix.ponte / 20)) + ' sacs', 'MG2MIX de 20 kg par cycle de ' + fr(p.effectif) + ' pondeuses', fr(Math.ceil(p.premix.chair / 20)) + ' sacs chair + ' + fr(Math.ceil(p.premix.ponte / 20)) + ' sacs ponte')}${K(fr(c.sacs + p.sacs), 'sacs d’aliment de 50 kg fabriqués', 'chair ' + fr(c.sacs) + ' • pondeuses ' + fr(p.sacs))}</div><div class="pz-cta"><b>Prochaine étape</b><span>Votre technicien SOLEVO valide la formule sur votre élevage et organise la première livraison de MG2MIX depuis le dépôt le plus proche.</span><em>Elvis LEHITO • Key Account Manager FEED • WhatsApp +225 07 10 47 14 02</em></div></div>`;
     }
-    return h + `<div class="pz-dots">${d.slides.map((_, j) => `<i class="${j === PZ.i ? 'on' : ''}"></i>`).join('')}</div>`;
+    return h + `<div class="pz-dots">${visSlides(d).map((_, j) => `<i class="${j === PZ.i ? 'on' : ''}"></i>`).join('')}</div>`;
   }
   function fxBind() {
     $$('#pzSlide [data-fxb]').forEach((i) => i.addEventListener('change', () => { const k = i.dataset.fxb; PZ.fx[k] = /chair|ponte|cf|pf/.test(k) ? Math.max(1, +i.value || 1) : i.value; pzRender(); }));
   }
   function pzRender() {
     const d = allDecks().find((x) => x.short === PZ.deck); const sl = visSlides(d);
-    if (d.live) {
+    if (d.live && !sl[((PZ.i % sl.length) + sl.length) % sl.length].promo) {
       PZ.i = (PZ.i + sl.length) % sl.length; const s = sl[PZ.i]; const el = $('#pzSlide');
       el.classList.toggle('is-cover', s.type === 'cover'); $('#prez').classList.toggle('on-cover', s.type === 'cover');
       if (!window.SKF || !SKF.loaded()) { el.innerHTML = '<div class="pz-load">Chargement du modèle de formulation SOLEVO…</div>'; skfReady().then(pzRender).catch((e) => { el.innerHTML = '<div class="pz-load">Modèle indisponible : ' + esc(e.message || e) + '</div>'; }); return; }
