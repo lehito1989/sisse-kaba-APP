@@ -1575,7 +1575,7 @@
   }
   /* prémix MG2MIX annuel (kg) pour les élevages simulés du visiteur */
   function simuAn(R, sps, prix) {
-    const P = Object.assign({ pxChair: 1500, pxPonte: 1400 }, Object.fromEntries(Object.entries(prix || {}).filter(([, v]) => +v > 0)));
+    const P = Object.assign({ pxChair: 1450, pxPonte: 1300 }, Object.fromEntries(Object.entries(prix || {}).filter(([, v]) => +v > 0)));
     let c = 0, p = 0;
     if (sps.includes('chair')) c += R.chair.premix.chair * (R.chair.bandes || 6);
     if (sps.includes('ponte')) { const k = 365 / (R.ponte.duree || 546); c += R.ponte.premix.chair * k; p += R.ponte.premix.ponte * k; }
@@ -1585,7 +1585,7 @@
   function simuStats(L) {
     const S = L.filter((r) => r.simu);
     const an = (r) => { const m = r.simu, i = m.inp || {}; if (m.an) return m.an; const pc = m.premixC != null ? m.premixC : (m.sp === 'chair' ? m.premixKg : 0), pp = m.premixP != null ? m.premixP : (m.sp === 'ponte' ? m.premixKg : 0);
-      const k = m.sp === 'chair' ? (+((i.chair || {}).bandes) || 6) : 365 / 546; const P = Object.assign({ pxChair: 1500, pxPonte: 1400 }, Object.fromEntries(Object.entries(i.prix || {}).filter(([, v]) => +v > 0)));
+      const k = m.sp === 'chair' ? (+((i.chair || {}).bandes) || 6) : 365 / 546; const P = Object.assign({ pxChair: 1450, pxPonte: 1300 }, Object.fromEntries(Object.entries(i.prix || {}).filter(([, v]) => +v > 0)));
       return { c: pc * k, p: pp * k, ca: (pc * k) * P.pxChair + (pp * k) * P.pxPonte }; };
     const rows = S.map((r) => Object.assign({ r }, an(r)));
     const sum = (f, A) => (A || rows).reduce((a, x) => a + f(x), 0);
@@ -2652,10 +2652,12 @@
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Catalogue_WhatsApp_MG2MIX_Chair_2026-11-15_v2.png', 'png', 'Catalogue WhatsApp Business : MG2MIX Chair', true);
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Catalogue_WhatsApp_MG2MIX_Ponte_2026-11-15_v2.png', 'png', 'Catalogue WhatsApp Business : MG2MIX Ponte', true);
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Catalogue_WhatsApp_MG2MIX_Porc_2026-11-15_v2.png', 'png', 'Catalogue WhatsApp Business : CMV Porc MG2MIX', true);
+    stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Carte_WhatsApp_Promo_SELAB_2026-11-15.png', 'png', 'Carte WhatsApp : promo SELAB SHOW (ponte −2 000, porc −2 000, chair −1 000 FCFA par sac)', true);
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_BAT_Visuels_MG2MIX_A5_2026-11-15.pdf', 'pdf', 'BAT des visuels MG2MIX A5 (à valider avant impression)');
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'LIVRET_FORMULES_MG2MIX_PORC_2026-01-13.pdf', 'pdf', 'Livret des formules aliments porc MG2MIX');
     L.push({ cat: 'liens', folder: '10_Documents_en_ligne', name: 'Document en ligne (claude.ai)', kind: 'url', url: 'https://claude.ai/artifact/HTawarRfbzMbzFDSWs151q', label: 'Enquête terrain porc : prix et repères (tableaux à remplir)' });
     L.push({ cat: 'liens', folder: '10_Documents_en_ligne', name: 'Document en ligne (claude.ai)', kind: 'url', url: 'https://claude.ai/artifact/HVtkEajPtWuuuEJXPSDW6Q', label: 'Répétition du parcours visiteur du 19/11/2026' });
+    L.push({ cat: 'liens', folder: '10_Documents_en_ligne', name: 'Tableur en ligne (claude.ai)', kind: 'url', url: 'https://claude.ai/artifact/Q8C6SPyYPC9gUuyS1DfD1u', label: 'Suivi promo SELAB SHOW 2026 : ventes, remises et inscriptions QR par produit et par jour' });
     L.push({ cat: 'kit', kit: true, folder: '02_Lancement_SELAB', name: nm('SISSE_KABA_Visuel_carre_WhatsApp_Facebook_1080', 'png'), kind: 'png', label: 'Visuel carré 1080 × 1080 (WhatsApp, Facebook) annonçant le stand', gen: () => squarePng() });
     L.push({ cat: 'kit', kit: true, folder: '02_Lancement_SELAB', name: nm('SISSE_KABA_Visuel_vertical_statut_WhatsApp_1080x1920', 'png'), kind: 'png', label: 'Visuel vertical 1080 × 1920 (statut WhatsApp) annonçant le stand', gen: () => storyPng() });
     L.push({ cat: 'kit', kit: true, folder: '02_Lancement_SELAB', name: nm('SISSE_KABA_QR_inscription_tables', 'pdf'), kind: 'pdf', label: 'QR codes d’inscription à imprimer (accueil + une page par table)', gen: () => qrPdfBytes() });
