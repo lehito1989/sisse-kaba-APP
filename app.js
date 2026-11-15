@@ -2158,14 +2158,45 @@
     let inp = rec && rec.simu && rec.simu.inp ? JSON.parse(JSON.stringify(rec.simu.inp)) : skfFromRec(rec);
     const opts = state.pros.slice().sort((a, c) => String(c.date || '').localeCompare(String(a.date || ''))).slice(0, 300);
     b.innerHTML = `<div class="fx"><div class="vg"><label>Visiteur<select id="fxRec"><option value="">— Simulation libre —</option>${opts.map((r) => `<option value="${r.id}" ${rec && rec.id === r.id ? 'selected' : ''}>${esc(r.nom)} • ${esc(r.localite || '')}</option>`).join('')}</select></label><label>Nom du client<input id="fxNom"></label><label>Localité<input id="fxLoc"></label><label>Téléphone<input id="fxTel" inputmode="tel"></label><label>E-mail<input id="fxMail" type="email"></label></div>
-      <div class="chips fxsp"><button type="button" data-sp="chair">🐔 Poulet de chair</button><button type="button" data-sp="ponte">🥚 Pondeuses</button></div>
+      <div class="chips fxsp"><button type="button" data-sp="chair">🐔 Poulet de chair</button><button type="button" data-sp="ponte">🥚 Pondeuses</button><button type="button" data-sp="porc">🐖 Porcs</button></div>
       <div id="fxIn"></div><div id="fxOut"></div>
       <div class="mbar"><button type="button" id="fxVal" class="fxval">✅ Valider avec le visiteur et lui envoyer</button><button type="button" id="fxSave" class="alt">💾 Enregistrer dans la fiche</button><a class="bk-btn" id="fxWa" target="_blank" rel="noopener">WhatsApp au visiteur</a><button type="button" id="fxCopy" class="alt">Copier le résumé</button><button type="button" id="fxXl">📊 Devis Excel personnalisé</button><button type="button" id="fxPdf">📄 Fiche PDF</button></div>
       <p class="note">Calculs issus du classeur SOLEVO « Formulation alimentaire avec les prémix MG2MIX » (1 197 formules recalculées à chaque saisie). Estimation indicative avant impôts et frais financiers : ce n’est pas un bénéfice net garanti. 1 € = 656 FCFA.</p></div>`;
     const setClient = () => { $('#fxNom', b).value = inp.client.nom || ''; $('#fxLoc', b).value = inp.client.localite || ''; $('#fxTel', b).value = inp.client.tel || ''; $('#fxMail', b).value = inp.client.email || (rec && rec.email) || ''; };
     setClient();
     const num = (x) => (x === '' || x == null ? '' : +(+x).toFixed(4));
+    function porcText(L) {
+      const t = ['*SOLEVO – Formules MG2MIX porc (CMV Porc MG2MIX 2 %)*', inp.client.nom ? 'Pour : ' + inp.client.nom + (inp.client.localite ? ' (' + inp.client.localite + ')' : '') : '', '1 sac de 20 kg de CMV Porc MG2MIX = 1 tonne d’aliment complet, à tous les stades.']
+        .concat(L.map((f) => '• ' + f.nom + ' : ' + (f.prixKg != null ? fr(f.prixKg, 1) + ' FCFA/kg (' + fr(f.prixSac) + ' FCFA le sac de 50 kg)' : 'prix à compléter (' + f.missing.join(', ') + ')')))
+        .concat(['Besoin pour ' + fr(+inp.porcT || 0) + ' t d’aliment par mois : ' + fr(Math.ceil(+inp.porcT || 0)) + ' sacs de CMV Porc MG2MIX', 'Estimation indicative : les prix appliqués lors de l’achat peuvent varier. SOLEVO Côte d’Ivoire – WhatsApp +225 07 10 47 14 02']);
+      return t.filter(Boolean).join('\n');
+    }
+    function renderPorcIn() {
+      const B = SKF.base(); if (inp.porcT == null) inp.porcT = 5;
+      $('#fxIn', b).innerHTML = `<div class="vg"><label>Aliment fabriqué par mois <small>(tonnes)</small><input type="number" min="0" step="any" id="fxPorcT" value="${num(inp.porcT || 5)}"></label></div>
+        <details class="veille" open><summary>Prix des matières premières <span>(FCFA/kg ; palmiste et CMV porc à saisir)</span></summary><div class="vg">${SKF.PORC_MP.map(([k, l]) => `<label>${l}${(inp.veille || []).includes(k) ? ' <em class="vtag">veille</em>' : ''}<input type="number" min="0" step="any" data-pmp="${k}" value="${num(inp.prix[k] != null ? inp.prix[k] : (B.prix[k] != null ? B.prix[k] : ''))}" placeholder="à saisir"></label>`).join('')}</div></details>`;
+      $('#fxPorcT', b).addEventListener('input', (e) => { inp.porcT = +e.target.value || 0; tick(); });
+      $$('[data-pmp]', b).forEach((i) => i.addEventListener('input', () => { inp.prix[i.dataset.pmp] = i.value === '' ? undefined : +i.value; tick(); }));
+    }
+    function renderPorcOut() {
+      clean(); const L = SKF.porcCompute(inp.prix), F0 = SKF.PORC_F;
+      const ings = SKF.PORC_MP.filter(([k]) => F0.some((f) => f.kg[k]));
+      const tbl = `<table class="fxt"><thead><tr><th>Matière première (kg / tonne)</th><th>Prix</th>${L.map((f) => `<th>${esc(f.nom)}</th>`).join('')}</tr></thead><tbody>
+        ${ings.map(([k, nom]) => `<tr class="${k === 'pxPorc' ? 'px' : ''}"><td>${esc(nom)}</td><td>${inp.prix[k] != null ? fr(inp.prix[k]) : (SKF.base().prix[k] != null ? fr(SKF.base().prix[k]) : '—')}</td>${F0.map((f) => `<td>${f.kg[k] ? fr(f.kg[k]) : '–'}</td>`).join('')}</tr>`).join('')}
+        <tr class="tot"><td>Prix de l’aliment (FCFA/kg)</td><td></td>${L.map((f) => `<td>${f.prixKg != null ? fr(f.prixKg, 1) : '…'}</td>`).join('')}</tr>
+        <tr class="tot"><td>Sac de 50 kg (FCFA)</td><td></td>${L.map((f) => `<td>${f.prixSac != null ? fr(f.prixSac) : '…'}</td>`).join('')}</tr>
+        <tr><td>Hors prémix (FCFA/kg)</td><td></td>${L.map((f) => `<td>${f.horsPremix != null ? fr(f.horsPremix, 1) : '…'}</td>`).join('')}</tr></tbody></table>`;
+      const t = +inp.porcT || 0, miss = [...new Set(L.flatMap((f) => f.missing))];
+      const k = (v, l, cl) => `<div class="fxk ${cl || ''}"><b>${v}</b><span>${l}</span></div>`;
+      $('#fxOut', b).innerHTML = `<div class="fxks">${k(fr(Math.ceil(t)) + ' sacs', 'CMV Porc MG2MIX de 20 kg par mois (' + fr(t) + ' t d’aliment)', 'mg')}${k('20 kg / t', 'dose unique à tous les stades')}${k(L.filter((f) => f.prixKg != null).length + ' / 5', 'formules chiffrées')}</div>
+        ${miss.length ? `<p class="note">Saisissez le prix de : <b>${esc(miss.join(', '))}</b> pour chiffrer toutes les formules.</p>` : ''}
+        <h4 class="fxh">Livret de formules MG2MIX porc</h4><div class="fxw">${tbl}</div>
+        <p class="note">La truie gestante reçoit un aliment fibreux (besoins faibles) ; la truie allaitante un aliment riche en énergie et en protéines pour produire plus de lait. Source : livret de formules MG2MIX porc, SOLEVO Côte d’Ivoire.</p>`;
+      const txt = porcText(L), tel = $('#fxTel', b).value; $('#fxWa', b).href = tel ? waLink(tel, txt) : 'https://wa.me/?text=' + encodeURIComponent(txt);
+    }
+    function porcMode() { const on = inp.sp === 'porc'; ['#fxVal', '#fxSave', '#fxXl', '#fxPdf'].forEach((sel) => { const e = $(sel, b); if (e) e.hidden = on; }); return on; }
     function renderIn() {
+      if (porcMode()) { $$('[data-sp]', b).forEach((x) => x.classList.toggle('on', x.dataset.sp === inp.sp)); return renderPorcIn(); }
       $$('[data-sp]', b).forEach((x) => x.classList.toggle('on', x.dataset.sp === inp.sp));
       const sp = inp.sp, S = inp[sp], F = sp === 'chair' ? SKF.CHAIR_F : SKF.PONTE_F, B = SKF.base();
       $('#fxIn', b).innerHTML = `<div class="vg">${SKF.PAR[sp].map(([k, l, , u]) => `<label>${l} <small>(${u})</small><input type="number" min="0" step="any" data-fp="${k}" value="${num(S[k])}"></label>`).join('')}
@@ -2188,6 +2219,7 @@
       return o;
     }
     function renderOut() {
+      if (inp.sp === 'porc') return renderPorcOut();
       let o; try { o = clean(); R = SKF.compute(o); } catch (e) { console.error(e); $('#fxOut', b).innerHTML = '<p class="err">Calcul impossible : ' + esc(e.message || e) + '</p>'; return; }
       const ch = inp.sp === 'chair', X = ch ? R.chair : R.ponte, cmp = R.comp[inp.sp];
       const k = (v, l, cl) => `<div class="fxk ${cl || ''}"><b>${v}</b><span>${l}</span></div>`;
@@ -2216,7 +2248,7 @@
     $$('[data-sp]', b).forEach((x) => x.addEventListener('click', () => { inp.sp = x.dataset.sp; renderIn(); tick(); }));
     ['#fxNom', '#fxLoc', '#fxTel', '#fxMail'].forEach((s) => $(s, b).addEventListener('input', tick));
     $('#fxRec', b).addEventListener('change', (e) => { rec = state.pros.find((x) => x.id === e.target.value) || null; inp = rec && rec.simu && rec.simu.inp ? JSON.parse(JSON.stringify(rec.simu.inp)) : skfFromRec(rec); setClient(); renderIn(); renderOut(); });
-    $('#fxCopy', b).addEventListener('click', async () => { try { await navigator.clipboard.writeText(skfResume(inp, R)); status('Résumé copié.', 'ok'); } catch (e) { status('Copie impossible dans cette vue.', 'err'); } });
+    $('#fxCopy', b).addEventListener('click', async () => { try { await navigator.clipboard.writeText(inp.sp === 'porc' ? porcText(SKF.porcCompute(inp.prix)) : skfResume(inp, R)); status('Résumé copié.', 'ok'); } catch (e) { status('Copie impossible dans cette vue.', 'err'); } });
     async function saveSimu(valide) {
       if (!rec) { status('Choisissez d’abord le visiteur dans la liste.', 'err'); return false; }
       const X = inp.sp === 'chair' ? R.chair : R.ponte;
