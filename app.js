@@ -669,7 +669,7 @@
   const PROFILS = ['Éleveur', 'Producteur de maïs', 'Éleveur et producteur', 'Fabricant d’aliment', 'Autre'];
   const PRIOS = ['Maïs moins cher', 'Prémix SOLEVO', 'Semences et engrais', 'Vendre mon maïs', 'Conseil technique', 'Financement'];
   const CONTACTS = ['WhatsApp', 'SMS', 'Appel', 'E-mail'];
-  const VEILLE = [['mais', 'Maïs', 'FCFA/kg'], ['soja', 'Soja (tourteau)', 'FCFA/kg'], ['son', 'Son de blé', 'FCFA/kg'], ['coq', 'Coquillage', 'FCFA/kg'], ['huile', 'Huile rouge', 'FCFA/litre'], ['pxChair', 'Prémix chair', 'FCFA/sac'], ['pxPonte', 'Prémix ponte', 'FCFA/sac'], ['pxPorc', 'CMV Porc MG2MIX', 'FCFA/sac'], ['plaq', 'Plaquette de 30 œufs (vente)', 'FCFA/plaquette'], ['poulet', 'Poulet de chair (vente)', 'FCFA/poulet']];
+  const VEILLE = [['mais', 'Maïs', 'FCFA/kg'], ['soja', 'Soja (tourteau)', 'FCFA/kg'], ['son', 'Son de blé', 'FCFA/kg'], ['coq', 'Coquillage', 'FCFA/kg'], ['huile', 'Huile rouge', 'FCFA/litre'], ['pxChair', 'Prémix chair', 'FCFA/sac'], ['pxPonte', 'Prémix ponte', 'FCFA/sac'], ['pxPorc', 'CMV Porc MG2MIX', 'FCFA/sac'], ['plaq', 'Plaquette de 30 œufs (vente)', 'FCFA/plaquette'], ['poulet', 'Poulet de chair (vente)', 'FCFA/poulet'], ['porcVif', 'Porc vif (vente)', 'FCFA/kg vif']];
   const SACS = ['1', '20', '25', '50', '100', '120'];
   const nrm = (x) => String(x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]+/g, ' ').trim();
   const VISITES = ['Seul(e)', 'En groupe', 'Délégation de coopérative', 'Association'];
@@ -2128,7 +2128,7 @@
       if (c.autoSimu === false || !r || r.simuAuto || !r.veille || !Object.keys(r.veille).some((k) => +r.veille[k] > 0)) return;
       await skfReady();
       const vf = SKF.inputFromVeille(r.veille, r); const R = SKF.compute(vf.inp);
-      const rep = SKF.report(R, { nom: r.nom, localite: r.localite, sps: vf.sps, porc: vf.porc, porcN: vf.porcN });
+      const rep = SKF.report(R, { nom: r.nom, localite: r.localite, sps: vf.sps, porc: vf.porc, porcN: vf.porcN, porcVif: vf.porcVif });
       const kPorc = vf.porcN * 250 * 0.02, pxK = +(vf.inp.prix.pxPorc || 0) || (state.V && state.V.N ? state.V.N.prixPorc / state.V.N.sacKg : 1500);
       if (!vf.sps.length) {
         await prosUpdate(r.id, { simu: { inp: skfFromRec(r), le: new Date().toISOString(), auto: true, sp: 'porc', formule: 'Livret MG2MIX porc', effectif: vf.porcN, cout: 0, marge: 0, caAn: 0, margeAn: 0, demarrage: 0, premixKg: kPorc, premixC: 0, premixP: 0, an: { c: 0, p: 0, k: kPorc, ca: kPorc * pxK }, resume: rep.text } });
@@ -2171,46 +2171,79 @@
     const setClient = () => { $('#fxNom', b).value = inp.client.nom || ''; $('#fxLoc', b).value = inp.client.localite || ''; $('#fxTel', b).value = inp.client.tel || ''; $('#fxMail', b).value = inp.client.email || (rec && rec.email) || ''; };
     setClient();
     const num = (x) => (x === '' || x == null ? '' : +(+x).toFixed(4));
-    function porcText(L) {
-      const t = ['*SOLEVO – Formules MG2MIX porc (CMV Porc MG2MIX 2 %)*', inp.client.nom ? 'Pour : ' + inp.client.nom + (inp.client.localite ? ' (' + inp.client.localite + ')' : '') : '', '1 sac de 20 kg de CMV Porc MG2MIX = 1 tonne d’aliment complet, à tous les stades.']
-        .concat(L.map((f) => '• ' + f.nom + ' : ' + (f.prixKg != null ? fr(f.prixKg, 1) + ' FCFA/kg (' + fr(f.prixSac) + ' FCFA le sac de 50 kg)' : 'prix à compléter (' + f.missing.join(', ') + ')')))
-        .concat((() => { if (!inp.porcQ) return []; const Pd = SKF.porcProd(inp.prix, inp.porcQ); return Pd.cout == null ? [] : ['Coût de revient : *' + fr(Pd.cout) + ' FCFA par porc* (' + fr(Pd.coutKgVif) + ' FCFA/kg vif)'].concat(Pd.marge != null ? ['Marge brute : ' + fr(Pd.marge) + ' FCFA par porc • ' + fr(Pd.margeBande) + ' FCFA (≈ ' + fr(Pd.margeBande / 656) + ' €) pour ' + fr(Pd.vendus) + ' porcs'] : []); })())
-        .concat(['Besoin pour ' + fr(+inp.porcT || 0) + ' t d’aliment par mois : ' + fr(Math.ceil(+inp.porcT || 0)) + ' sacs de CMV Porc MG2MIX', 'Estimation indicative : les prix appliqués lors de l’achat peuvent varier. SOLEVO Côte d’Ivoire – WhatsApp +225 07 10 47 14 02']);
-      return t.filter(Boolean).join('\n');
+    const ST_CL = { 'publié': 'st-pub', 'annonce commerciale': 'st-ann', 'hypothèse à confirmer': 'st-hyp', 'paramètre du simulateur': 'st-sim', 'saisi': 'st-sai' };
+    const stTag = (st) => `<em class="pst ${ST_CL[st] || ''}">${esc(st)}</em>`;
+    function porcPrix() { const P = Object.assign({}, inp.prix); if ((P.palmiste == null || P.palmiste === '') && +inp.palmSim > 0) P.palmiste = +inp.palmSim; return P; }
+    function porcText() {
+      const P = porcPrix(), L = SKF.porcCompute(P), Pd = SKF.porcProd(P, inp.porcQ), Nd = SKF.porcNaisseur(P, inp.porcQ);
+      const t = ['*SOLEVO – Porcs : formules et coûts avec le CMV Porc MG2MIX 2 %*', inp.client.nom ? 'Pour : ' + inp.client.nom + (inp.client.localite ? ' (' + inp.client.localite + ')' : '') : '', '1 sac de 20 kg de CMV Porc MG2MIX = 1 tonne d’aliment complet, à tous les stades.']
+        .concat(L.map((f) => '• ' + f.nom + ' : ' + (f.prixKg != null ? fr(f.prixKg, 1) + ' FCFA/kg' : 'en attente du prix ' + f.missing.join(', '))))
+        .concat(Pd.cout != null ? ['', '*Engraissement (' + fr(Pd.q.poidsE) + ' → ' + fr(Pd.q.poidsS) + ' kg vif)*', 'Coût de revient : *' + fr(Pd.cout) + ' FCFA par porc vendu* (' + fr(Pd.coutKgVif) + ' FCFA/kg vif), pertes comprises' + (Pd.q.autres ? '' : ', hors autres charges'), 'Prix de vente au seuil de rentabilité : ' + fr(Pd.seuil) + ' FCFA/kg vif', 'Marge par porc : ' + Pd.scen.map((x) => fr(x.px) + ' F/kg → ' + fr(x.marge) + ' FCFA').join(' • ')] : [])
+        .concat(Nd.coutPorcelet != null ? ['', '*Naisseur*', fr(Nd.sevresAn, 1) + ' porcelets sevrés par truie et par an • coût d’un porcelet sevré : ' + fr(Nd.coutPorcelet) + ' FCFA' + (+inp.palmSim > 0 && inp.prix.palmiste == null ? ' (SIMULATION palmiste ' + inp.palmSim + ' FCFA/kg)' : '')] : [])
+        .concat(['', 'Repères à confirmer avec votre conseiller ; estimation indicative avant impôts et frais financiers. SOLEVO Côte d’Ivoire – WhatsApp +225 07 10 47 14 02']);
+      return t.filter((x) => x !== '').join('\n').replace(/\n\*/g, '\n\n*');
     }
     function renderPorcIn() {
-      const B = SKF.base(); if (inp.porcT == null) inp.porcT = 5;
+      const B = SKF.base(), PP = SKF.PORC_PARAMS; if (inp.porcT == null) inp.porcT = 5; if (!inp.porcQ || inp.porcQ.alP != null) inp.porcQ = { formC: 'charcutier' };
       if (inp.prix.pxPorc == null && state.V && state.V.N && state.V.N.prixPorc) inp.prix.pxPorc = Math.round(state.V.N.prixPorc / (state.V.N.sacKg || 20));
-      const kgP = state.V && state.V.N && state.V.N.kgPorc ? state.V.N.kgPorc : 250;
-      if (!inp.porcQ) inp.porcQ = { effectif: rec && +rec.porc ? Math.round(+rec.porc) : 100, poidsE: 7, poidsS: 100, ageE: 30, ageS: 210, alP: 36, alC: Math.max(0, kgP - 36), mort: 5, formC: 'charcutier', prixPorcelet: '', prixVif: '', autres: '' };
-      const Q = inp.porcQ, PQ = [['effectif', 'Porcs engraissés par bande', 'porcs'], ['poidsE', 'Poids au sevrage', 'kg'], ['poidsS', 'Poids vif à la vente', 'kg'], ['ageE', 'Âge au sevrage', 'jours'], ['ageS', 'Âge à la vente', 'jours'], ['alP', 'Aliment porcelet par porc', 'kg'], ['alC', 'Aliment charcutier par porc', 'kg'], ['mort', 'Mortalité', '%'], ['prixPorcelet', 'Prix (ou coût) du porcelet sevré', 'FCFA'], ['prixVif', 'Prix de vente du porc vif', 'FCFA/kg'], ['autres', 'Autres charges par porc (soins, eau, main-d’œuvre)', 'FCFA']];
-      $('#fxIn', b).innerHTML = `<details class="veille" open><summary>Engraissement : du porcelet sevré au porc vif <span>(repères modifiables ; prix à saisir)</span></summary><div class="vg">${PQ.map(([k, l, u]) => `<label>${l} <small>(${u})</small><input type="number" min="0" step="any" data-pq="${k}" value="${Q[k] === '' || Q[k] == null ? '' : num(Q[k])}" ${/prix|autres/.test(k) ? 'placeholder="à saisir"' : ''}></label>`).join('')}
-        <label>Formule charcutier<select data-pq="formC"><option value="charcutier" ${Q.formC === 'charcutier' ? 'selected' : ''}>Charcutiers</option><option value="charcPalm" ${Q.formC === 'charcPalm' ? 'selected' : ''}>Charcutiers (avec palmiste)</option></select></label></div></details>
-        <div class="vg"><label>Aliment fabriqué par mois <small>(tonnes)</small><input type="number" min="0" step="any" id="fxPorcT" value="${num(inp.porcT || 5)}"></label></div>
-        <details class="veille" open><summary>Prix des matières premières <span>(FCFA/kg ; palmiste et CMV porc à saisir)</span></summary><div class="vg">${SKF.PORC_MP.map(([k, l]) => `<label>${l}${(inp.veille || []).includes(k) ? ' <em class="vtag">veille</em>' : ''}<input type="number" min="0" step="any" data-pmp="${k}" value="${num(inp.prix[k] != null ? inp.prix[k] : (B.prix[k] != null ? B.prix[k] : ''))}" placeholder="à saisir"></label>`).join('')}</div></details>`;
+      if (rec && +rec.porc && inp.porcQ.effectif == null) inp.porcQ.effectif = Math.round(+rec.porc);
+      if (rec && rec.veille && +rec.veille.porcVif && inp.porcQ.prixVif == null) inp.porcQ.prixVif = +rec.veille.porcVif;
+      const Q = inp.porcQ, field = (k) => { const d = PP[k], v = Q[k] != null && Q[k] !== '' ? Q[k] : d.v, st = Q[k] != null && Q[k] !== '' && +Q[k] !== d.v ? 'saisi' : d.st;
+        return `<label title="${esc(d.src + ' • ' + d.date)}">${esc(d.l)} <small>(${esc(d.u)})</small> ${stTag(st)}<input type="number" min="0" step="any" data-pq="${k}" value="${num(v)}"></label>`; };
+      $('#fxIn', b).innerHTML = `<details class="veille" open><summary>Engraissement : du porcelet sevré au porc vif <span>(survolez un champ pour voir sa source)</span></summary><div class="vg">${['effectif', 'poidsE', 'ageE', 'poidsT', 'poidsS', 'ageS', 'icP', 'icC', 'mort', 'prixPorcelet', 'prixVif', 'autres'].map(field).join('')}
+          <label>Formule charcutier<select data-pq="formC"><option value="charcutier" ${Q.formC !== 'charcPalm' ? 'selected' : ''}>Charcutiers</option><option value="charcPalm" ${Q.formC === 'charcPalm' ? 'selected' : ''}>Charcutiers (avec palmiste)</option></select></label></div></details>
+        <details class="veille"><summary>Naisseur : truies et porcelets sevrés <span>(formules gestante et allaitante)</span></summary><div class="vg">${['truies', 'portees', 'sevres', 'gestJ', 'gestKg', 'lactJ', 'lactKg', 'videJ', 'autresTruie'].map(field).join('')}</div></details>
+        <details class="veille" open><summary>Prix des matières premières <span>(FCFA/kg)</span></summary><div class="vg">${SKF.PORC_MP.map(([k, l]) => { const S2 = SKF.PORC_PRIX_SRC[k] || {}; const v = inp.prix[k] != null ? inp.prix[k] : (B.prix[k] != null ? B.prix[k] : ''); return `<label title="${esc((S2.src || '') + ' • ' + (S2.date || ''))}">${l} ${stTag(inp.prix[k] != null && inp.prix[k] !== B.prix[k] && k !== 'pxPorc' ? 'saisi' : (S2.st || 'hypothèse à confirmer'))}<input type="number" min="0" step="any" data-pmp="${k}" value="${num(v)}" placeholder="à confirmer"></label>`; }).join('')}
+          <label>Simulation palmiste (non validée)<select id="fxPalmSim"><option value="">Aucune : coûts en attente</option>${SKF.PALM_ANNONCES.map((a) => `<option value="${a.v}" ${+inp.palmSim === a.v ? 'selected' : ''}>Annonce ${esc(a.l)}</option>`).join('')}</select></label></div>
+          <p class="note">Prix rendu ferme = (achat + transport + manutention) ÷ quantité utilisable reçue.</p>
+          <div class="vg"><label>Achat <small>(FCFA)</small><input type="number" min="0" id="prfA"></label><label>Transport <small>(FCFA)</small><input type="number" min="0" id="prfT"></label><label>Manutention <small>(FCFA)</small><input type="number" min="0" id="prfM"></label><label>Quantité utilisable reçue <small>(kg)</small><input type="number" min="0" id="prfQ"></label></div>
+          <div class="mbar"><span id="prfR" class="note"></span><button type="button" class="alt" id="prfGo" data-k="palmiste">Utiliser pour le tourteau de palmiste</button></div></details>
+        <div class="vg"><label>Aliment fabriqué par mois <small>(tonnes)</small><input type="number" min="0" step="any" id="fxPorcT" value="${num(inp.porcT || 5)}"></label></div>`;
       $('#fxPorcT', b).addEventListener('input', (e) => { inp.porcT = +e.target.value || 0; tick(); });
-      $$('[data-pq]', b).forEach((i) => i.addEventListener('input', () => { inp.porcQ[i.dataset.pq] = i.tagName === 'SELECT' ? i.value : (i.value === '' ? '' : +i.value); tick(); }));
+      $$('[data-pq]', b).forEach((i) => i.addEventListener('input', () => { inp.porcQ[i.dataset.pq] = i.tagName === 'SELECT' ? i.value : (i.value === '' ? null : +i.value); tick(); }));
       $$('[data-pmp]', b).forEach((i) => i.addEventListener('input', () => { inp.prix[i.dataset.pmp] = i.value === '' ? undefined : +i.value; tick(); }));
+      $('#fxPalmSim', b).addEventListener('change', (e) => { inp.palmSim = +e.target.value || null; tick(); });
+      const prf = () => { const a = +$('#prfA', b).value || 0, t2 = +$('#prfT', b).value || 0, m2 = +$('#prfM', b).value || 0, q2 = +$('#prfQ', b).value || 0; const v = q2 > 0 ? (a + t2 + m2) / q2 : null; $('#prfR', b).textContent = v != null ? 'Prix rendu ferme : ' + fr(v, 1) + ' FCFA/kg' : ''; return v; };
+      ['#prfA', '#prfT', '#prfM', '#prfQ'].forEach((x) => $(x, b).addEventListener('input', prf));
+      $('#prfGo', b).addEventListener('click', () => { const v = prf(); if (v == null) { status('Renseignez au moins le montant et la quantité reçue.', 'err'); return; } inp.prix.palmiste = Math.round(v * 10) / 10; renderPorcIn(); tick(); });
     }
     function renderPorcOut() {
-      clean(); const L = SKF.porcCompute(inp.prix), F0 = SKF.PORC_F;
+      clean(); const P = porcPrix(), L = SKF.porcCompute(P), F0 = SKF.PORC_F, Pd = SKF.porcProd(P, inp.porcQ), Nd = SKF.porcNaisseur(P, inp.porcQ), PQ = Pd.q;
+      const sim = +inp.palmSim > 0 && (inp.prix.palmiste == null || inp.prix.palmiste === '');
       const ings = SKF.PORC_MP.filter(([k]) => F0.some((f) => f.kg[k]));
+      const k = (v, l, cl) => `<div class="fxk ${cl || ''}"><b>${v}</b><span>${l}</span></div>`, eu = (x) => fr(x) + ' FCFA <small class="eur">(≈ ' + fr(x / 656) + ' €)</small>';
+      const pend = (x) => (x != null ? x : '<span class="pend">en attente</span>');
+      const simBan = sim ? `<p class="simban">SIMULATION : tourteau de palmiste à ${fr(+inp.palmSim)} FCFA/kg (annonce commerciale non validée). Les résultats qui en dépendent ne sont pas des coûts confirmés.</p>` : '';
+      const engr = `<h4 class="fxh">Engraissement : ${fr(PQ.effectif)} porcs, ${fr(PQ.poidsE)} → ${fr(PQ.poidsS)} kg vif en ${fr(Pd.duree)} jours</h4><div class="fxks">
+        ${k(Pd.coutAl != null ? fr(Pd.coutAl) + ' F' : pend(null), 'coût alimentaire par porc (' + fr(Pd.kgAl) + ' kg : ' + fr(Pd.alP) + ' porcelet + ' + fr(Pd.alC) + ' charcutier)')}
+        ${k(Pd.cout != null ? fr(Pd.cout) + ' F' : pend(null), 'coût de revient par porc vendu' + (Pd.coutMorts != null ? ' • dont pertes ' + fr(Pd.coutMorts) + ' F' : ''))}
+        ${k(Pd.seuil != null ? fr(Pd.seuil) + ' F' : pend(null), 'coût du kg vif = prix de vente au seuil de rentabilité', Pd.seuil != null ? 'mg' : '')}
+        ${k(Pd.marge != null ? fr(Pd.marge) + ' F' : pend(null), 'marge par porc à ' + fr(PQ.prixVif) + ' F/kg vif' + (Pd.margePct != null ? ' (' + fr(Pd.margePct * 100) + ' %)' : ''), Pd.marge != null ? (Pd.marge < 0 ? 'neg' : 'pos') : '')}
+        ${k(Pd.margeBande != null ? eu(Pd.margeBande) : pend(null), 'marge de la bande (' + fr(Pd.vendus) + ' porcs vendus)', Pd.margeBande != null && Pd.margeBande < 0 ? 'neg' : '')}
+        ${k(fr(Pd.ic, 2) + ' • ' + fr(Pd.gmq) + ' g/j', 'indice de consommation • gain moyen quotidien')}
+        ${k(fr(Pd.sacs) + ' sacs', 'CMV Porc MG2MIX de 20 kg par bande')}</div>
+        ${PQ.autres ? '' : '<p class="note">Autres charges (soins, eau, énergie, main-d’œuvre) à 0 : la marge affichée est une marge sur coûts alimentaires et porcelets.</p>'}
+        <table class="fxt cmp"><thead><tr><th>Scénario de prix vif (sensibilité, pas un prix de marché vérifié)</th><th>Recette par porc</th><th>Marge par porc</th><th>Marge de la bande</th></tr></thead><tbody>${Pd.scen.map((x) => `<tr class="${x.px === PQ.prixVif ? 'cur' : ''}"><td>${fr(x.px)} FCFA/kg vif × ${fr(PQ.poidsS)} kg</td><td>${fr(x.ca)}</td><td class="${x.marge != null && x.marge < 0 ? 'neg' : ''}">${x.marge != null ? fr(x.marge) : '…'}</td><td>${x.margeBande != null ? eu(x.margeBande) : '…'}</td></tr>`).join('')}</tbody></table>
+        <p class="note">Coût par porc vendu = [porcelets et autres charges de tous les porcs mis en place + aliment des porcs vendus + moitié de l’aliment des porcs morts (mort en moyenne à mi-parcours)] ÷ porcs vendus.</p>`;
+      const nais = `<h4 class="fxh">Naisseur : ${fr(Nd.q.truies)} truies</h4><div class="fxks">
+        ${k(fr(Nd.sevresAn, 1), 'porcelets sevrés par truie et par an (' + fr(Nd.q.portees, 1) + ' portées × ' + fr(Nd.q.sevres, 2) + ')')}
+        ${k(fr(Nd.kgAn) + ' kg', 'aliment par truie et par an (' + fr(Nd.kgG) + ' gestante + ' + fr(Nd.kgA) + ' allaitante)')}
+        ${k(Nd.coutA != null ? fr(Nd.coutA) + ' F' : pend(null), 'aliment allaitante par truie et par an')}
+        ${k(Nd.coutG != null ? fr(Nd.coutG) + ' F' + (sim ? ' *' : '') : pend(null), 'aliment gestante par truie et par an' + (Nd.coutG == null ? ' (dépend du palmiste)' : sim ? ' (simulation palmiste)' : ''))}
+        ${k(Nd.coutPorcelet != null ? fr(Nd.coutPorcelet) + ' F' + (sim ? ' *' : '') : pend(null), 'coût alimentaire d’un porcelet sevré' + (Nd.q.autresTruie ? '' : ' (hors autres charges de la truie)'), Nd.coutPorcelet != null ? 'mg' : '')}
+        ${k(fr(Nd.sacsAn) + ' sacs', 'CMV Porc MG2MIX de 20 kg par an pour les truies')}</div>
+        <p class="note">Cycle de ${fr(Nd.cycleJ)} jours : au plus ${fr(Nd.porteesMax, 2)} portées par truie et par an.</p>`;
       const tbl = `<table class="fxt"><thead><tr><th>Matière première (kg / tonne)</th><th>Prix</th>${L.map((f) => `<th>${esc(f.nom)}</th>`).join('')}</tr></thead><tbody>
-        ${ings.map(([k, nom]) => `<tr class="${k === 'pxPorc' ? 'px' : ''}"><td>${esc(nom)}</td><td>${inp.prix[k] != null ? fr(inp.prix[k]) : (SKF.base().prix[k] != null ? fr(SKF.base().prix[k]) : '—')}</td>${F0.map((f) => `<td>${f.kg[k] ? fr(f.kg[k]) : '–'}</td>`).join('')}</tr>`).join('')}
-        <tr class="tot"><td>Prix de l’aliment (FCFA/kg)</td><td></td>${L.map((f) => `<td>${f.prixKg != null ? fr(f.prixKg, 1) : '…'}</td>`).join('')}</tr>
-        <tr class="tot"><td>Sac de 50 kg (FCFA)</td><td></td>${L.map((f) => `<td>${f.prixSac != null ? fr(f.prixSac) : '…'}</td>`).join('')}</tr>
-        <tr><td>Hors prémix (FCFA/kg)</td><td></td>${L.map((f) => `<td>${f.horsPremix != null ? fr(f.horsPremix, 1) : '…'}</td>`).join('')}</tr></tbody></table>`;
-      const t = +inp.porcT || 0, miss = [...new Set(L.flatMap((f) => f.missing))];
-      const k = (v, l, cl) => `<div class="fxk ${cl || ''}"><b>${v}</b><span>${l}</span></div>`;
-      const Pd = SKF.porcProd(inp.prix, inp.porcQ), Qd = Pd.q, need = [];
-      if (Pd.coutAl == null) need.push('prix des matières premières'); if (!(+Qd.prixPorcelet > 0)) need.push('prix du porcelet'); if (!(+Qd.prixVif > 0)) need.push('prix du porc vif');
-      const eu = (x) => fr(x) + ' FCFA <small class="eur">(≈ ' + fr(x / 656) + ' €)</small>';
-      const prod = `<h4 class="fxh">Coût de production du porc charcutier</h4><div class="fxks">${k(Pd.cout != null ? fr(Pd.cout) + ' F' : '…', 'coût de revient par porc vendu')}${k(Pd.coutKgVif != null ? fr(Pd.coutKgVif) + ' F' : '…', 'coût du kg de porc vif')}${k(Pd.coutAl != null ? fr(Pd.coutAl) + ' F' : '…', 'aliment par porc (' + fr(Pd.kgAl) + ' kg)')}${k(Pd.ic != null ? fr(Pd.ic, 2) : '…', 'indice de consommation • GMQ ' + (Pd.gmq != null ? fr(Pd.gmq) + ' g/j' : '…'))}${k(Pd.marge != null ? fr(Pd.marge) + ' F' : '…', 'marge brute par porc' + (Pd.margePct != null ? ' (' + fr(Pd.margePct * 100) + ' %)' : ''), Pd.marge != null ? (Pd.marge < 0 ? 'neg' : 'pos') : '')}${k(Pd.margeBande != null ? eu(Pd.margeBande) : '…', 'marge brute de la bande (' + fr(Pd.vendus) + ' porcs vendus)', Pd.margeBande != null && Pd.margeBande < 0 ? 'neg' : '')}${k(fr(Pd.sacs) + ' sacs', 'CMV Porc MG2MIX de 20 kg par bande', 'mg')}</div>${need.length ? `<p class="note">Pour chiffrer le coût et la marge, saisissez : <b>${esc(need.join(', '))}</b>.</p>` : ''}<p class="note">Repères par défaut à valider avec l’éleveur : sevrage vers 30 jours à 7 kg, vente à 100 kg vif à 7 mois, ${fr(Pd.kgAl)} kg d’aliment par porc (paramètre du simulateur). Coût par porc vendu = (porcelet + aliment + autres charges) ÷ (1 − mortalité).</p>`;
-      $('#fxOut', b).innerHTML = prod + `<h4 class="fxh">Formules et besoin mensuel</h4><div class="fxks">${k(fr(Math.ceil(t)) + ' sacs', 'CMV Porc MG2MIX de 20 kg par mois (' + fr(t) + ' t d’aliment)', 'mg')}${k('20 kg / t', 'dose unique à tous les stades')}${k(L.filter((f) => f.prixKg != null).length + ' / 5', 'formules chiffrées')}</div>
-        ${miss.length ? `<p class="note">Saisissez le prix de : <b>${esc(miss.join(', '))}</b> pour chiffrer toutes les formules.</p>` : ''}
-        <h4 class="fxh">Livret de formules MG2MIX porc</h4><div class="fxw">${tbl}</div>
-        <p class="note">La truie gestante reçoit un aliment fibreux (besoins faibles) ; la truie allaitante un aliment riche en énergie et en protéines pour produire plus de lait. Source : livret de formules MG2MIX porc, SOLEVO Côte d’Ivoire.</p>`;
-      const txt = porcText(L), tel = $('#fxTel', b).value; $('#fxWa', b).href = tel ? waLink(tel, txt) : 'https://wa.me/?text=' + encodeURIComponent(txt);
+        ${ings.map(([kk, nom]) => `<tr class="${kk === 'pxPorc' ? 'px' : ''}"><td>${esc(nom)}</td><td>${P[kk] != null ? fr(P[kk]) + (kk === 'palmiste' && sim ? ' *' : '') : '—'}</td>${F0.map((f) => `<td>${f.kg[kk] ? fr(f.kg[kk]) : '–'}</td>`).join('')}</tr>`).join('')}
+        <tr class="tot"><td>Prix de l’aliment (FCFA/kg)</td><td></td>${L.map((f) => `<td>${f.prixKg != null ? fr(f.prixKg, 1) : '<span class="pend">en attente</span>'}</td>`).join('')}</tr>
+        <tr><td>Sac de 50 kg (FCFA)</td><td></td>${L.map((f) => `<td>${f.prixSac != null ? fr(f.prixSac) : '…'}</td>`).join('')}</tr></tbody></table>`;
+      const PPm = SKF.PORC_PARAMS, regRows = Object.keys(PPm).map((kk) => { const d = PPm[kk], v = PQ[kk] != null ? PQ[kk] : (Nd.q[kk] != null ? Nd.q[kk] : d.v), ch = inp.porcQ[kk] != null && inp.porcQ[kk] !== '' && +inp.porcQ[kk] !== d.v;
+        return `<tr><td>${esc(d.l)}</td><td>${fr(v, v % 1 ? 2 : 0)} ${esc(d.u)}</td><td>${ch ? 'saisi ' + today().fr : esc(d.date)}</td><td>${ch ? 'Saisie pendant l’entretien' : esc(d.src)}</td><td>${stTag(ch ? 'saisi' : d.st)}</td></tr>`; }).join('')
+        + SKF.PORC_MP.map(([kk, nom]) => { const S2 = SKF.PORC_PRIX_SRC[kk] || {}, v = P[kk]; return `<tr><td>Prix ${esc(nom)}</td><td>${v != null ? fr(v, v % 1 ? 1 : 0) + ' FCFA/kg' : 'à confirmer'}${kk === 'palmiste' && sim ? ' (simulation)' : ''}</td><td>${esc(S2.date || '')}</td><td>${esc(S2.src || '')}</td><td>${stTag(S2.st || 'hypothèse à confirmer')}</td></tr>`; }).join('');
+      $('#fxOut', b).innerHTML = simBan + engr + nais + `<h4 class="fxh">Formules du livret MG2MIX porc</h4><div class="fxw">${tbl}</div>
+        <p class="note">${fr(Math.ceil(+inp.porcT || 0))} sacs de CMV Porc MG2MIX pour ${fr(+inp.porcT || 0)} t d’aliment par mois. « Fibre de pression de palmiste » : nature exacte et prix à vérifier auprès du fournisseur.</p>
+        <details class="veille"><summary>Registre des paramètres <span>(valeur, unité, date, source, statut)</span></summary><div class="fxw"><table class="fxt reg"><thead><tr><th>Paramètre</th><th>Valeur</th><th>Date</th><th>Source</th><th>Statut</th></tr></thead><tbody>${regRows}</tbody></table></div></details>`;
+      const txt = porcText(), tel = $('#fxTel', b).value; $('#fxWa', b).href = tel ? waLink(tel, txt) : 'https://wa.me/?text=' + encodeURIComponent(txt);
     }
     function porcMode() { const on = inp.sp === 'porc'; ['#fxVal', '#fxSave', '#fxXl', '#fxPdf'].forEach((sel) => { const e = $(sel, b); if (e) e.hidden = on; }); return on; }
     function renderIn() {
@@ -2266,7 +2299,7 @@
     $$('[data-sp]', b).forEach((x) => x.addEventListener('click', () => { inp.sp = x.dataset.sp; renderIn(); tick(); }));
     ['#fxNom', '#fxLoc', '#fxTel', '#fxMail'].forEach((s) => $(s, b).addEventListener('input', tick));
     $('#fxRec', b).addEventListener('change', (e) => { rec = state.pros.find((x) => x.id === e.target.value) || null; inp = rec && rec.simu && rec.simu.inp ? JSON.parse(JSON.stringify(rec.simu.inp)) : skfFromRec(rec); setClient(); renderIn(); renderOut(); });
-    $('#fxCopy', b).addEventListener('click', async () => { try { await navigator.clipboard.writeText(inp.sp === 'porc' ? porcText(SKF.porcCompute(inp.prix)) : skfResume(inp, R)); status('Résumé copié.', 'ok'); } catch (e) { status('Copie impossible dans cette vue.', 'err'); } });
+    $('#fxCopy', b).addEventListener('click', async () => { try { await navigator.clipboard.writeText(inp.sp === 'porc' ? porcText() : skfResume(inp, R)); status('Résumé copié.', 'ok'); } catch (e) { status('Copie impossible dans cette vue.', 'err'); } });
     async function saveSimu(valide) {
       if (!rec) { status('Choisissez d’abord le visiteur dans la liste.', 'err'); return false; }
       const X = inp.sp === 'chair' ? R.chair : R.ponte;
