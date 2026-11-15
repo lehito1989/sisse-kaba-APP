@@ -614,6 +614,11 @@ window.addEventListener('unhandledrejection',function(e){show((e.reason&&(e.reas
 })();
 </script>
 <!-- ===== fin commande en ligne ===== -->
+<!-- ===== Écran du stand (#ecran) ===== -->
+<div id="ecranView" hidden style="position:fixed;inset:0;z-index:9500;background:#000"><iframe id="ecranFrame" title="Vidéo du stand SOLEVO" style="border:0;width:100%;height:100%" allow="fullscreen" allowfullscreen></iframe><button type="button" id="ecranClose" hidden style="position:absolute;top:10px;right:10px;z-index:2;font:700 14px Arial;padding:8px 12px;border:0;border-radius:8px;background:rgba(255,255,255,.85);cursor:pointer">Fermer</button></div>
+<script>(function(){var v=document.getElementById('ecranView'),f=document.getElementById('ecranFrame');function open(team){if(!f.src)f.src='ecran.html';v.hidden=false;document.getElementById('ecranClose').hidden=!team;}
+document.getElementById('ecranClose').addEventListener('click',function(){v.hidden=true;});window.SK_ECRAN_OPEN=function(){open(true);};
+function route(){if(/^#ecran/i.test(location.hash))open(false);}route();window.addEventListener('hashchange',route);})();</script>
 <div id="app" class="loading">
 <header>
   <img src="assets/solevo_small.jpg" alt="SOLEVO">
@@ -740,6 +745,7 @@ window.addEventListener('unhandledrejection',function(e){show((e.reason&&(e.reas
       <button id="prosAgents" type="button" class="pri2">☷ Interface d’entretien</button>
       <button id="prosFiche" type="button" class="pri2">📝 Fiche visiteur</button>
       <button id="prosCmd" type="button" class="pri2">🛒 Commande en ligne (QR)</button>
+      <button id="prosEcran" type="button" class="pri2">🎬 Vidéo des écrans du stand</button>
       <button id="prosAppel" type="button" class="pri2">📺 Écran d’appel (2e écran)</button>
       <button id="prosBilan" type="button">✉ Bilan de la journée</button>
       <button id="prosFinal" type="button">📊 Rapport final du salon</button>

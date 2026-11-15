@@ -705,8 +705,9 @@
     msgRappel: 'Bonjour {prenom}, merci de votre patience sur le stand SOLEVO Côte d’Ivoire. {agent} vous reçoit très bientôt {lieu}. Restez à proximité, votre nom s’affichera à l’écran.', bilanAuto: false, bilanHour: '19:00', bilanTo: 'elvis.lehito@solevogroup.com, arnaud.agohi@solevogroup.com, lehitognakoury@gmail.com', finalTo: 'elvis.lehito@solevogroup.com, arnaud.agohi@solevogroup.com, christophe.kouame@solevogroup.com, olivier.konan@solevogroup.com, jean-noel.kouakou@solevogroup.com, lehitognakoury@gmail.com', bilanLast: '',
     msgTable: 'Bonjour {prenom}, merci pour votre inscription sur le stand SOLEVO Côte d’Ivoire (SELAB SHOW). Rendez-vous {lieu} avec {agent}, pour un échange sur votre activité ({activite}). Vous êtes {rang} dans la file d’attente. En attendant, une bouteille d’eau et un café vous sont offerts à l’accueil SOLEVO. À tout de suite !',
     ficheUrl: '',
-    msgMerci: 'Bonjour {prenom}, merci pour votre visite et votre échange avec {agent} sur le stand SOLEVO Côte d’Ivoire.\n\nSISSÊ~KABA relie les producteurs de maïs et les éleveurs : maïs mieux payé au producteur (+30 % visés), maïs moins cher pour l’éleveur (−15 % visés), prémix et intrants SOLEVO, appui des techniciens.\n\n👉 Pour vous inscrire au projet, répondez « OUI » à ce message{lien}.\n\nVos contacts SOLEVO :\n{contacts}{mail}',
+    msgMerci: 'Bonjour {prenom}, merci pour votre visite et votre échange avec {agent} sur le stand SOLEVO Côte d’Ivoire.\n\nSISSÊ~KABA relie les producteurs de maïs et les éleveurs : maïs mieux payé au producteur (+30 % visés), maïs moins cher pour l’éleveur (−15 % visés), prémix et intrants SOLEVO, appui des techniciens.\n\n👉 Pour vous inscrire au projet, répondez « OUI » à ce message{lien}.\n\n🎬 Revoyez la présentation du stand SOLEVO (promo, formules, coûts, contacts) : {video}\n\nVos contacts SOLEVO :\n{contacts}{mail}',
   };
+  const ECRAN_URL = 'https://lehito1989.github.io/sisse-kaba-APP/ecran/';
   state.pros = []; state.standCfg = JSON.parse(JSON.stringify(CFG_DEFAULT));
   function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
   const dbOn = () => state.db && !state.prosLocal;
@@ -729,7 +730,7 @@
     const c = state.standCfg; const t = (c.tables || []).find((x) => String(x.n) === String(r.table)) || {};
     const lien = c.inscription ? ' ou inscrivez-vous ici : ' + c.inscription : '';
     return String(tpl).replace(/\{prenom\}/g, prenom(r)).replace(/\{nom\}/g, r.nom || '').replace(/\{table\}/g, tLab(r.table)).replace(/\{lieu\}/g, tA(r.table)).replace(/\{agent\}/g, r.agent || t.agent || 'un technicien SOLEVO')
-      .replace(/\{activite\}/g, activite(r)).replace(/\{contacts\}/g, contactsOf(r)).replace(/\{rang\}/g, rangLab(r)).replace(/\{profil\}/g, r.public || r.profil || '').replace(/\{localite\}/g, r.localite || '—').replace(/\{tel\}/g, r.tel || '').replace(/\{de\}/g, (r.transfert && r.transfert.deAgent) || 'notre technicien').replace(/\{motif\}/g, (r.transfert && r.transfert.motif) || 'grand compte').replace(/\{lien\}/g, lien).replace(/\{mail\}/g, (extra && extra.mail) || '');
+      .replace(/\{activite\}/g, activite(r)).replace(/\{contacts\}/g, contactsOf(r)).replace(/\{rang\}/g, rangLab(r)).replace(/\{profil\}/g, r.public || r.profil || '').replace(/\{localite\}/g, r.localite || '—').replace(/\{tel\}/g, r.tel || '').replace(/\{de\}/g, (r.transfert && r.transfert.deAgent) || 'notre technicien').replace(/\{motif\}/g, (r.transfert && r.transfert.motif) || 'grand compte').replace(/\{lien\}/g, lien).replace(/\{mail\}/g, (extra && extra.mail) || '').replace(/\{video\}/g, ECRAN_URL);
   }
   /* contacts à donner au visiteur selon son profil : Key Account Manager + technicien de suivi */
   /* place dans la file d’attente de la table (arrivée ou transfert) */
@@ -771,6 +772,7 @@
       const D = CFG_DEFAULT;
       (c.tables || []).forEach((t) => { const d = D.tables.find((x) => x.n === t.n); if (d && (/à nommer|^Ibrahim Ouattara$|^Kouadio Kouassi François$|^X$|^Y$/i.test(t.agent || '') || !t.agent)) t.agent = d.agent; });
       if (/Contact : LEHITO GNAKOURY Elvis/.test(c.msgMerci || '')) c.msgMerci = D.msgMerci;
+      if (c.msgMerci && !/\{video\}/.test(c.msgMerci) && c.msgMerci.indexOf(ECRAN_URL) < 0) c.msgMerci = /\n\nVos contacts SOLEVO/.test(c.msgMerci) ? c.msgMerci.replace('\n\nVos contacts SOLEVO', '\n\n🎬 Revoyez la présentation du stand SOLEVO (promo, formules, coûts, contacts) : {video}\n\nVos contacts SOLEVO') : c.msgMerci + '\n\n🎬 Revoyez la présentation du stand SOLEVO : {video}';
       if (!c.bilanTo || c.bilanTo === 'elvis.lehito@solevogroup.com, lehitognakoury@gmail.com') c.bilanTo = D.bilanTo;
       if (!c.finalTo) c.finalTo = D.finalTo;
       c.v = 3;
@@ -1333,6 +1335,7 @@
       const html = '<div style="font-family:Arial,sans-serif;font-size:14px;color:#1d2433">' + esc(txt).replace(/\n/g, '<br>') +
         `<p style="margin-top:16px"><b>Ce que SISSÊ~KABA peut vous apporter :</b><br>${esc(activite(r))}${r.eco ? ' : environ ' + fr(r.eco / 1e6, 2) + ' M FCFA d’économies attendues par an sur le maïs' : ''}${r.gain ? ' : environ ' + fr(r.gain / 1e6, 2) + ' M FCFA de recettes en plus par an' : ''} (estimations, non garanties).</p>
         <p>Vous trouverez en pièces jointes la présentation du projet et la fiche SOLEVO.</p>
+        <p style="margin:18px 0"><a href="${ECRAN_URL}" style="background:#37A028;color:#fff;text-decoration:none;font-weight:bold;padding:12px 18px;border-radius:8px;display:inline-block">🎬 Revoir la présentation du stand SOLEVO</a> &nbsp; <a href="https://claude.ai/artifact/TUnnsq3KPaGHqWqgX2PpWF#commande" style="background:#002060;color:#fff;text-decoration:none;font-weight:bold;padding:12px 18px;border-radius:8px;display:inline-block">🛒 Commander les prémix MG2MIX</a></p>
         <p style="color:#5b6476;font-size:12px">SOLEVO Côte d’Ivoire • FEED &amp; SEED • ${SOLEVO_TEL} • ${SOLEVO_MAIL}<br>Vous recevez ce message suite à votre inscription sur le stand SOLEVO au SELAB SHOW 2026.</p></div>`;
       const mk = (mode) => ({ to: [r.email], subject: 'SOLEVO Côte d’Ivoire – Merci pour votre visite et présentation SISSÊ~KABA', htmlBody: html,
         attachments: atts.map((a) => ({ filename: a.filename, mimeType: 'application/pdf', content: mode === 'file' ? { $file: { data: new Blob([a.bytes], { type: 'application/pdf' }), name: a.filename, type: 'application/pdf' } } : b64(a.bytes) })) });
@@ -2394,6 +2397,7 @@
     $('#skModal').addEventListener('click', (e) => { if (e.target.id === 'skModal') modalClose(); });
     $('#prosFiche').addEventListener('click', ficheOpen);
     $('#prosCmd').addEventListener('click', () => { if (window.SK_CMD_OPEN) window.SK_CMD_OPEN(); });
+    $('#prosEcran').addEventListener('click', () => { if (window.SK_ECRAN_OPEN) window.SK_ECRAN_OPEN(); });
     try {
       const h = decodeURIComponent(location.hash + location.search);
       const m = h.match(/entretien(?:=([^&#]+))?/i);
@@ -2662,6 +2666,7 @@
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'LIVRET_FORMULES_MG2MIX_PORC_2026-01-13.pdf', 'pdf', 'Livret des formules aliments porc MG2MIX');
     L.push({ cat: 'liens', folder: '10_Documents_en_ligne', name: 'Document en ligne (claude.ai)', kind: 'url', url: 'https://claude.ai/artifact/HTawarRfbzMbzFDSWs151q', label: 'Enquête terrain porc : prix et repères (tableaux à remplir)' });
     L.push({ cat: 'liens', folder: '10_Documents_en_ligne', name: 'Document en ligne (claude.ai)', kind: 'url', url: 'https://claude.ai/artifact/HVtkEajPtWuuuEJXPSDW6Q', label: 'Répétition du parcours visiteur du 19/11/2026' });
+    L.push({ cat: 'liens', folder: '10_Documents_en_ligne', name: 'Vidéo du stand (écrans et visiteurs)', kind: 'url', url: 'https://lehito1989.github.io/sisse-kaba-APP/ecran/', label: 'Vidéo du stand SOLEVO : promo, commande, formules et coûts, filière avicole, offre, acides aminés, projet, dépôts, contacts' });
     L.push({ cat: 'liens', folder: '10_Documents_en_ligne', name: 'Formulaire de commande (lien du QR)', kind: 'url', url: 'https://claude.ai/artifact/TUnnsq3KPaGHqWqgX2PpWF#commande', label: 'Commande en ligne MG2MIX : formulaire public, envoi par e-mail à l’agent de la zone' });
     L.push({ cat: 'liens', folder: '10_Documents_en_ligne', name: 'Tableur en ligne (claude.ai)', kind: 'url', url: 'https://claude.ai/artifact/Q8C6SPyYPC9gUuyS1DfD1u', label: 'Suivi et bilan promo SELAB SHOW 2026 : ventes, coût de la remise, conversion QR par produit et par jour' });
     L.push({ cat: 'kit', kit: true, folder: '02_Lancement_SELAB', name: nm('SISSE_KABA_Visuel_carre_WhatsApp_Facebook_1080', 'png'), kind: 'png', label: 'Visuel carré 1080 × 1080 (WhatsApp, Facebook) annonçant le stand', gen: () => squarePng() });
