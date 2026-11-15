@@ -55,6 +55,7 @@
     if (state.buffers[path]) return state.buffers[path].slice(0);
     const LAZY = { 'static/Filieres_Elevage_Alimentation_Animale_Cote_Ivoire.pptx': 'static/filieres_pptx.js' };
     if (/^static\/SOLEVO_Filieres_.*\.pptx$/.test(path)) LAZY[path] = 'static/fil_short_pptx.js';
+    if (/^static\/SOLEVO_(Seminaire|Offre)_.*\.pptx$/.test(path)) LAZY[path] = 'static/sem_pptx.js';
     if (LAZY[path] && !(window.SK_TPL && window.SK_TPL[path])) await new Promise((ok, ko) => { const sc = document.createElement('script'); sc.src = LAZY[path]; sc.onload = ok; sc.onerror = () => ko(new Error('Chargement impossible : ' + LAZY[path])); document.head.appendChild(sc); });
     if (window.SK_TPL && window.SK_TPL[path]) {
       const bin = atob(window.SK_TPL[path]); const u = new Uint8Array(bin.length);
@@ -601,7 +602,7 @@
     if (b.k === 'kpis') return `<div class="pz-grid">${b.items.map((it) => k3(F(it.v), F(it.l))).join('')}</div>`;
     if (b.k === 'cols' || b.k === 'cards') return `<div class="pz-cols">${b.items.map((c) => `<div class="pz-col"><h3>${F(c.h)}</h3>${c.l ? `<ul>${c.l.map((x) => `<li>${F(x)}</li>`).join('')}</ul>` : `<p>${F(c.t)}</p>`}</div>`).join('')}</div>`;
     if (b.k === 'steps') return `<ol class="pz-steps">${b.items.map((it, i) => `<li><em>${i + 1}</em><b>${F(it.h)}</b><span>${F(it.t)}</span></li>`).join('')}</ol>`;
-    if (b.k === 'table') return `<table class="pz-tbl${b.left ? ' tl' : ''}"><thead><tr>${b.head.map((h) => `<th>${F(h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => `<tr class="${STRONG.test(r[0]) ? 'st' : ''}">${r.map((c) => `<td>${F(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    if (b.k === 'table') return `<table class="pz-tbl${b.left ? ' tl' : ''}${b.rows.length > 8 ? ' dense' : ''}"><thead><tr>${b.head.map((h) => `<th>${F(h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => `<tr class="${STRONG.test(r[0]) ? 'st' : ''}">${r.map((c) => `<td>${F(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
     if (b.k === 'quote') return `<div class="pz-quote"><blockquote><span class="qm">“</span><p>${F(b.q)}</p><footer><b>${F(b.n)}</b><span>${F(b.p)}</span></footer></blockquote><div class="pz-qfig">${b.who && temoPhoto(b.who) ? `<img src="${temoPhoto(b.who)}" alt="">` : ''}<b>${F(b.v)}</b><span>${F(b.l)}</span></div></div>`;
     if (b.k === 'flow') return `<div class="pz-flow">${SKG.flowSvg(SKD.FLOW, state.V.S, true)}</div>`;
     if (b.k === 'qr') return `<div class="pz-qr"><figure>${imgs.qr ? `<img src="${imgs.qr}" alt="QR code d’inscription">` : ''}<figcaption><b>${F(b.h)}</b><span>${F(b.t)}</span></figcaption></figure>
@@ -2453,7 +2454,7 @@
       { fx: 'devisPonte', title: 'Devis estimatif : pondeuses', notes: 'OBJECTIF : chiffrer un élevage de pondeuses selon la quantité choisie.\nCONSEIL : remettre la fiche PDF ou le devis Excel depuis la fenêtre « Formulation & rentabilité ».' },
       { fx: 'porc', title: 'Formules MG2MIX porc', notes: 'MESSAGE CLÉ : un seul CMV Porc MG2MIX 2 % pour tous les stades, 1 sac de 20 kg par tonne d’aliment.\nCONSEIL : la truie gestante reçoit un aliment fibreux, la truie allaitante un aliment riche ; les formules sont spécifiques.' },
       { fx: 'besoin', title: 'Votre besoin en prémix MG2MIX', full: true, notes: 'CONCLUSION : inscrire le visiteur et programmer la visite du technicien pour valider la formule sur son élevage.' }] };
-  const allDecks = () => SKD.short.concat([FXDECK], window.SKD_FIL || []);
+  const allDecks = () => SKD.short.concat([FXDECK], window.SKD_SEM || [], window.SKD_FIL || []);
   PZ.fx = { chair: 1000, ponte: 1000, cf: 1, pf: 1, bat: 'neuf', rec: '' };
   function fxInput() {
     const B = SKF.base(), P = PZ.fx; const r = P.rec ? state.pros.find((x) => x.id === P.rec) : null;
@@ -2545,7 +2546,7 @@
     else {
       const bl = s.blocks || [];
       el.innerHTML = `<div class="pz-hd"><span>${d.menu}</span><span>${PZ.i + 1} / ${sl.length}</span></div><h2>${F(s.title)}</h2>${s.sub ? `<p class="pz-subt">${F(s.sub)}</p>` : ''}
-        <div class="pz-blocks">${bl.map((b) => pzBlock(b, F)).join('')}</div>${s.calc ? pzCalcHtml(s.calc) : ''}${(s.comments || []).length ? `<p class="pz-note">${s.comments.map(F).join(' • ')}</p>` : ''}
+        <div class="pz-blocks">${bl.map((b) => pzBlock(b, F)).join('')}</div>${s.calc ? pzCalcHtml(s.calc) : ''}${(s.comments || []).length ? `<p class="pz-note">${s.comments.map(F).join(' • ')}</p>` : ''}${s.src ? `<p class="pz-note" style="opacity:.75">${F(s.src)}</p>` : ''}
         <div class="pz-dots">${sl.map((_, j) => `<i class="${j === PZ.i ? 'on' : ''}"></i>`).join('')}</div>`;
     }
     if (s.calc) pzCalcBind(s.calc);
@@ -2570,10 +2571,10 @@
     $('#qrReset').addEventListener('click', () => { qi.value = ''; qi.dispatchEvent(new Event('change')); });
     $('#qrTest').addEventListener('click', () => { window.open(state.qrLink, '_blank', 'noopener'); });
     $('#prezBtn').addEventListener('click', () => { refreshMenu(); temoForm(); $('#pzMenu').hidden = false; });
-    const DESC = { fil1: 'Décideurs, investisseurs, ADVANS CI : marché, risques, indicateurs', fil2: 'Chair, poulettes, pondeuses : références et simulations', fil3: 'PPA, biosécurité, indice de consommation', fil4: 'Saison sèche, fourrages, lait et marchés', fil5: 'Qualité, dosage, prémix, concentré, aliment complet', fil6: 'Matrice de décision, plan d’action, tableau de bord', fil7: '10 questions avec corrigé', selab: 'Éleveurs, producteurs, partenaires • 20–22 novembre 2026', codir: 'Objectifs, économie du programme, décisions attendues', it: 'Cadrage fonctionnel et technique de la plateforme', eleveur: 'Court et concret : maïs −15 %, besoins de l’élevage, inscription', producteur: 'Court et concret : +30 % sur le prix, recettes par hectare, inscription', fx: 'Aliment formulé, coût du poulet, de la poulette et de l’œuf, marges et devis selon la quantité' };
+    const DESC = { sem1: 'Gagnoa et Agnibilékrou : SWOT, 7 M, biosécurité, perspectives, quiz', sem2: 'Prémix 2 % en une diapo, formules chair, poulette, ponte, démarrage', sem3: 'Version corrigée : AA digestibles et soja, enzymes, minéraux, son de blé', fil1: 'Décideurs, investisseurs, ADVANS CI : marché, risques, indicateurs', fil2: 'Chair, poulettes, pondeuses : références et simulations', fil3: 'PPA, biosécurité, indice de consommation', fil4: 'Saison sèche, fourrages, lait et marchés', fil5: 'Qualité, dosage, prémix, concentré, aliment complet', fil6: 'Matrice de décision, plan d’action, tableau de bord', fil7: '10 questions avec corrigé', selab: 'Éleveurs, producteurs, partenaires • 20–22 novembre 2026', codir: 'Objectifs, économie du programme, décisions attendues', it: 'Cadrage fonctionnel et technique de la plateforme', eleveur: 'Court et concret : maïs −15 %, besoins de l’élevage, inscription', producteur: 'Court et concret : +30 % sur le prix, recettes par hectare, inscription', fx: 'Aliment formulé, coût du poulet, de la poulette et de l’œuf, marges et devis selon la quantité' };
     window.__skRefreshMenu = () => {
     const card = (d, i) => `<button data-pzopen="${d.short}" class="pzm-c c${i + 1}"><em>${visSlides(d).length} diapos</em><b>${d.menu}</b><span>${DESC[d.short] || ''}</span></button>`;
-    $('#pzmList').innerHTML = '<div class="pzm-sep">Présentations</div>' + SKD.short.slice(0, 3).map(card).join('') + '<div class="pzm-sep">Stand SOLEVO : visiteurs</div>' + SKD.short.slice(3).map((d, i) => card(d, i + 3)).join('') + card(FXDECK, 5) + ((window.SKD_FIL || []).length ? '<div class="pzm-sep">Filières élevage et alimentation animale : versions courtes</div>' + window.SKD_FIL.map((d, i) => card(d, i % 6)).join('') : '');
+    $('#pzmList').innerHTML = '<div class="pzm-sep">Présentations</div>' + SKD.short.slice(0, 3).map(card).join('') + '<div class="pzm-sep">Stand SOLEVO : visiteurs</div>' + SKD.short.slice(3).map((d, i) => card(d, i + 3)).join('') + card(FXDECK, 5) + ((window.SKD_SEM || []).length ? '<div class="pzm-sep">Séminaires SOLEVO</div>' + window.SKD_SEM.map((d, i) => card(d, (i + 1) % 6)).join('') : '') + ((window.SKD_FIL || []).length ? '<div class="pzm-sep">Filières élevage et alimentation animale : versions courtes</div>' + window.SKD_FIL.map((d, i) => card(d, i % 6)).join('') : '');
     $('#pzDeck').innerHTML = allDecks().map((d) => `<option value="${d.short}">${d.menu} (${visSlides(d).length})</option>`).join('');
     $$('[data-pzopen]').forEach((b) => b.addEventListener('click', () => pzOpen(b.dataset.pzopen)));
     };
@@ -2639,6 +2640,12 @@
     stat('filieres', '08_Filieres_elevage_alimentation', 'SOLEVO_Filieres_Rentabilite_et_actions_2026-11-15.pptx', 'pptx', 'Version courte SOLEVO : rentabilité et plan d’action');
     stat('filieres', '08_Filieres_elevage_alimentation', 'SOLEVO_Filieres_Quiz_et_corrige_2026-11-15.pptx', 'pptx', 'Version courte SOLEVO : quiz et corrigé');
     stat('filieres', '08_Filieres_elevage_alimentation', 'SOLEVO_Kit_Atelier_Filieres_Elevage_2026-11-15.pdf', 'pdf', 'Kit atelier à imprimer : quiz, corrigé, matrice vierge, tableau de bord');
+    stat('seminaires', '11_Seminaires_SOLEVO', 'SOLEVO_Seminaire_Filiere_Avicole_Enjeux_Perspectives_Elvis_LEHITO_2026-11-15.pptx', 'pptx', 'Séminaire filière avicole : enjeux et perspectives (Gagnoa, Agnibilékrou)');
+    stat('seminaires', '11_Seminaires_SOLEVO', 'SOLEVO_Seminaire_Filiere_Avicole_Enjeux_Perspectives_Elvis_LEHITO_2026-11-15.pdf', 'pdf', 'Séminaire filière avicole : enjeux et perspectives (Gagnoa, Agnibilékrou) (PDF)');
+    stat('seminaires', '11_Seminaires_SOLEVO', 'SOLEVO_Seminaire_Volailles_MG2MIX_2026-11-15.pptx', 'pptx', 'Séminaire volailles MG2MIX (prémix 2 % en une diapositive)');
+    stat('seminaires', '11_Seminaires_SOLEVO', 'SOLEVO_Seminaire_Volailles_MG2MIX_2026-11-15.pdf', 'pdf', 'Séminaire volailles MG2MIX (prémix 2 % en une diapositive) (PDF)');
+    stat('seminaires', '11_Seminaires_SOLEVO', 'SOLEVO_Offre_Filiere_Avicole_corrigee_2026-11-15.pptx', 'pptx', 'Offre SOLEVO filière avicole (version corrigée)');
+    stat('seminaires', '11_Seminaires_SOLEVO', 'SOLEVO_Offre_Filiere_Avicole_corrigee_2026-11-15.pdf', 'pdf', 'Offre SOLEVO filière avicole (version corrigée) (PDF)');
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Catalogue_WhatsApp_MG2MIX_Chair_2026-11-15_v2.png', 'png', 'Catalogue WhatsApp Business : MG2MIX Chair', true);
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Catalogue_WhatsApp_MG2MIX_Ponte_2026-11-15_v2.png', 'png', 'Catalogue WhatsApp Business : MG2MIX Ponte', true);
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Catalogue_WhatsApp_MG2MIX_Porc_2026-11-15_v2.png', 'png', 'Catalogue WhatsApp Business : CMV Porc MG2MIX', true);
