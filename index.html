@@ -646,9 +646,15 @@ function route(){if(/^#ecran/i.test(location.hash))open(false);}route();window.a
   <button type="button" data-tab="objectifs">◎ Objectifs</button>
   <button type="button" data-tab="stand">☎ Stand SELAB</button>
   <button type="button" data-tab="videos">▶ Vidéos</button>
-  <button type="button" data-tab="documents">⇩ Documents</button>
-  <button type="button" data-tab="tout">☰ Tout afficher</button>
+  <button type="button" data-tab="documents">🔒 Documents</button>
+  <button type="button" data-tab="tout">🔒 Tout afficher</button>
 </nav>
+<div id="skGate" hidden style="max-width:520px;margin:24px auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px">
+  <h2 style="margin-top:0">🔒 Accès réservé</h2>
+  <p class="note" id="skGateTxt">Cet onglet est réservé à Elvis LEHITO et Arnaud AGOHI. Saisissez le code KAM.</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><input type="password" id="skGatePin" inputmode="numeric" autocomplete="off" placeholder="Code KAM" style="width:140px"><button type="button" class="prim" id="skGateBtn">Déverrouiller</button><button type="button" id="skGateBack">Retour</button></div>
+  <p class="note" id="skGateMsg" style="margin-bottom:0"></p>
+</div>
 <style>
 #skMenu{position:sticky;top:0;z-index:30;display:flex;gap:6px;overflow-x:auto;padding:8px 18px;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 2px 6px rgba(0,0,0,.05);scrollbar-width:thin}
 #skMenu button{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:20px;padding:7px 14px;font-weight:700;font-size:13.5px;cursor:pointer;white-space:nowrap}
@@ -990,6 +996,29 @@ body.m-mobile header .prezbtn[onclick]{display:none}
     setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 30);
     if (scroll !== false) window.scrollTo({ top: 0 });
   }
+  var LOCKED = { documents: 1, tout: 1 }, H = '17d4cc6d5aaa51af20f5029ee9d4626cd30db2d362661e4e351ad9f1f19e8e19', gateFor = null, owner = false;
+  function tabsOk() { if (owner) return true; try { return sessionStorage.getItem('sk_tabs_unlock') === '1' || sessionStorage.getItem('sk_scen_unlock') === '1'; } catch (e) { return false; } }
+  var gate = document.getElementById('skGate');
+  function showGate(t) {
+    gateFor = t; ALL.forEach(function (id) { var e = document.getElementById(id); if (e) e.classList.add('sk-hide'); });
+    main.classList.add('sk-hide'); gate.hidden = false; document.getElementById('skGateMsg').textContent = '';
+    [].slice.call(document.querySelectorAll('#skMenu [data-tab]')).forEach(function (b) { b.classList.toggle('on', b.dataset.tab === t); });
+    setTimeout(function () { try { document.getElementById('skGatePin').focus(); } catch (e) { /* */ } }, 50);
+  }
+  var setTab0 = setTab;
+  setTab = function (t, scroll) {
+    if (LOCKED[t] && !tabsOk()) { showGate(t); return; }
+    gate.hidden = true; main.classList.remove('sk-hide'); setTab0(t, scroll);
+  };
+  function sha(t) { return crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)).then(function (b) { return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join(''); }); }
+  document.getElementById('skGateBtn').addEventListener('click', function () {
+    var i = document.getElementById('skGatePin'), m = document.getElementById('skGateMsg'), v = (i.value || '').trim();
+    if (!v) { m.textContent = 'Saisissez le code KAM.'; return; }
+    sha('sk-scen-2026' + v).then(function (x) { i.value = ''; if (x === H) { try { sessionStorage.setItem('sk_tabs_unlock', '1'); } catch (e) { /* */ } setTab(gateFor || 'documents'); } else m.textContent = 'Code incorrect.'; }).catch(function () { m.textContent = 'Vérification impossible sur ce navigateur.'; });
+  });
+  document.getElementById('skGatePin').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('skGateBtn').click(); } });
+  document.getElementById('skGateBack').addEventListener('click', function () { setTab('scenario'); });
+  try { if (window.claude && window.claude.use) window.claude.use('user').then(function (u) { if (u && u.isOwner && u.isOwner()) { owner = true; if (gateFor && !gate.hidden) setTab(gateFor); } }).catch(function () {}); } catch (e) { /* */ }
   window.SK_TAB = setTab;
   [].slice.call(document.querySelectorAll('#skMenu [data-tab]')).forEach(function (b) { b.addEventListener('click', function () { setTab(b.dataset.tab); }); });
   /* barre du bas (téléphone) et boutons « aller à » : ouvrent l’onglet correspondant */
