@@ -1742,7 +1742,7 @@
   }
   function renderTeam() {
     const el = $('#teamBox'); if (!el) return;
-    const card = (t, tag) => `<div class="tm"><em>${tag}</em><b>${esc(t.nom)}</b><span>${esc(t.role)}</span><small>${esc(t.mission)}</small><small>Contact : WhatsApp Business SOLEVO ${SOLEVO_TEL}</small></div>`;
+    const card = (t, tag) => `<div class="tm"><em>${tag}</em><b>${esc(t.nom)}</b><span>${esc(t.role)}</span><small>${esc(t.mission)}</small></div>`;
     el.innerHTML = `<div class="tmg"><span>Mandants</span>${card(TM.kouame, 'Mandant FEED')}${card(TM.konan, 'Mandant Agro / SEED')}</div>
       <div class="tmg"><span>Porteurs du projet au SELAB</span>${card(TM.lehito, 'KAM FEED')}${card(TM.agohi, 'KAM SEED')}</div>
       <div class="tmg"><span>Marketing Agro</span>${card(TM.kouakou, 'Responsable marketing Agro')}</div>
