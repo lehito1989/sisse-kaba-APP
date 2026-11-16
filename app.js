@@ -539,6 +539,7 @@
   }
   function qrRefresh() {
     try { const c = qrCanvas(state.qrLink, 700); imgs.qr = c.toDataURL('image/png'); } catch (e) { imgs.qr = null; }
+    try { imgs.qrVideo = qrCanvas('https://lehito1989.github.io/sisse-kaba-APP/videos/', 500).toDataURL('image/png'); } catch (e) { imgs.qrVideo = null; }
     try { const q = qrcode(0, 'M'); q.addData(state.qrLink); q.make(); const n = q.getModuleCount(); imgs.qrMatrix = Array.from({ length: n }, (_, r) => Array.from({ length: n }, (_, k) => (q.isDark(r, k) ? '1' : '0')).join('')); } catch (e) { imgs.qrMatrix = null; }
   }
   async function qrPngBytes() {
@@ -690,6 +691,9 @@
   const occOf = (n) => state.pros.filter((r) => String(r.table) === String(n) && r.etat === 'En entretien').reduce((a, r) => a + nbP(r), 0);
   const accLab = (r) => { const a = r.accueil || []; if (!a.length) return ''; const n = nbP(r); return a.map((x) => (n > 1 ? n + ' ' : '') + (x === 'Eau' ? (n > 1 ? 'bouteilles d’eau' : '1 bouteille d’eau') : (n > 1 ? 'cafés' : '1 café'))).join(' + '); };
   const SOLEVO_TEL = '+225 07 10 47 14 02', SOLEVO_TEL2 = '07 77 19 09 94', SOLEVO_MAIL = 'elvis.lehito@solevogroup.com';
+  /* coordonnées des agents masquées à l’affichage (sécurité) : seul le WhatsApp Business SOLEVO est public */
+  const maskMail = (m) => String(m || '').replace(/^(.)[^@]*(@.*)$/, '$1•••$2');
+  const VIDEO_URL = 'https://lehito1989.github.io/sisse-kaba-APP/videos/';
   const CFG_DEFAULT = {
     v: 8, qrMode: 'nav', testMode: false, rep: {},
     tables: [{ n: 1, lieu: 'Table 1', agent: 'Ibrahim OUATTARA, agent technique élevage', pour: 'Éleveurs', cap: 4 }, { n: 2, lieu: 'Table 2', agent: 'Kouassi François KOUADIO, agent technique élevage', pour: 'Éleveurs' }, { n: 3, lieu: 'Table 3', agent: 'Aubin Ghislain KOFFI, agent technique semence', pour: 'Producteurs' },
@@ -1036,7 +1040,7 @@
         <label class="consent"><input type="checkbox" id="mRO" ${c.rappelOn ? 'checked' : ''}> Rappeler le visiteur s’il attend depuis plus de <input id="mRM" type="number" min="5" max="90" value="${+c.rappelMin || 15}" style="width:64px"> minutes</label>
         <label class="consent"><input type="checkbox" id="mATr" ${c.autoTransfert !== false ? 'checked' : ''}> Envoyer automatiquement un message au visiteur transféré vers un Key Account Manager</label>
         <label class="consent"><input type="checkbox" id="mNK" ${c.notifKam !== false ? 'checked' : ''}> Prévenir le Key Account Manager sur son téléphone à chaque transfert</label>
-        <div class="vg"><label>Téléphone KAM FEED (Elvis LEHITO)<input id="mKF" value="${esc(c.kamFeedTel || CFG_DEFAULT.kamFeedTel)}"></label><label>Téléphone KAM SEED (Arnaud AGOHI)<input id="mKS" value="${esc(c.kamSeedTel || CFG_DEFAULT.kamSeedTel)}"></label></div>
+        <div class="vg"><label>Téléphone KAM FEED (Elvis LEHITO)<input id="mKF" value="" placeholder="numéro enregistré (masqué) : laisser vide pour le garder"></label><label>Téléphone KAM SEED (Arnaud AGOHI)<input id="mKS" value="" placeholder="numéro enregistré (masqué) : laisser vide pour le garder"></label></div>
         <label class="w">Message au Key Account Manager ({nom}, {profil}, {localite}, {activite}, {motif}, {de}, {tel}, {lieu})<textarea id="mKam" rows="3">${esc(c.msgKam || CFG_DEFAULT.msgKam)}</textarea></label>
         <label class="w">Message de transfert ({de} = agent d’origine, {motif} = raison du transfert)<textarea id="mTransf" rows="3">${esc(c.msgTransfert || CFG_DEFAULT.msgTransfert)}</textarea></label>
         <label class="w">Message de rappel<textarea id="mRappel" rows="3">${esc(c.msgRappel || CFG_DEFAULT.msgRappel)}</textarea></label>
@@ -1044,7 +1048,7 @@
       <label class="w">Numéro WhatsApp de la borne digitale (pour lui envoyer le lien)<input id="mKiosk" value="${esc(c.kioskTel)}" placeholder="07 00 00 00 00"></label>
       <div class="mbar"><button type="button" id="cfgOk">Enregistrer</button><button type="button" id="cfgReset">Messages par défaut</button></div>`, true);
     const read = () => { $$('[data-ti]', b).forEach((i) => { const t = c.tables[+i.dataset.ti]; t[i.dataset.tk] = i.dataset.tk === 'n' ? parseInt(i.value, 10) || 1 : i.dataset.tk === 'cap' ? Math.max(0, parseInt(i.value, 10) || 0) : i.value.trim(); });
-      c.msgTable = $('#mTable', b).value; c.msgMerci = $('#mMerci', b).value; c.autoProv = $('#mProv', b).value; c.autoTable = $('#mAT', b).checked; c.autoMerci = $('#mAM', b).checked; c.autoSimu = $('#mASim', b).checked; c.objPremix = Math.max(1, +$('#mObjPx', b).value || 10); c.autoReplies = $('#mAR', b).checked; c.rappelOn = $('#mRO', b).checked; c.rappelMin = Math.max(5, parseInt($('#mRM', b).value, 10) || 15); c.msgRappel = $('#mRappel', b).value; c.autoTransfert = $('#mATr', b).checked; c.notifKam = $('#mNK', b).checked; c.kamFeedTel = $('#mKF', b).value.trim(); c.kamSeedTel = $('#mKS', b).value.trim(); c.msgKam = $('#mKam', b).value; c.msgTransfert = $('#mTransf', b).value; c.inscription = $('#mLien', b).value.trim(); c.kioskTel = $('#mKiosk', b).value.trim(); };
+      c.msgTable = $('#mTable', b).value; c.msgMerci = $('#mMerci', b).value; c.autoProv = $('#mProv', b).value; c.autoTable = $('#mAT', b).checked; c.autoMerci = $('#mAM', b).checked; c.autoSimu = $('#mASim', b).checked; c.objPremix = Math.max(1, +$('#mObjPx', b).value || 10); c.autoReplies = $('#mAR', b).checked; c.rappelOn = $('#mRO', b).checked; c.rappelMin = Math.max(5, parseInt($('#mRM', b).value, 10) || 15); c.msgRappel = $('#mRappel', b).value; c.autoTransfert = $('#mATr', b).checked; c.notifKam = $('#mNK', b).checked; if ($('#mKF', b).value.trim()) c.kamFeedTel = $('#mKF', b).value.trim(); if ($('#mKS', b).value.trim()) c.kamSeedTel = $('#mKS', b).value.trim(); c.msgKam = $('#mKam', b).value; c.msgTransfert = $('#mTransf', b).value; c.inscription = $('#mLien', b).value.trim(); c.kioskTel = $('#mKiosk', b).value.trim(); };
     $('#tAdd', b).addEventListener('click', () => { read(); { const nn = (c.tables.reduce((a, t) => Math.max(a, t.n), 0) || 0) + 1; c.tables.push({ n: nn, lieu: 'Table ' + nn, agent: '', pour: 'Tous' }); } editCfg(); });
     $$('[data-tdel]', b).forEach((x) => x.addEventListener('click', () => { read(); c.tables.splice(+x.dataset.tdel, 1); editCfg(); }));
     $('#cfgReset', b).addEventListener('click', () => { c.msgTable = CFG_DEFAULT.msgTable; c.msgMerci = CFG_DEFAULT.msgMerci; c.msgTransfert = CFG_DEFAULT.msgTransfert; c.msgKam = CFG_DEFAULT.msgKam; editCfg(); });
@@ -1461,12 +1465,12 @@
   }
   function bilanOpen() {
     const day = new Date().toISOString().slice(0, 10);
-    const b = modal('Bilan de la journée', `<div class="vg"><label>Journée<input type="date" id="bjDay" value="${day}"></label><label>Destinataires<input id="bjTo" value="${esc(state.standCfg.bilanTo || CFG_DEFAULT.bilanTo)}"></label></div>
+    const b = modal('Bilan de la journée', `<div class="vg"><label>Journée<input type="date" id="bjDay" value="${day}"></label><label>Destinataires<input id="bjTo" value="" placeholder="${esc((state.standCfg.bilanTo || CFG_DEFAULT.bilanTo).split(/[,;\s]+/).filter((x) => /@/.test(x)).map(maskMail).join(', '))} (vide = garder)"></label></div>
        <label class="consent"><input type="checkbox" id="bjTest" ${state.bilanTest ? 'checked' : ''}> Inclure les inscriptions de répétition (test)</label>
       <label class="consent"><input type="checkbox" id="bjAuto" ${state.standCfg.bilanAuto ? 'checked' : ''}> Envoyer automatiquement le bilan du jour à <input id="bjHour" type="time" value="${esc(state.standCfg.bilanHour || '19:00')}" style="width:auto"> quand ce simulateur est ouvert (borne, écran d’appel ou vue des tables)</label>
       <div class="mbar"><button type="button" id="bjPrev">Aperçu</button><button type="button" id="bjSend">Envoyer maintenant</button><button type="button" id="bjSave">Enregistrer les réglages</button></div><div id="bjOut" class="bjout"></div>`, true);
     $('#bjTest', b).addEventListener('change', () => { state.bilanTest = $('#bjTest', b).checked; });
-    const keep = () => { state.standCfg.bilanTo = $('#bjTo', b).value; state.standCfg.bilanAuto = $('#bjAuto', b).checked; state.standCfg.bilanHour = $('#bjHour', b).value || '19:00'; };
+    const keep = () => { if ($('#bjTo', b).value.trim()) state.standCfg.bilanTo = $('#bjTo', b).value; state.standCfg.bilanAuto = $('#bjAuto', b).checked; state.standCfg.bilanHour = $('#bjHour', b).value || '19:00'; };
     $('#bjPrev', b).addEventListener('click', () => { $('#bjOut', b).innerHTML = bilanHtml($('#bjDay', b).value); });
     $('#bjSend', b).addEventListener('click', async () => { keep(); await bilanSend($('#bjDay', b).value); });
     $('#bjSave', b).addEventListener('click', async () => { keep(); await cfgSave(); status('Réglages du bilan enregistrés.', 'ok'); modalClose(); });
@@ -1671,13 +1675,13 @@
     } catch (e) { console.error(e); status('Rapport non envoyé : ' + mailErr(e), 'err'); }
   }
   function finalOpen() {
-    const b = modal('Rapport final du salon', `<div class="vg"><label>Du<input type="date" id="fnFrom" value="2026-11-20"></label><label>Au<input type="date" id="fnTo" value="2026-11-22"></label><label>Destinataires<input id="fnDest" value="${esc(state.standCfg.finalTo || CFG_DEFAULT.finalTo)}"></label></div>
+    const b = modal('Rapport final du salon', `<div class="vg"><label>Du<input type="date" id="fnFrom" value="2026-11-20"></label><label>Au<input type="date" id="fnTo" value="2026-11-22"></label><label>Destinataires<input id="fnDest" value="" placeholder="${esc((state.standCfg.finalTo || CFG_DEFAULT.finalTo).split(/[,;\s]+/).filter((x) => /@/.test(x)).map(maskMail).join(', '))} (vide = destinataires enregistrés)"></label></div>
       <p class="note">Un rapport final est aussi programmé le 23/11/2026 à 9 h (heure d’Abidjan) : il est envoyé automatiquement, même si le simulateur est fermé.</p>
       <div class="mbar"><button type="button" id="fnPrev">Aperçu</button><button type="button" id="fnXl">⬇ Télécharger le classeur</button><button type="button" id="fnSend">Envoyer par e-mail</button></div><div id="fnOut" class="bjout"></div>`, true);
     const rng = () => [$('#fnFrom', b).value, $('#fnTo', b).value];
     $('#fnPrev', b).addEventListener('click', () => { const [f, t] = rng(); $('#fnOut', b).innerHTML = finalHtml(finalData(f, t)); });
     $('#fnXl', b).addEventListener('click', async () => { const [f, t] = rng(); await save('SISSE_KABA_Rapport_final_SELAB_2026_' + new Date().toISOString().slice(0, 10) + '.xlsx', await finalBook(finalData(f, t))); });
-    $('#fnSend', b).addEventListener('click', async () => { const [f, t] = rng(); await finalSend(f, t, $('#fnDest', b).value.split(/[,;\s]+/).filter((x) => /@/.test(x))); });
+    $('#fnSend', b).addEventListener('click', async () => { const [f, t] = rng(); await finalSend(f, t, ($('#fnDest', b).value.trim() || state.standCfg.finalTo || CFG_DEFAULT.finalTo).split(/[,;\s]+/).filter((x) => /@/.test(x))); });
   }
   /* ---- calcul au stand (diapo 3) : enregistrement rapide ---- */
   function prosForm() {
@@ -1738,7 +1742,7 @@
   }
   function renderTeam() {
     const el = $('#teamBox'); if (!el) return;
-    const card = (t, tag) => `<div class="tm"><em>${tag}</em><b>${esc(t.nom)}</b><span>${esc(t.role)}</span><small>${esc(t.mission)}</small><a href="tel:+225${t.tel.replace(/\D/g, '')}">${esc(t.tel)}</a><a href="mailto:${esc(t.mail)}">${esc(t.mail)}</a></div>`;
+    const card = (t, tag) => `<div class="tm"><em>${tag}</em><b>${esc(t.nom)}</b><span>${esc(t.role)}</span><small>${esc(t.mission)}</small><small>Contact : WhatsApp Business SOLEVO ${SOLEVO_TEL}</small></div>`;
     el.innerHTML = `<div class="tmg"><span>Mandants</span>${card(TM.kouame, 'Mandant FEED')}${card(TM.konan, 'Mandant Agro / SEED')}</div>
       <div class="tmg"><span>Porteurs du projet au SELAB</span>${card(TM.lehito, 'KAM FEED')}${card(TM.agohi, 'KAM SEED')}</div>
       <div class="tmg"><span>Marketing Agro</span>${card(TM.kouakou, 'Responsable marketing Agro')}</div>
@@ -1793,7 +1797,7 @@
       ${L.map((a) => `<div style="background:#F4F7FB;border-left:4px solid #0B5FA1;border-radius:8px;padding:10px 12px;margin:12px 0"><b style="color:#002060;font-size:15px">${a.t}</b> <span style="color:#5b6476;font-size:12px">• ${a.who}</span>
         ${accesOpts(a, x).map((o) => `<div style="margin-top:8px"><b>Option ${o.n}${o.best ? ' (recommandée)' : ''}</b> – ${esc(o.lab)}<br>${btn(o.url, o.n === 1 ? 'Ouvrir (option 1)' : 'Ouvrir (option 2)', o.n === 1 ? '#37A028' : '#0B5FA1')}<br><a href="${o.url}" style="color:#0B5FA1;font-size:13px;word-break:break-all">${o.url}</a><div style="font-size:12px;color:#5b6476;margin-top:2px">${esc(o.tip)}</div></div>`).join('')}</div>`).join('')}
       <p style="font-size:13px"><b>Règles du stand :</b> 4 personnes au plus par table ; délégations de coopératives et associations en salle de conférence avec le Key Account Manager choisi ; eau et café offerts à l’accueil ; grands comptes transférés en un clic vers le Key Account Manager concerné.</p>
-      <p style="font-size:13px">Contacts : Elvis LEHITO, KAM FEED, ${TM.lehito.tel} • Arnaud AGOHI, KAM SEED, ${TM.agohi.tel} • WhatsApp inscriptions ${SOLEVO_TEL}</p>
+      <p style="font-size:13px">Contacts : Elvis LEHITO, KAM FEED • Arnaud AGOHI, KAM SEED • WhatsApp Business SOLEVO ${SOLEVO_TEL}</p>
       <p style="color:#5b6476;font-size:12px">Elvis LEHITO et Arnaud AGOHI, Key Account Managers FEED et SEED, mandatés par Christophe KOUAME et Olivier KONAN – SOLEVO Côte d’Ivoire</p></div>`;
   }
   async function accesMail(x, to) {
@@ -1812,15 +1816,15 @@
         <label class="consent"><input type="radio" name="qrm" value="wa" ${c0.qrMode === 'wa' ? 'checked' : ''}> Fiche d’inscription prête dans WhatsApp (fonctionne pour tous les visiteurs ; importée automatiquement dans la liste avec Smsmobileapi, sinon via « Importer »)</label>
         <label class="consent"><input type="radio" name="qrm" value="fiche" ${c0.qrMode === 'fiche' ? 'checked' : ''}> Fiche visiteur du simulateur (seulement pour les personnes qui ont accès au simulateur)</label></fieldset>
       <h4 style="margin:14px 0 6px">Envoyer les accès à l’équipe</h4>
-      <div class="acc-p">${P.map((x) => `<div class="acc-r"><div><b>${esc(x.p.nom)}</b><br><small>${esc(x.p.role)} • ${esc(x.table)}</small></div><input data-em="${x.id}" type="email" value="${esc(x.mail)}" placeholder="adresse e-mail"><div class="mbar"><button type="button" data-am="${x.id}">E-mail</button>${x.p.tel ? `<a class="bk-btn alt" target="_blank" rel="noopener" href="${waLink(x.p.tel, accesText(x))}">WhatsApp</a>` : ''}<button type="button" class="mini" data-at="${x.id}">Copier</button></div><span class="acc-s" data-as="${x.id}">${esc((state.standCfg.accesSent || {})[x.id] || '')}</span></div>`).join('')}</div>
-      <p class="note">À vérifier : l’adresse d’Ibrahim OUATTARA (fiche Lucca : ibrahim.ouattara@solevogroup.com ; tâches FEED : ouattara.daouda@solevogroup.com). Les adresses modifiées ici sont enregistrées.</p>
+      <div class="acc-p">${P.map((x) => `<div class="acc-r"><div><b>${esc(x.p.nom)}</b><br><small>${esc(x.p.role)} • ${esc(x.table)}</small></div><input data-em="${x.id}" type="email" value="" placeholder="${x.mail ? 'adresse enregistrée (masquée) : ' + esc(maskMail(x.mail)) : 'adresse e-mail'}"><div class="mbar"><button type="button" data-am="${x.id}">E-mail</button>${x.p.tel ? `<a class="bk-btn alt" target="_blank" rel="noopener" href="${waLink(x.p.tel, accesText(x))}">WhatsApp</a>` : ''}<button type="button" class="mini" data-at="${x.id}">Copier</button></div><span class="acc-s" data-as="${x.id}">${esc((state.standCfg.accesSent || {})[x.id] || '')}</span></div>`).join('')}</div>
+      <p class="note">Les adresses des agents sont masquées pour la sécurité ; laissez un champ vide pour garder l’adresse enregistrée, ou saisissez-en une nouvelle.</p>
       <div class="mbar"><button type="button" id="accAll">Envoyer à toute l’équipe par e-mail</button><button type="button" id="accX">Fermer</button></div>`, true);
-    const readEm = () => { const c = state.standCfg; c.emails = c.emails || {}; $$('[data-em]', b).forEach((i) => { c.emails[i.dataset.em] = i.value.trim(); }); };
+    const readEm = () => { const c = state.standCfg; c.emails = c.emails || {}; $$('[data-em]', b).forEach((i) => { if (i.value.trim()) c.emails[i.dataset.em] = i.value.trim(); }); };
     const sendOne = async (id) => {
-      readEm(); const x = accesPeople().find((y) => y.id === id); const to = (state.standCfg.emails[id] || '').trim();
+      readEm(); const x = accesPeople().find((y) => y.id === id); const to = (state.standCfg.emails[id] || x.mail || '').trim();
       if (!/@/.test(to)) { status('Indiquez une adresse e-mail pour ' + x.p.nom + '.', 'err'); return false; }
       const ok = await accesMail(x, to);
-      if (ok) { state.standCfg.accesSent = Object.assign({}, state.standCfg.accesSent, { [id]: '✓ envoyé à ' + to + ' le ' + today().fr }); $(`[data-as="${id}"]`, b).textContent = state.standCfg.accesSent[id]; }
+      if (ok) { state.standCfg.accesSent = Object.assign({}, state.standCfg.accesSent, { [id]: '✓ envoyé à ' + maskMail(to) + ' le ' + today().fr }); $(`[data-as="${id}"]`, b).textContent = state.standCfg.accesSent[id]; }
       await cfgSave(); return ok;
     };
     $$('[data-am]', b).forEach((x) => x.addEventListener('click', async () => { if (await sendOne(x.dataset.am)) status('Accès envoyés par e-mail.', 'ok'); }));
@@ -3005,14 +3009,19 @@
     return [{ id: 'equipe', name: 'Équipe SOLEVO CI (tous)', to: j(() => true) }, { id: 'mandants-kam', name: 'Mandants et Key Account Managers', to: j((x) => /Mandants|Key/.test(x.g)) },
       { id: 'kam-marketing', name: 'Key Account Managers et marketing', to: j((x) => /Key|Marketing/.test(x.g)) }, { id: 'ate', name: 'Agents techniques', to: j((x) => /Agents/.test(x.g)) }];
   }
+  function renderChips() {
+    const ch = $('#mailChips'); if (ch) { const L = recipients(); ch.innerHTML = L.length ? 'Destinataires : ' + L.map((m) => `<span class="chipm" style="display:inline-block;background:#EEF4FB;border-radius:10px;padding:2px 8px;margin:2px">${esc(maskMail(m))}</span>`).join('') : 'Aucun destinataire : choisissez une liste, cochez des agents ou ajoutez une adresse.'; }
+    const cs = $('#mailCopyShow'); if (cs) cs.textContent = ($('#mailCopyTo').value || '').split(/[;,\s]+/).filter((x) => /@/.test(x)).map(maskMail).join(', ');
+  }
   function renderTeamMail() {
+    renderChips();
     const box = $('#teamMail'); if (!box) return; const cur = recipients().map((x) => x.toLowerCase());
     const T = teamMails(); const groups = [...new Set(T.map((x) => x.g))];
-    box.innerHTML = groups.map((g) => `<div class="tmm"><b>${esc(g)}</b>${T.filter((x) => x.g === g).map((x) => `<label class="tmc"><input type="checkbox" data-tm="${esc(x.mail)}" ${cur.includes(x.mail.toLowerCase()) ? 'checked' : ''}><span>${esc(x.nom)}<small>${esc(x.role)} • ${esc(x.mail)}</small></span></label>`).join('')}</div>`).join('');
+    box.innerHTML = groups.map((g) => `<div class="tmm"><b>${esc(g)}</b>${T.filter((x) => x.g === g).map((x) => `<label class="tmc"><input type="checkbox" data-tm="${esc(x.mail)}" ${cur.includes(x.mail.toLowerCase()) ? 'checked' : ''}><span>${esc(x.nom)}<small>${esc(x.role)} • ${esc(maskMail(x.mail))}</small></span></label>`).join('')}</div>`).join('');
     $$('[data-tm]', box).forEach((c) => c.addEventListener('change', () => {
       let L = recipients(); const m = c.dataset.tm;
       L = c.checked ? (L.some((x) => x.toLowerCase() === m.toLowerCase()) ? L : L.concat([m])) : L.filter((x) => x.toLowerCase() !== m.toLowerCase());
-      $('#mailTo').value = L.join(', '); $('#mailOk').checked = false;
+      $('#mailTo').value = L.join(', '); $('#mailOk').checked = false; renderChips();
     }));
   }
   const DEFAULT_LISTS = [{ id: 'moi', name: 'Moi', to: 'elvis.lehito@solevogroup.com, lehitognakoury@gmail.com' }];
@@ -3172,7 +3181,10 @@
       $('#zipAll').addEventListener('click', saveZip);
       $('#mailBtn').addEventListener('click', () => sendMail());
       $('#listSel').addEventListener('change', applyList);
-      $('#mailTo').addEventListener('input', renderTeamMail); renderTeamMail(); renderKitVal();
+      $('#mailTo').addEventListener('input', renderTeamMail); renderTeamMail();
+      const addM = () => { const v = ($('#mailAdd').value || '').trim(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { status('Adresse e-mail invalide.', 'err'); return; } const L = recipients(); if (!L.some((x) => x.toLowerCase() === v.toLowerCase())) L.push(v); $('#mailTo').value = L.join(', '); $('#mailAdd').value = ''; $('#mailOk').checked = false; renderTeamMail(); };
+      $('#mailAddBtn').addEventListener('click', addM); $('#mailAdd').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addM(); } });
+      $('#mailClr').addEventListener('click', () => { $('#mailTo').value = ''; $('#mailOk').checked = false; renderTeamMail(); }); renderKitVal();
       $('#kitBtn').addEventListener('click', () => {
         $$('#mailCats input').forEach((i) => { i.checked = i.value === 'kit'; });
         $('#mailTo').value = (SKD.TEAM.kouakou.mail); $('#listSel').value = ''; $('#listName').value = ''; renderTeamMail(); $('#mailOk').checked = false;

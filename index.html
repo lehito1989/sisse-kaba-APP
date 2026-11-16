@@ -858,7 +858,9 @@ function route(){if(/^#ecran/i.test(location.hash))open(false);}route();window.a
       <div class="lists"><select id="listSel"><option value="">— Choisir une liste —</option></select>
         <input type="text" id="listName" placeholder="Nom de la liste (ex. CODIR)">
         <button id="listSave">Enregistrer la liste</button><button id="listDel">Supprimer</button></div>
-      <input type="text" id="mailTo" value="elvis.lehito@solevogroup.com, lehitognakoury@gmail.com">
+      <input type="hidden" id="mailTo" value="">
+      <div id="mailChips" class="note" style="margin:4px 0">Aucun destinataire : choisissez une liste, cochez des agents ou ajoutez une adresse.</div>
+      <div class="lists"><input type="email" id="mailAdd" placeholder="Ajouter une adresse e-mail"><button type="button" id="mailAddBtn">Ajouter</button><button type="button" id="mailClr">Vider</button></div>
       <details class="tmbox" open><summary>Agents SOLEVO Côte d’Ivoire enregistrés : cochez pour ajouter au destinataire</summary><div id="teamMail"></div></details>
       <div class="note" style="margin-top:6px">Contenu à envoyer (le « Lire d’abord », le contrôle qualité et les paramètres du scénario sont toujours joints)</div>
       <div id="mailCats" class="cats">
@@ -874,7 +876,7 @@ function route(){if(/^#ecran/i.test(location.hash))open(false);}route();window.a
       </div>
       <div class="bar" style="margin:6px 0"><button type="button" id="kitBtn">📦 Kit communication pour Jean-Noël KOUAKOU</button></div>
       <div id="kitVal" class="kitval"></div>
-      <label class="chk"><input type="checkbox" id="mailCopy" checked> M’envoyer une copie récapitulative (fichiers envoyés et destinataires) à <input type="text" id="mailCopyTo" value="elvis.lehito@solevogroup.com, lehitognakoury@gmail.com" style="width:auto;min-width:260px;display:inline-block"></label>
+      <label class="chk"><input type="checkbox" id="mailCopy" checked> M’envoyer une copie récapitulative (fichiers envoyés et destinataires) à <span id="mailCopyShow"></span><input type="hidden" id="mailCopyTo" value="elvis.lehito@solevogroup.com, lehitognakoury@gmail.com" style="width:auto;min-width:260px;display:inline-block"></label>
       <label class="chk"><input type="checkbox" id="mailOk"> Je confirme l’envoi à ces adresses (découpage automatique en parties de 10 Mo maximum)</label>
       <div class="bar"><button class="prim" id="mailBtn">Envoyer par mail</button></div>
       <div class="note" id="mailNote"></div>

@@ -217,6 +217,11 @@
     c.push({ image: images.solevoBig, height: 32, absolutePosition: { x: 32, y: 29 } });
     if (images.sisse || images.sisseUrl) c.push({ image: images.sisse || images.sisseUrl, height: 32, absolutePosition: { x: 148, y: 29 } });
     c.push({ text: F(cv.tag).toUpperCase(), fontSize: 7.5, bold: true, color: 'white', absolutePosition: { x: 26, y: 84 } });
+    if (images.qrVideo) {
+      c.push({ canvas: [{ type: 'rect', x: 0, y: 0, w: 70, h: 80, r: 6, color: 'white' }], absolutePosition: { x: W - 24 - 70, y: 12 } });
+      c.push({ image: images.qrVideo, width: 60, absolutePosition: { x: W - 24 - 65, y: 15 } });
+      c.push({ text: 'VOIR LA VIDÉO', fontSize: 6.5, bold: true, color: NAVY, alignment: 'center', absolutePosition: { x: W - 24 - 70, y: 79 }, width: 70 });
+    }
     c.push({ text: F(cv.title), fontSize: 28, bold: true, color: 'white', absolutePosition: { x: 24, y: 100 }, width: 370 });
     c.push({ text: F(cv.sub), fontSize: 11, color: '#E8F0FA', absolutePosition: { x: 24, y: cv.slogan ? 158 : 172 }, width: 370 });
     if (cv.slogan) {
