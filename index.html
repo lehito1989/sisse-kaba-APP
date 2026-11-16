@@ -643,6 +643,12 @@ function route(){if(/^#ecran/i.test(location.hash))open(false);}route();window.a
 <main>
 <section class="panel left" id="secScen">
   <h2>Scénario</h2>
+  <div id="scenLockBar" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:#FFF8E1;border:1px solid #F5C400;border-radius:10px;padding:8px 10px;margin:4px 0 10px">
+    <b id="scenLockState" style="font-size:13px">🔒 Paramètres verrouillés</b>
+    <input type="password" id="scenPin" inputmode="numeric" autocomplete="off" placeholder="Code KAM" style="width:110px">
+    <button type="button" id="scenLockBtn" class="prim">Activer les modifications</button>
+    <small id="scenLockMsg" style="width:100%;color:#5b6476">Seuls Elvis LEHITO et Arnaud AGOHI peuvent modifier les paramètres des scénarios (code KAM).</small>
+  </div>
   <select id="preset">
     <option value="s2">Scénario 2 — 500 t, +10 %/an (dossier 2)</option>
     <option value="s1">Scénario 1 — 300 / 450 / 600 t (dossier 1)</option>
@@ -660,6 +666,57 @@ function route(){if(/^#ecran/i.test(location.hash))open(false);}route();window.a
     <p class="note">Valeurs en unités Excel (taux en décimales : 0,24 = 24 %). Les cellules grises sont calculées (prémix 2028–2029).</p>
   </details>
 </section>
+<style>
+#secScen.sk-locked > :not(#scenLockBar):not(h2){opacity:.6}
+#secScen.sk-locked > :not(#scenLockBar) summary{opacity:1;cursor:pointer}
+</style>
+<script>
+(function () {
+  var H = '17d4cc6d5aaa51af20f5029ee9d4626cd30db2d362661e4e351ad9f1f19e8e19', SALT = 'sk-scen-2026', sec = document.getElementById('secScen');
+  var st = document.getElementById('scenLockState'), pin = document.getElementById('scenPin'), btn = document.getElementById('scenLockBtn'), msg = document.getElementById('scenLockMsg');
+  var unlocked = false, owner = false;
+  try { unlocked = sessionStorage.getItem('sk_scen_unlock') === '1'; } catch (e) { /* */ }
+  function inBar(t) { return t && t.closest && t.closest('#scenLockBar'); }
+  function apply() {
+    sec.classList.toggle('sk-locked', !unlocked);
+    [].slice.call(sec.querySelectorAll('input,select,textarea,button')).forEach(function (el) {
+      if (inBar(el)) return;
+      if (!unlocked) { if (!el.disabled) { el.dataset.skLock = '1'; el.disabled = true; } }
+      else if (el.dataset.skLock) { el.disabled = false; delete el.dataset.skLock; }
+    });
+    var a = unlocked ? '🔓 Modifications activées' : '🔒 Paramètres verrouillés', c = unlocked ? 'Verrouiller' : 'Activer les modifications', d = (unlocked || owner) ? 'none' : '';
+    if (st.textContent !== a) st.textContent = a;
+    if (btn.textContent !== c) btn.textContent = c;
+    if (pin.style.display !== d) pin.style.display = d;
+  }
+  new MutationObserver(function (ms) { if (ms.some(function (m) { return !inBar(m.target); })) apply(); }).observe(sec, { childList: true, subtree: true });
+  ['click', 'mousedown', 'keydown', 'input', 'change', 'paste', 'drop', 'wheel'].forEach(function (ev) {
+    sec.addEventListener(ev, function (e) {
+      if (unlocked || inBar(e.target)) return;
+      if (ev === 'click' && e.target.closest && e.target.closest('summary')) return;
+      if (ev === 'wheel' && !(e.target.matches && e.target.matches('input'))) return;
+      e.preventDefault(); e.stopPropagation();
+      if (ev === 'click' || ev === 'mousedown') msg.textContent = 'Paramètres verrouillés : saisissez le code KAM puis « Activer les modifications ».';
+    }, true);
+  });
+  function sha(t) { return crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)).then(function (b) { return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join(''); }); }
+  function setU(v) { unlocked = v; try { sessionStorage.setItem('sk_scen_unlock', v ? '1' : '0'); } catch (e) { /* */ } apply(); }
+  btn.addEventListener('click', function () {
+    if (unlocked) { setU(false); msg.textContent = 'Paramètres verrouillés.'; return; }
+    if (owner) { setU(true); msg.textContent = 'Modifications activées (propriétaire).'; return; }
+    var v = (pin.value || '').trim(); if (!v) { msg.textContent = 'Saisissez le code KAM.'; pin.focus(); return; }
+    sha(SALT + v).then(function (x) {
+      pin.value = '';
+      if (x === H) { setU(true); msg.textContent = 'Modifications activées. Pensez à verrouiller après vos réglages.'; }
+      else msg.textContent = 'Code incorrect.';
+    }).catch(function () { msg.textContent = 'Vérification du code impossible sur ce navigateur.'; });
+  });
+  pin.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); btn.click(); } });
+  apply();
+  try { if (window.claude && window.claude.use) window.claude.use('user').then(function (u) { if (u && u.isOwner && u.isOwner()) { owner = true; msg.textContent = 'Vous êtes propriétaire : « Activer les modifications » sans code.'; apply(); } }).catch(function () {}); } catch (e) { /* */ }
+})();
+</script>
+
 <section>
   <div class="panel" id="secRes">
     <div class="scen"><div>Scénario actif : <b id="scenarioName"></b></div></div>
