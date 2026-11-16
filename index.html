@@ -629,7 +629,7 @@ function route(){if(/^#ecran/i.test(location.hash))open(false);}route();window.a
     <button data-view="desktop" title="Affichage ordinateur">Ordinateur</button>
     <button data-view="auto" title="Selon la taille de l’écran">Auto</button>
   </div>
-  <button class="prezbtn" type="button" title="Vidéos SELAB SHOW 2026 : lecture et téléchargement" onclick="var e=document.getElementById('secVid');if(e)e.scrollIntoView({behavior:'smooth',block:'start'})">🎬 Vidéos</button>
+  <button class="prezbtn" type="button" title="Vidéos SELAB SHOW 2026 : lecture et téléchargement" onclick="window.SK_TAB&&SK_TAB('videos')">🎬 Vidéos</button>
   <button class="prezbtn" id="prezBtn" title="Plein écran avec gros chiffres, pour le stand SELAB SHOW">▶ Présentation</button>
   <div class="zoombar" role="group" aria-label="Zoom">
     <button data-zoom="-" title="Dézoomer (Ctrl + molette ou −)">−</button>
@@ -639,6 +639,28 @@ function route(){if(/^#ecran/i.test(location.hash))open(false);}route();window.a
   </div>
   <img src="assets/logo_sisse.jpg" alt="SISSÊ~KABA" class="lsisse" style="height:46px">
 </header>
+<nav id="skMenu" aria-label="Menu principal">
+  <button type="button" data-tab="scenario">⚙ Scénario &amp; résultats</button>
+  <button type="button" data-tab="intrants">✦ Intrants SEED / FEED</button>
+  <button type="button" data-tab="marche">% Marché &amp; dépôts</button>
+  <button type="button" data-tab="objectifs">◎ Objectifs</button>
+  <button type="button" data-tab="stand">☎ Stand SELAB</button>
+  <button type="button" data-tab="videos">▶ Vidéos</button>
+  <button type="button" data-tab="documents">⇩ Documents</button>
+  <button type="button" data-tab="tout">☰ Tout afficher</button>
+</nav>
+<style>
+#skMenu{position:sticky;top:0;z-index:30;display:flex;gap:6px;overflow-x:auto;padding:8px 18px;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 2px 6px rgba(0,0,0,.05);scrollbar-width:thin}
+#skMenu button{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:20px;padding:7px 14px;font-weight:700;font-size:13.5px;cursor:pointer;white-space:nowrap}
+#skMenu button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+#skMenu button:hover:not(.on){border-color:var(--green)}
+body.m-mobile #skMenu{padding:6px 8px}body.m-mobile #skMenu button{font-size:12.5px;padding:6px 11px}
+main.sk-one,body.m-wide main.sk-one,body.m-mobile main.sk-one{grid-template-columns:minmax(0,1fr)!important}
+.sk-hide{display:none !important}
+main.sk-one > section > .panel{margin-top:0 !important}
+body.m-mobile .bottomnav{overflow-x:auto;justify-content:flex-start}body.m-mobile .bottomnav button{flex:0 0 auto;min-width:60px}
+body.m-mobile header .prezbtn[onclick]{display:none}
+</style>
 <div id="loadmsg">Chargement du simulateur en cours (environ 8 Mo : modèles PowerPoint, Excel et PDF)… Merci de patienter quelques secondes.</div>
 <main>
 <section class="panel left" id="secScen">
@@ -902,7 +924,7 @@ function route(){if(/^#ecran/i.test(location.hash))open(false);}route();window.a
       document.getElementById('vdLoop').addEventListener('click', function () { loop = !loop; this.classList.toggle('on', loop); mark(); prep(); if (loop && front.paused) front.play().catch(function () {}); });
       document.getElementById('vdFull').addEventListener('click', function () { var m = document.getElementById('vdMain'); try { (m.requestFullscreen || m.webkitRequestFullscreen).call(m); } catch (e) {} });
       A.src = P[0]; mark(); prep();
-      function hv() { if (/^#videos$/i.test(location.hash)) setTimeout(function () { var e = document.getElementById('secVid'); if (e) e.scrollIntoView({ block: 'start' }); }, 1500); }
+      function hv() { /* l’onglet Vidéos est ouvert par le menu (#videos) */ }
       hv(); window.addEventListener('hashchange', hv);
     })();
     </script>
@@ -949,6 +971,37 @@ function route(){if(/^#ecran/i.test(location.hash))open(false);}route();window.a
   </div>
 </section>
 </main>
+<script>
+(function () {
+  var TABS = { scenario: ['secScen', 'secRes'], intrants: ['secSim'], marche: ['secNet'], objectifs: ['secObj'], stand: ['secPros'], videos: ['secVid'], documents: ['secDocs'] };
+  var ALL = ['secScen', 'secRes', 'secSim', 'secNet', 'secObj', 'secPros', 'secVid', 'secDocs'];
+  var GO = { secScen: 'scenario', secRes: 'scenario', secSim: 'intrants', secNet: 'marche', secObj: 'objectifs', secPros: 'stand', secVid: 'videos', secDocs: 'documents' };
+  var main = document.querySelector('main'), cur = null;
+  var ROUTES = ['scenario', 'intrants', 'marche', 'objectifs', 'stand', 'videos', 'documents', 'tout'];
+  function setTab(t, scroll) {
+    if (!TABS[t] && t !== 'tout') t = 'scenario';
+    cur = t; var show = t === 'tout' ? ALL : TABS[t];
+    ALL.forEach(function (id) { var e = document.getElementById(id); if (e) e.classList.toggle('sk-hide', show.indexOf(id) < 0); });
+    main.classList.toggle('sk-one', show.indexOf('secScen') < 0);
+    [].slice.call(document.querySelectorAll('#skMenu [data-tab]')).forEach(function (b) { b.classList.toggle('on', b.dataset.tab === t); });
+    var on = document.querySelector('#skMenu .on'); if (on && on.scrollIntoView) try { on.scrollIntoView({ block: 'nearest', inline: 'center' }); } catch (e) { /* */ }
+    try { localStorage.setItem('sk_tab', t); } catch (e) { /* */ }
+    var hh = location.hash.slice(1).toLowerCase(); if ((hh === '' || ROUTES.indexOf(hh) >= 0) && hh !== t) { try { history.replaceState(null, '', '#' + t); } catch (e) { /* */ } }
+    setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 30);
+    if (scroll !== false) window.scrollTo({ top: 0 });
+  }
+  window.SK_TAB = setTab;
+  [].slice.call(document.querySelectorAll('#skMenu [data-tab]')).forEach(function (b) { b.addEventListener('click', function () { setTab(b.dataset.tab); }); });
+  /* barre du bas (téléphone) et boutons « aller à » : ouvrent l’onglet correspondant */
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('.bottomnav [data-go]');
+    if (b && GO[b.dataset.go]) { e.preventDefault(); e.stopPropagation(); setTab(GO[b.dataset.go]); var x = document.getElementById(b.dataset.go); if (x && cur === 'tout') x.scrollIntoView({ behavior: 'smooth' }); }
+  }, true);
+  function fromHash() { var h = location.hash.slice(1).toLowerCase(); if (ROUTES.indexOf(h) >= 0) { if (h !== cur) setTab(h); return true; } return false; }
+  window.addEventListener('hashchange', fromHash);
+  if (!fromHash()) { var t = 'scenario'; try { t = localStorage.getItem('sk_tab') || 'scenario'; } catch (e) { /* */ } setTab(t, false); }
+})();
+</script>
 <div id="skModal" class="skm" hidden><div class="skm-box"><div class="skm-hd"><b id="skModalT"></b><button id="skModalX" type="button" title="Fermer">✕</button></div><div id="skModalB"></div></div></div>
 <div id="borne" class="borne" hidden><div class="bk-top"><img src="assets/solevo_big.png" alt="SOLEVO"><img src="assets/logo_sisse.png" alt="SISSÊ~KABA"><span>Stand SOLEVO Côte d’Ivoire • SELAB SHOW 2026</span><button id="borneX" type="button" title="Quitter le mode borne">✕</button></div><div id="borneB" class="bk-b"></div></div>
 <div id="appel" class="appel" hidden><div class="ap-top"><img src="assets/solevo_big.png" alt="SOLEVO"><span>Stand SOLEVO Côte d’Ivoire • Tables d’entretien SISSÊ~KABA</span><button id="appelX" type="button" title="Fermer">✕</button></div><div id="apGauge" class="apgauge"></div><div id="appelB" class="ap-b"></div><div class="ap-foot">Merci de vous présenter à votre table quand votre nom s’affiche • Inscriptions sur la borne ou par QR code • Eau et café offerts à l’accueil</div></div>
