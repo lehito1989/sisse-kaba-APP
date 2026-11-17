@@ -467,194 +467,194 @@ et les éleveurs de Côte d'Ivoire, pour rendre le maïs disponible en permanenc
 l'alimentation animale.
 
 118
-00:06:49,779 --> 00:06:55,259
+00:06:49,920 --> 00:06:55,242
 Aujourd'hui, entre le champ et la mangeoire, les intermédiaires, revendeurs et négociants,
 
 119
-00:06:55,259 --> 00:06:59,339
-captent quarante à cinquante pour cent des marges des producteurs.
+00:06:55,242 --> 00:06:59,560
+ajoutent une majoration d'environ quarante pour cent du prix bord champ.
 
 120
-00:06:59,220 --> 00:07:01,819
+00:06:59,480 --> 00:07:02,040
 SISSÊ KABA fait sauter ce verrou.
 
 121
-00:07:01,699 --> 00:07:02,720
+00:07:01,920 --> 00:07:02,860
 Concrètement :
 
 122
-00:07:02,560 --> 00:07:06,920
-l'éleveur achète son maïs quinze pour cent moins cher que le prix du marché.
+00:07:02,699 --> 00:07:06,500
+le producteur reçoit quinze pour cent de plus que le prix bord champ.
 
 123
-00:07:06,800 --> 00:07:11,360
-Et le producteur vend son maïs trente pour cent plus cher qu'au prix du marché.
+00:07:06,379 --> 00:07:11,759
+Et l'éleveur paie son maïs environ quinze pour cent moins cher, transport et entrepôt compris.
 
 124
-00:07:11,399 --> 00:07:12,560
+00:07:11,600 --> 00:07:12,959
 Tout le monde y gagne.
 
 125
-00:07:12,839 --> 00:07:18,552
+00:07:13,139 --> 00:07:18,851
 Pour produire plus et mieux, SOLEVO accompagne les producteurs de maïs avec des semences,
 
 126
-00:07:18,552 --> 00:07:21,439
+00:07:18,851 --> 00:07:21,740
 des engrais et des produits phytosanitaires.
 
 127
-00:07:21,319 --> 00:07:25,161
+00:07:21,620 --> 00:07:25,461
 Et grâce à notre partenariat avec la microfinance ADVANS Côte d'Ivoire,
 
 128
-00:07:25,161 --> 00:07:29,805
+00:07:25,461 --> 00:07:30,105
 les producteurs accèdent plus facilement au financement de leurs intrants et de leurs
 
 129
-00:07:29,805 --> 00:07:30,680
+00:07:30,105 --> 00:07:30,980
 mises en place.
 
 130
-00:07:30,839 --> 00:07:32,019
+00:07:31,139 --> 00:07:32,319
 Notre ambition :
 
 131
-00:07:31,860 --> 00:07:36,882
+00:07:32,160 --> 00:07:37,182
 mille producteurs, pour environ trente mille tonnes de maïs, et trois mille éleveurs,
 
 132
-00:07:36,882 --> 00:07:39,660
+00:07:37,182 --> 00:07:39,959
 pour environ cinquante mille tonnes d'aliment.
 
 133
-00:07:39,540 --> 00:07:45,247
+00:07:39,839 --> 00:07:45,548
 SISSÊ KABA, c'est le segment SEED et le segment FEED de SOLEVO, main dans la main,
 
 134
-00:07:45,247 --> 00:07:46,779
+00:07:45,548 --> 00:07:47,079
 du champ à l'élevage.
 
 135
-00:07:51,879 --> 00:07:53,860
+00:07:52,180 --> 00:07:54,160
 Combinons maintenant les deux leviers :
 
 136
-00:07:53,699 --> 00:07:58,300
+00:07:54,000 --> 00:07:58,600
 le prémix MG2MIX et le maïs SISSÊ KABA, quinze pour cent moins cher.
 
 137
-00:07:58,519 --> 00:07:59,552
+00:07:58,819 --> 00:07:59,853
 Résultat :
 
 138
-00:07:59,406 --> 00:08:04,115
+00:07:59,706 --> 00:08:04,415
 un aliment fabriqué à la ferme qui revient trente à quarante pour cent moins cher que
 
 139
-00:08:04,115 --> 00:08:08,379
+00:08:04,415 --> 00:08:08,680
 l'aliment fini du commerce, en poulet de chair, en pondeuses comme en porcs.
 
 140
-00:08:08,449 --> 00:08:09,449
+00:08:08,750 --> 00:08:09,750
 Et les marges ?
 
 141
-00:08:09,410 --> 00:08:14,689
+00:08:09,709 --> 00:08:14,990
 En poulet de chair, le coût du kilo vif baisse, et la marge de l'éleveur augmente.
 
 142
-00:08:14,769 --> 00:08:19,529
+00:08:15,069 --> 00:08:19,829
 Pour les pondeuses, le coût de l'œuf baisse, et la marge par plaquette augmente.
 
 143
-00:08:19,680 --> 00:08:21,387
+00:08:20,105 --> 00:08:21,858
 Et le producteur de maïs ?
 
 144
-00:08:21,399 --> 00:08:23,738
+00:08:21,711 --> 00:08:24,129
 En vendant directement, sans intermédiaires,
 
 145
-00:08:23,738 --> 00:08:27,300
-il vend son maïs trente pour cent plus cher qu'au prix du marché :
+00:08:24,129 --> 00:08:27,425
+il reçoit quinze pour cent de plus que le prix bord champ :
 
 146
-00:08:27,139 --> 00:08:31,019
-c'est trente pour cent de revenu en plus sur chaque tonne livrée.
+00:08:27,264 --> 00:08:31,064
+c'est quinze pour cent de revenu en plus sur chaque tonne livrée.
 
 147
-00:08:30,860 --> 00:08:34,700
-Et l'éleveur, lui, paie son maïs quinze pour cent moins cher.
+00:08:30,944 --> 00:08:34,985
+Et l'éleveur, lui, paie son maïs environ quinze pour cent moins cher.
 
 148
-00:08:34,580 --> 00:08:37,076
+00:08:35,085 --> 00:08:37,581
 Ces pourcentages sont des simulations indicatives,
 
 149
-00:08:37,076 --> 00:08:40,173
+00:08:37,581 --> 00:08:40,677
 car les prix des intrants et des matières premières varient :
 
 150
-00:08:40,027 --> 00:08:43,720
+00:08:40,532 --> 00:08:44,225
 nos agents les recalculent avec vos propres prix et vos effectifs.
 
 151
-00:08:48,820 --> 00:08:51,919
+00:08:49,325 --> 00:08:52,424
 Éleveurs, provendiers, producteurs de maïs :
 
 152
-00:08:51,759 --> 00:08:55,000
+00:08:52,264 --> 00:08:55,504
 SOLEVO Côte d'Ivoire veut vous redonner le sourire.
 
 153
-00:08:54,840 --> 00:08:59,937
+00:08:55,345 --> 00:09:00,442
 Avec notre partenaire technique MG2MIX et notre partenaire financier ADVANS Côte d'Ivoire,
 
 154
-00:08:59,937 --> 00:09:03,279
+00:09:00,442 --> 00:09:03,784
 nous mettons la productivité au cœur de vos exploitations.
 
 155
-00:09:03,279 --> 00:09:05,000
+00:09:03,784 --> 00:09:05,504
 Rejoignez-nous dès aujourd'hui.
 
 156
-00:09:05,120 --> 00:09:09,964
+00:09:05,625 --> 00:09:10,469
 Passez au stand SOLEVO, échangez avec nos techniciens, faites calculer votre formule,
 
 157
-00:09:09,964 --> 00:09:12,299
+00:09:10,469 --> 00:09:12,804
 et profitez de la promotion SELAB SHOW :
 
 158
-00:09:12,139 --> 00:09:15,220
+00:09:12,644 --> 00:09:15,725
 jusqu'à deux mille francs de remise par sac de prémix.
 
 159
-00:09:15,100 --> 00:09:18,106
+00:09:15,605 --> 00:09:18,611
 Moins deux mille francs sur la ponte, jusqu'au trente novembre ;
 
 160
-00:09:17,932 --> 00:09:21,331
+00:09:18,437 --> 00:09:21,836
 moins deux mille francs sur le porc et moins mille francs sur le chair,
 
 161
-00:09:21,331 --> 00:09:22,960
+00:09:21,836 --> 00:09:23,465
 pendant les trois jours du salon.
 
 162
-00:09:22,840 --> 00:09:25,657
+00:09:23,345 --> 00:09:26,162
 Scannez le premier QR code pour commander en ligne,
 
 163
-00:09:25,657 --> 00:09:28,639
+00:09:26,162 --> 00:09:29,144
 et le second pour vous inscrire au projet SISSÊ KABA.
 
 164
-00:09:28,519 --> 00:09:30,320
+00:09:29,024 --> 00:09:30,825
 SOLEVO Côte d'Ivoire.
 
 165
-00:09:30,200 --> 00:09:32,320
+00:09:30,705 --> 00:09:32,825
 Dépensez moins, gagnez plus !
 
