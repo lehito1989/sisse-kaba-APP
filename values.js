@@ -130,14 +130,17 @@
     N.mktSplit = parts.map((p, i) => ({ label: lab[i], v: N.mkt27 * p / 49 }));
     parts.forEach((p, i) => { N['mktA' + (i + 1)] = N.mkt27 * p / 49; });
     // acteurs
-    N.prixProdAv = N.P * 0.5; N.prixProdAp = N.P * 0.65; N.prixAchAp = N.P * 0.85;
-    N.gainProdKg = N.P * 0.15; N.gainProdT = N.P * 150;
-    for (const [, y] of YRS) { N['gainP' + y] = N.gainProdT * N['mais' + y]; }
-    N.effetMaisAliment = 0.15 * N.txMais; // baisse max sur la part maïs de la formule
+    /* P = prix bord champ de référence (FCFA/kg). Avant : producteur 100 %, transport 15 %, entrepôt 5 %, majoration intermédiaire 40 % = 160 % de P.
+       Avec SISSÊ~KABA : producteur 115 %, transport 15 %, entrepôt 5 %, majoration 0 % = 135 % de P. */
+    N.prixProdAv = N.P; N.prixProdAp = N.P * 1.15; N.prixAchAv = N.P * 1.6; N.prixAchAp = N.P * 1.35;
+    N.transpKg = N.P * 0.15; N.entrepotKg = N.P * 0.05; N.majorKg = N.P * 0.4;
+    N.gainProdKg = N.P * 0.15; N.gainProdT = N.P * 150; N.econAchKg = N.P * 0.25; N.econAchT = N.P * 250;
+    for (const [, y] of YRS) { N['gainP' + y] = N.gainProdT * N['mais' + y]; N['econA' + y] = N.econAchT * N['mais' + y]; }
+    N.effetMaisAliment = 0.15625 * N.txMais; // baisse max sur la part maïs de la formule
     N.gainParProd = N.prod27 ? N.gainP27 / N.prod27 : 0;
     N.maisParProd = N.prod27 ? N.mais27 / N.prod27 : 0;
     N.alimParFerme = N.chair27 ? N.aliment27 / N.chair27 : 0;
-    N.econParFerme = N.chair27 ? N.gainP27 / N.chair27 : 0;
+    N.econParFerme = N.chair27 ? N.econA27 / N.chair27 : 0;
     N.ctrlOK = [g('Controles', 11, 'B'), g('Controles', 11, 'C'), g('Controles', 11, 'D')];
     N.ctrlTotal = 7;
 
@@ -152,11 +155,11 @@
       S['semences' + y] = fr(N['semences' + y] / 1000, 1); S['npk' + y] = fr(N['npk' + y] / 1000, 1); S['uree' + y] = fr(N['uree' + y] / 1000, 1);
       S['herb' + y] = fr(N['herb' + y]); S['insect' + y] = fr(N['insect' + y]);
       for (const k of ['caFeed', 'achFeed', 'mbFeed', 'caSeed', 'achSeed', 'mbSeed', 'ca', 'ach', 'mb', 'fixes', 'variables', 'charges', 'contrib', 'pertes', 'exced', 'amort', 'res', 'gainProd', 'econAch', 'solde', 'mkt', 'histFixe', 'hist', 'risqAmort',
-        'crF', 'crS', 'stF', 'stS', 'four', 'bfr', 'varBfr', 'capex', 'flux', 'bfrMaj', 'coussin', 'env', 'capSup', 'gainP'])
+        'crF', 'crS', 'stF', 'stS', 'four', 'bfr', 'varBfr', 'capex', 'flux', 'bfrMaj', 'coussin', 'env', 'capSup', 'gainP', 'econA'])
         S[k + y] = M(N[k + y]);
       for (const k of ['ca', 'res', 'bfr', 'env', 'flux', 'mb', 'mkt', 'solde', 'charges', 'caFeed', 'caSeed'])
         S[k + y + '_1'] = M(N[k + y], 1);
-      for (const k of ['caFeed', 'caSeed', 'mb', 'res', 'charges', 'mkt', 'ca', 'bfr', 'env', 'gainP'])
+      for (const k of ['caFeed', 'caSeed', 'mb', 'res', 'charges', 'mkt', 'ca', 'bfr', 'env', 'gainP', 'econA'])
         S[k + y + 'n'] = (N[k + y] / 1e6).toFixed(2); // valeurs brutes pour graphiques
       S['premix' + y + 'n'] = String(+N['premix' + y].toFixed(2));
       S['mais' + y + 'n'] = String(Math.round(N['mais' + y]));
@@ -226,8 +229,12 @@
     S.sensPrixCA = M(N.sensPrixCA); S.sensPrix = M(N.sensPrix); S.sensCouvCA = M(N.sensCouvCA); S.sensCouv = M(N.sensCouv);
     S.sensDelai = M(N.sensDelai); S.sensRisk = M(N.sensRisk); S.sensRdtHa = fr(N.sensRdtHa);
     for (let i = 1; i <= 6; i++) S['mktA' + i] = M(N['mktA' + i], 1);
-    S.P = fr(N.P); S.prixProdAv = fr(N.prixProdAv, 1); S.prixProdAp = fr(N.prixProdAp, 1); S.prixAchAp = fr(N.prixAchAp, 1);
-    S.gainProdKg = fr(N.gainProdKg, 1); S.gainProdT = fr(N.gainProdT);
+    const f1 = (x) => fr(x, Math.abs(x - Math.round(x)) < 1e-9 ? 0 : 1);
+    S.P = fr(N.P); S.prixProdAv = f1(N.prixProdAv); S.prixProdAp = f1(N.prixProdAp); S.prixAchAv = f1(N.prixAchAv); S.prixAchAp = f1(N.prixAchAp);
+    S.transpKg = f1(N.transpKg); S.entrepotKg = f1(N.entrepotKg); S.majorKg = f1(N.majorKg);
+    S.gainProdKg = f1(N.gainProdKg); S.gainProdT = fr(N.gainProdT); S.econAchKg = f1(N.econAchKg); S.econAchT = fr(N.econAchT);
+    S.pctProd = '+15 %'; S.pctEleveur = '−15,6 %';
+    S.prixProdApT = fr(N.prixProdAp * 1000); S.transpT = fr(N.transpKg * 1000); S.entrepotT = fr(N.entrepotKg * 1000); S.prixAchApT = fr(N.prixAchAp * 1000); S.prixAchAvT = fr(N.prixAchAv * 1000);
     S.gainParProd = M(N.gainParProd, 2); S.maisParProd = fr(N.maisParProd, 1); S.alimParFerme = fr(N.alimParFerme, 0); S.econParFerme = M(N.econParFerme, 2);
     S.gainParProdF = fr(N.gainParProd); S.econParFermeF = fr(N.econParFerme);
     S.effetMaisAliment = pct(N.effetMaisAliment, 0);
@@ -266,7 +273,7 @@
       S.alimAnChair = fr(aC, 0); S.alimAnPonte = fr(aP, 0); S.alimAnPorc = fr(aK, 0);
       S.sacsAnChair = fr(aC / asC, 0); S.sacsAnPonte = fr(aP / asP, 0); S.sacsAnPorc = fr(aK / asK, 0);
       S.maisAnChair = fr(aC * N.txMais, 0); S.maisAnPonte = fr(aP * N.txMais, 0); S.maisAnPorc = fr(aK * N.txMais, 0);
-      S.econAnChair = M(aC * N.txMais * 1000 * (N.P - N.prixAchAp), 2); S.econAnPonte = M(aP * N.txMais * 1000 * (N.P - N.prixAchAp), 2); S.econAnPorc = M(aK * N.txMais * 1000 * (N.P - N.prixAchAp), 2);
+      S.econAnChair = M(aC * N.txMais * 1000 * (N.prixAchAv - N.prixAchAp), 2); S.econAnPonte = M(aP * N.txMais * 1000 * (N.prixAchAv - N.prixAchAp), 2); S.econAnPorc = M(aK * N.txMais * 1000 * (N.prixAchAv - N.prixAchAp), 2);
       const recAv = N.tHa * 1000 * N.prixProdAv, recAp = N.tHa * 1000 * N.prixProdAp;
       S.recHaAv = fr(recAv, 0); S.recHaAp = fr(recAp, 0); S.gainHa = fr(recAp - recAv, 0); S.gainHa5 = M((recAp - recAv) * N.surf, 2);
     }

@@ -53,15 +53,47 @@
   ];
 
   const s3 = [
-    { h1: '3 Proposition de valeur pour les acteurs' },
-    { p: 'La répartition ci-dessous reprend le schéma économique fourni par le porteur du projet. Il s’agit d’un objectif de redistribution de la valeur à tester par corridor, et non d’une statistique de marché vérifiée. Toutes les parts ont pour référence le prix ancien payé par l’acheteur, noté P.' },
-    T(['Poste pour 100 de prix ancien', 'Avant', 'Avec projet'], [
-      ['Prix bord champ producteur', '50', '65'], ['Emballage et stockage', '5', '5'], ['Transport', '15', '15'], ['Part intermédiaire', '30', '0'], ['Prix payé par moulin ou éleveur', '100', '85']], [3, 1, 1]),
-    { p: 'Le producteur reçoit 15 points de P supplémentaires : ses recettes brutes par kilogramme augmentent de 30 %. L’acheteur économise 15 % sur le maïs. Cette baisse ne représente pas 15 % du coût total de l’aliment fini : les autres composants et coûts de fabrication restent distincts.' },
-    { h2: 'Illustration avec un ancien prix de {{P}} FCFA par kilogramme' },
-    { p: 'Le prix producteur passe de {{prixProdAv}} à {{prixProdAp}} FCFA/kg et le prix acheteur de {{P}} à {{prixAchAp}} FCFA/kg. L’écart est de {{gainProdKg}} FCFA/kg, soit {{gainProdT}} FCFA/t pour chacun. Sur {{mais27}} tonnes, cela représente {{gainP27}} millions FCFA de recettes brutes supplémentaires pour les producteurs et autant d’économies pour les acheteurs. Le prix P est illustratif et ne constitue pas une cotation.' },
-    { h2: 'Conditions de réalisation' },
-    { p: 'Comparer des lots de même qualité, au même lieu et à la même période, sur la même base de taxes. Vérifier les coûts réels de transport, d’emballage, de séchage, de stockage, de pertes, de contrôle et de financement. La suppression d’un intermédiaire ne supprime pas ses fonctions : elles doivent être reprises, financées et documentées. Ces gains ne sont pas des revenus SOLEVO.' },
+    { h1: '3 Fonctionnement et partage de valeur' },
+    { p: 'SISSÊ~KABA relie directement les producteurs de maïs aux éleveurs et fabricants d’aliments. SOLEVO coordonne les segments SEED et FEED, accompagne les acteurs et vend ses semences, intrants et produits de nutrition animale. SOLEVO n’achète pas le maïs pour le revendre pour son propre compte.' },
+    { h2: 'Qui fait quoi' },
+    T(['Acteur', 'Responsabilité principale'], [
+      ['Producteurs et coopératives', 'Déclarer surfaces et récoltes, produire, livrer un maïs conforme et respecter les engagements.'],
+      ['SOLEVO SEED et FEED', 'Fournir intrants et prémix, accompagner les acteurs et coordonner le programme via la plateforme.'],
+      ['ADVANS', 'Partenaire SEED existant de SOLEVO : étudier le financement et organiser les règlements selon les accords du projet.'],
+      ['Entrepôts et transporteurs', 'Réceptionner, peser, contrôler, conserver, tracer et livrer les lots selon les prestations convenues.'],
+      ['Éleveurs et fabricants d’aliments', 'Déclarer les besoins, respecter le contrat FEED et payer les commandes avant leur exécution.']], [2, 4]),
+    { h2: 'Le financement des intrants avec ADVANS' },
+    { p: 'Le producteur déclare ses superficies, ses besoins en semences et intrants, son calendrier cultural et sa production prévisionnelle. SOLEVO SEED établit l’offre correspondante. ADVANS étudie la demande selon ses critères ; après accord et signature, le financement peut régler la facture d’intrants SOLEVO. Le remboursement peut être retenu sur les ventes de maïs, uniquement avec l’autorisation contractuelle du producteur.' },
+    { h2: 'Le circuit du maïs et de l’argent' },
+    T(['Étape', 'Ce qui se passe'], [
+      ['1. Commande et vérification', 'Disponibilité du lot, conformité, prix, délai et éligibilité de l’éleveur.'],
+      ['2. Paiement', 'L’éleveur règle sa commande par le circuit convenu avec ADVANS.'],
+      ['3. Validation', 'Les fonds sont confirmés avant tout règlement.'],
+      ['4. Règlement du producteur', 'Sa rémunération, après déduction du remboursement de financement expressément autorisé.'],
+      ['5. Livraison', 'Sortie du lot de l’entrepôt et transport vers l’éleveur.'],
+      ['6. Règlement des prestations', 'Transport et charges d’entrepôt payés sur justificatifs.']], [2, 4]),
+    { p: 'Le dépôt du maïs en entrepôt ne déclenche pas, à lui seul, le paiement du producteur. Le dispositif ne suppose pas qu’ADVANS préfinance l’achat des stocks de maïs.' },
+    { h2: 'Le partage du prix du maïs' },
+    { p: 'P désigne le prix bord champ de référence du maïs, en FCFA/kg. Tous les pourcentages sont calculés sur P. La référence « avant » est une hypothèse de comparaison, à vérifier à qualité, période et lieu de livraison équivalents.' },
+    T(['Poste, en % de P', 'Avant', 'Avec SISSÊ~KABA'], [
+      ['Producteur', '100 %', '115 %'], ['Transport', '15 %', '15 %'], ['Entrepôt', '5 %', '5 %'], ['Majoration intermédiaire', '40 %', '0 %'], ['Prix payé par l’éleveur', '160 %', '135 %']], [3, 1, 1.4]),
+    { p: 'La suppression de la majoration intermédiaire (40 % de P) apporte 15 % de P supplémentaires au producteur (+15 %) et 25 % de P d’économie à l’éleveur, soit 15,6 % de son prix d’achat avant projet. Aucun solde, aucune réserve et aucune commission ne sont conservés. La baisse porte sur le maïs, pas sur le coût total de l’aliment fini.' },
+    { h2: 'Exemple avec P = {{P}} FCFA par kilogramme' },
+    T(['Affectation', 'FCFA par kg', 'FCFA par tonne'], [
+      ['Producteur', '{{prixProdAp}}', '{{prixProdApT}}'], ['Transport', '{{transpKg}}', '{{transpT}}'], ['Entrepôt', '{{entrepotKg}}', '{{entrepotT}}'],
+      ['Prix payé par l’éleveur', '{{prixAchAp}}', '{{prixAchApT}}'], ['Référence avant projet', '{{prixAchAv}}', '{{prixAchAvT}}'], ['Économie de l’éleveur', '{{econAchKg}}', '{{econAchT}}']], [3, 1.2, 1.4]),
+    { p: 'Le producteur reçoit {{gainProdT}} FCFA de plus par tonne, avant remboursement éventuel de son financement ; l’éleveur économise {{econAchT}} FCFA par tonne. Sur {{mais27}} tonnes en 2027 : {{gainP27}} millions FCFA en plus pour les producteurs et {{econA27}} millions FCFA d’économies pour les éleveurs. Ces montants restent distincts du chiffre d’affaires de SOLEVO.' },
+    { h2: 'Les règles du programme' },
+    { p: 'Stocks réels et traçables : tout maïs livré passe par un entrepôt où il est réceptionné, pesé, identifié et contrôlé ; seuls les lots acceptés sont proposés ; les quantités réservées sont déduites. Les stocks réceptionnés sont prioritaires ; les collectes complémentaires sont programmées cinq à sept jours avant livraison.' },
+    { p: 'Éligibilité des éleveurs : l’accès aux conditions du programme est lié au contrat FEED, avec un seuil proposé d’au moins 80 % des engagements d’achat échus et des échéances de paiement respectées. Une non-conformité bloque la commande avant paiement.' },
+    { p: 'Enveloppe entrepôt de 5 % de P : elle couvre les charges convenues et justifiées (réception, manutention, stockage, occupation, autres frais retenus), sans double comptage. Sa suffisance sera vérifiée pendant le pilote. Les frais financiers éventuels sont explicités contractuellement et ne sont pas ajoutés à la grille.' },
+    { h2: 'À formaliser avant le pilote' },
+    T(['Domaine', 'Décision ou preuve attendue'], [
+      ['Financement et règlements', 'Convention ADVANS, autorisations de retenue, frais et délais de paiement.'],
+      ['Stocks et qualité', 'Propriété des lots, transfert des risques, critères d’acceptation, pertes et assurance.'],
+      ['Prestations logistiques', 'Périmètre des coûts, contrats entrepôts et transporteurs, preuves de service.'],
+      ['Relations commerciales', 'Contrats producteurs et éleveurs, engagements FEED, procédure de réclamation.'],
+      ['Suivi du pilote', 'Tonnes acceptées et livrées, délais, conformité, paiements et coûts réels.']], [2, 4]),
   ];
 
   const s4 = [
@@ -250,7 +282,7 @@
       ['Gain additionnel', 'Historique ventes et marges des clients participants.'],
       ['Contrats et données', 'Revue juridique et procédures internes avant signature.']], [1.6, 3.4]),
     { h2: 'Utilisation du modèle Excel' },
-    { p: 'Hypotheses contient les cellules bleues modifiables : B5 pour l’objectif prémix 2027, C52 et D52 pour la croissance 2028 et 2029. Previsions calcule volumes, intrants et résultat ; Tresorerie le BFR et les ressources ; Suivi sert à saisir les réalisations ; Gains acteurs reçoit en B3 un prix ancien comparable ; Controles vérifie la cohérence ({{ctrl27}} contrôles OK en 2027). Les documents Word, PDF et PowerPoint sont des synthèses figées à régénérer après modification.' },
+    { p: 'Hypotheses contient les cellules bleues modifiables : B5 pour l’objectif prémix 2027, C52 et D52 pour la croissance 2028 et 2029. Previsions calcule volumes, intrants et résultat ; Tresorerie le BFR et les ressources ; Suivi sert à saisir les réalisations ; Gains acteurs reçoit en B3 le prix bord champ de référence P ; Controles vérifie la cohérence ({{ctrl27}} contrôles OK en 2027). Les documents Word, PDF et PowerPoint sont des synthèses figées à régénérer après modification.' },
     { h2: 'Sources et méthode' },
     { bullets: ['[1] FIRCA, Filière maïs, https://firca.ci/filieres-agricoles/mais/ — source de contexte national.', '[2] Gouvernement de Côte d’Ivoire, Bilan 2011–2025 — production de maïs 2024.', '[3] Données du porteur : conversion prémix, prix du sac, taux de marge, incorporation du maïs, partage de valeur, fourniture IT, budget IT et marketing. Autres paramètres : hypothèses de planification à confirmer.'] },
   ];
@@ -320,8 +352,8 @@
       { p: 'Résultat avant financement et impôt = marge brute {{mb27}} − charges {{charges27}} − risque clients {{pertes27}} − amortissements {{amort27}} = {{res27}} M (≈ {{res27E}}) FCFA (≈ {{res27E}}). Le risque clients correspond à {{pertesPct}} du CA de {{ca27}} M (≈ {{ca27E}}). BFR normatif 2027 : {{bfr27}} M ; enveloppe indicative de ressources : {{env27}} M.' },
       T(['Valeurs par tonne de maïs livré', 'FCFA par tonne'], [['CA FEED', '{{caFeedT}}'], ['CA SEED', '{{caSeedT}}'], ['Marge brute FEED', '{{mbFeedT}}'], ['Marge brute SEED', '{{mbSeedT}}'], ['CA combiné', '{{caT}}'], ['Marge brute combinée', '{{mbT}}']], [3, 1.4]),
       { h2: 'Mode opératoire' },
-      { p: 'Dans Hypotheses, modifier le prémix en B5 pour 2027 et la croissance en C52 (2028) et D52 (2029). Les volumes, ventes, marges et besoins de trésorerie se recalculent. Suivi reçoit le réalisé ; Gains acteurs reçoit un prix ancien comparable P en B3 ; Controles vérifie la cohérence des formules.' },
-      { p: 'Le partage de valeur vise producteur 65 % de P et acheteur 85 % de P : +30 % de recettes brutes au producteur et −15 % sur le prix du maïs à l’acheteur, sous conditions comparables et accords signés. Aucun gain de maïs n’est ajouté au CA SOLEVO.' },
+      { p: 'Dans Hypotheses, modifier le prémix en B5 pour 2027 et la croissance en C52 (2028) et D52 (2029). Les volumes, ventes, marges et besoins de trésorerie se recalculent. Suivi reçoit le réalisé ; Gains acteurs reçoit le prix bord champ de référence P en B3 ; Controles vérifie la cohérence des formules.' },
+      { p: 'Partage du prix du maïs (P = prix bord champ) : producteur 115 % de P au lieu de 100 % (+15 %), éleveur 135 % de P au lieu de 160 % (−15,6 %), transport 15 % et entrepôt 5 % inchangés, majoration intermédiaire de 40 % supprimée. Aucun montant de maïs n’est ajouté au CA SOLEVO.' },
     ] },
     { id: 'ns', folder: '06_Dossier_et_notes', file: 'SISSE_KABA_Note_Synthese', title: 'Note de synthèse du projet SISSÊ~KABA', subtitle: 'SISSÊ~KABA • SOLEVO Côte d’Ivoire', header: 'NOTE DE SYNTHÈSE', blocks: [
       { p: SELAB }, { p: 'Scénario : {{scenario}}.', style: 'accent' },
@@ -362,7 +394,7 @@
       partners: ['Producteurs, coopératives, éleveurs et industriels du réseau.', 'Fournisseurs de prémix et d’intrants agricoles.', 'Stockeurs, transporteurs et laboratoires de contrôle.', 'Organismes d’appui, financeurs et assureurs à mobiliser.'],
       activities: ['Qualifier la demande FEED et les besoins en maïs.', 'Accompagner la production et commercialiser les intrants.', 'Vérifier les lots et rapprocher offre et demande.', 'Coordonner contrats, livraisons et règlements.'],
       resources: ['Équipes FEED et SEED et leurs portefeuilles clients.', 'Prémix et intrants disponibles.', 'Plateforme IT SOLEVO-CI : parcelles, lots, besoins.', 'Contrôle qualité, logistique et trésorerie.'],
-      value: ['Producteurs : débouchés organisés, intrants adaptés, accompagnement.', 'Éleveurs et moulins : lots identifiés, approvisionnement planifié, offre prémix.', 'Base 100 : producteur 50 → 65 ; acheteur 100 → 85.', '+30 % de recettes brutes/kg producteur ; −15 % sur le prix du maïs acheteur (conditionnel).'],
+      value: ['Producteurs : débouchés organisés, intrants adaptés, accompagnement.', 'Éleveurs et moulins : lots identifiés, approvisionnement planifié, offre prémix.', 'Prix en % du prix bord champ P : producteur 100 → 115 ; éleveur 160 → 135.', '+15 % pour le producteur ; −15,6 % sur le maïs pour l’éleveur ; majoration intermédiaire de 40 % supprimée.'],
       relations: ['Référent technique et commercial.', 'Contrats cadres et fiches de transaction.', 'Information sur lots, prix et livraisons.', 'Suivi des engagements et paiements.'],
       channels: ['Équipes terrain FEED et SEED.', 'Réseau commercial SOLEVO-CI.', 'Plateforme fournie par l’IT SOLEVO-CI.', 'Lancement SELAB SHOW 20–22 nov. 2026.'],
       segments: ['Éleveurs et fabricants d’aliments à la ferme.', 'Fabricants industriels (prospects, sans engagement).', 'Producteurs et coopératives de maïs.', 'Cible 2027 : {{prod27}} producteurs de {{surf}} ha et {{chair27}} élevages chair équivalents.'],

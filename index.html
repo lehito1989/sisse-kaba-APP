@@ -640,6 +640,7 @@ function route(){if(/^#ecran/i.test(location.hash))open(false);}route();window.a
   <img src="assets/logo_sisse.jpg" alt="SISSÊ~KABA" class="lsisse" style="height:46px">
 </header>
 <nav id="skMenu" aria-label="Menu principal">
+  <button type="button" data-tab="projet">◆ Le projet en bref</button>
   <button type="button" data-tab="scenario">⚙ Scénario &amp; résultats</button>
   <button type="button" data-tab="intrants">✦ Intrants SEED / FEED</button>
   <button type="button" data-tab="marche">% Marché &amp; dépôts</button>
@@ -746,6 +747,70 @@ body.m-mobile header .prezbtn[onclick]{display:none}
 </script>
 
 <section>
+  <div class="panel" id="secPrj">
+    <h2>SISSÊ~KABA en bref</h2>
+    <p class="note">Le projet relie directement les producteurs de maïs et les éleveurs. SOLEVO coordonne, fournit les semences, intrants et prémix ; il n’achète pas le maïs pour le revendre.</p>
+    <style>
+      .pj-k{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:12px 0}
+      .pj-k div{background:#F4F7FB;border-left:5px solid var(--green);border-radius:10px;padding:12px 14px}
+      .pj-k b{display:block;font-size:30px;color:var(--navy);line-height:1.1}.pj-k span{font-size:13.5px;color:#3c4a5c}
+      .pj-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0 14px;counter-reset:st}
+      .pj-steps div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px}
+      .pj-steps div b{display:block;color:var(--navy);margin-bottom:3px}
+      .pj-steps div b::before{counter-increment:st;content:counter(st);display:inline-block;width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;text-align:center;line-height:22px;margin-right:6px;font-size:12px}
+      .pj-t{width:100%;border-collapse:collapse;font-size:14px;margin:6px 0}
+      .pj-t th,.pj-t td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:right}
+      .pj-t th:first-child,.pj-t td:first-child{text-align:left}
+      .pj-t thead th{background:var(--navy);color:#fff}
+      .pj-t tr.tot td{font-weight:800;color:var(--navy);background:#EEF4FB}
+      .pj-t td.cut{color:#c0392b;text-decoration:line-through}
+      .pj-grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+      .pj-box{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff}
+      .pj-box h3{margin:0 0 6px;color:var(--navy);font-size:16px}
+      .pj-box ul{margin:4px 0 0 18px;padding:0;font-size:14px}.pj-box li{margin:3px 0}
+    </style>
+    <div class="pj-k">
+      <div><b>+15 %</b><span>pour le producteur : il reçoit 115 % du prix bord champ P au lieu de 100 %</span></div>
+      <div><b>−15,6 %</b><span>pour l’éleveur : il paie 135 % de P au lieu de 160 %</span></div>
+      <div><b>0 %</b><span>de majoration intermédiaire : les 40 % de P sont supprimés et redistribués</span></div>
+    </div>
+    <h3 style="margin:14px 0 4px">Le partage du prix du maïs</h3>
+    <p class="note" id="prjP">P = prix bord champ de référence du maïs.</p>
+    <div class="tw"><table class="pj-t" id="prjTable"><thead><tr><th>Poste</th><th>Avant</th><th>Avec SISSÊ~KABA</th><th>Avant (FCFA/kg)</th><th>Avec (FCFA/kg)</th></tr></thead><tbody></tbody></table></div>
+    <p class="note" id="prjGain"></p>
+    <h3 style="margin:14px 0 4px">Le circuit du maïs et de l’argent</h3>
+    <div class="pj-steps">
+      <div><b>Commande</b>Lot disponible et conforme, prix, délai et éleveur éligible vérifiés.</div>
+      <div><b>Paiement</b>L’éleveur paie par le circuit convenu avec ADVANS.</div>
+      <div><b>Validation</b>Les fonds sont confirmés avant tout règlement.</div>
+      <div><b>Producteur payé</b>Sa rémunération, moins le remboursement de crédit qu’il a autorisé.</div>
+      <div><b>Livraison</b>Sortie du lot de l’entrepôt et transport vers l’éleveur.</div>
+      <div><b>Prestataires</b>Transport et entrepôt payés sur justificatifs.</div>
+    </div>
+    <div class="pj-grid2">
+      <div class="pj-box"><h3>Qui fait quoi</h3><ul>
+        <li><b>Producteurs :</b> déclarent surfaces et récoltes, livrent un maïs conforme.</li>
+        <li><b>SOLEVO SEED et FEED :</b> intrants, prémix, accompagnement, coordination par la plateforme.</li>
+        <li><b>ADVANS :</b> étudie le financement des intrants et organise les règlements.</li>
+        <li><b>Entrepôts et transporteurs :</b> réception, pesée, contrôle, stockage, livraison.</li>
+        <li><b>Éleveurs :</b> déclarent leurs besoins, respectent le contrat FEED, paient avant livraison.</li></ul></div>
+      <div class="pj-box"><h3>Le financement des intrants (ADVANS)</h3><ul>
+        <li>Le producteur déclare ses besoins ; SOLEVO SEED établit l’offre.</li>
+        <li>ADVANS étudie le dossier et, après accord, règle la facture d’intrants SOLEVO.</li>
+        <li>Remboursement retenu sur la vente du maïs, avec l’autorisation écrite du producteur.</li>
+        <li>ADVANS ne préfinance pas l’achat des stocks de maïs.</li></ul></div>
+      <div class="pj-box"><h3>Les règles du programme</h3><ul>
+        <li>Tout maïs passe par un entrepôt : réceptionné, pesé, identifié, contrôlé.</li>
+        <li>Stocks en entrepôt prioritaires ; collectes complémentaires 5 à 7 jours avant livraison.</li>
+        <li>Éleveur éligible : au moins 80 % de ses engagements FEED échus respectés.</li>
+        <li>Le dépôt en entrepôt ne déclenche pas, à lui seul, le paiement du producteur.</li></ul></div>
+      <div class="pj-box"><h3>Ce que gagne SOLEVO</h3><ul>
+        <li>Plus de ventes SEED auprès des producteurs et FEED auprès des éleveurs.</li>
+        <li>Les paiements du maïs, du transport et de l’entrepôt restent hors de son chiffre d’affaires.</li>
+        <li>Aucune réserve ni commission n’est conservée sur le maïs.</li></ul></div>
+    </div>
+    <p class="note" style="margin-top:10px">Référence « avant » à vérifier à qualité, période et lieu de livraison équivalents. Modalités (financement, stocks, qualité, litiges) précisées dans les conventions du programme. Document détaillé : onglet Documents, « Stratégie de fonctionnement : ADVANS et répartition du prix du maïs ».</p>
+  </div>
   <div class="panel" id="secRes">
     <div class="scen"><div>Scénario actif : <b id="scenarioName"></b></div></div>
     <div class="kpis" id="kpis"></div>
@@ -979,11 +1044,11 @@ body.m-mobile header .prezbtn[onclick]{display:none}
 </main>
 <script>
 (function () {
-  var TABS = { scenario: ['secScen', 'secRes'], intrants: ['secSim'], marche: ['secNet'], objectifs: ['secObj'], stand: ['secPros'], videos: ['secVid'], documents: ['secDocs'] };
-  var ALL = ['secScen', 'secRes', 'secSim', 'secNet', 'secObj', 'secPros', 'secVid', 'secDocs'];
-  var GO = { secScen: 'scenario', secRes: 'scenario', secSim: 'intrants', secNet: 'marche', secObj: 'objectifs', secPros: 'stand', secVid: 'videos', secDocs: 'documents' };
+  var TABS = { projet: ['secPrj'], scenario: ['secScen', 'secRes'], intrants: ['secSim'], marche: ['secNet'], objectifs: ['secObj'], stand: ['secPros'], videos: ['secVid'], documents: ['secDocs'] };
+  var ALL = ['secPrj', 'secScen', 'secRes', 'secSim', 'secNet', 'secObj', 'secPros', 'secVid', 'secDocs'];
+  var GO = { secPrj: 'projet', secScen: 'scenario', secRes: 'scenario', secSim: 'intrants', secNet: 'marche', secObj: 'objectifs', secPros: 'stand', secVid: 'videos', secDocs: 'documents' };
   var main = document.querySelector('main'), cur = null;
-  var ROUTES = ['scenario', 'intrants', 'marche', 'objectifs', 'stand', 'videos', 'documents', 'tout'];
+  var ROUTES = ['projet', 'scenario', 'intrants', 'marche', 'objectifs', 'stand', 'videos', 'documents', 'tout'];
   function setTab(t, scroll) {
     if (!TABS[t] && t !== 'tout') t = 'scenario';
     cur = t; var show = t === 'tout' ? ALL : TABS[t];
@@ -1028,7 +1093,7 @@ body.m-mobile header .prezbtn[onclick]{display:none}
   }, true);
   function fromHash() { var h = location.hash.slice(1).toLowerCase(); if (ROUTES.indexOf(h) >= 0) { if (h !== cur) setTab(h); return true; } return false; }
   window.addEventListener('hashchange', fromHash);
-  if (!fromHash()) { var t = 'scenario'; try { t = localStorage.getItem('sk_tab') || 'scenario'; } catch (e) { /* */ } setTab(t, false); }
+  if (!fromHash()) { var t = 'scenario'; try { t = localStorage.getItem('sk_tab') || 'projet'; } catch (e) { /* */ } setTab(t, false); }
 })();
 </script>
 <div id="skModal" class="skm" hidden><div class="skm-box"><div class="skm-hd"><b id="skModalT"></b><button id="skModalX" type="button" title="Fermer">✕</button></div><div id="skModalB"></div></div></div>

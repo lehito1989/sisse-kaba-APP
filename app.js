@@ -42,7 +42,7 @@
     { g: 'Marché Côte d’Ivoire', k: 'B58', lab: 'Ventes actuelles de prémix SOLEVO (hors programme)', unit: 't/an', min: 0, max: 20000, step: 50, apply: 'all' },
     { g: 'Marché Côte d’Ivoire', k: 'B59', lab: 'Part des ventes de prémix : chair', unit: '%', pct: true, min: 0, max: 100, step: 0.5, apply: 'all' },
     { g: 'Marché Côte d’Ivoire', k: 'B69', lab: 'Part des ventes de prémix : porcin (reste : pondeuse)', unit: '%', pct: true, min: 0, max: 100, step: 0.5, apply: 'all' },
-    { g: 'Acteurs', k: 'GB3', lab: 'Prix ancien du maïs P (illustratif)', unit: 'FCFA/kg', min: 50, max: 500, step: 5, apply: 'gains' },
+    { g: 'Acteurs', k: 'GB3', lab: 'Prix bord champ de référence P (illustratif)', unit: 'FCFA/kg', min: 25, max: 300, step: 5, apply: 'gains' },
   ];
   const PRESETS = {
     s2: { label: 'Scénario 2 : 500 t, croissance 10 %/an', set: {} },
@@ -140,6 +140,8 @@
   }
 
   /* ---------- rendu ---------- */
+  /* P était le prix acheteur (base 100 = 200 FCFA/kg) ; il devient le prix bord champ : on convertit les anciens scénarios enregistrés */
+  function migP(h, x) { h = Object.assign({}, h || {}); if (!(x && x.pBordChamp) && h['Gains acteurs!B3'] != null) h['Gains acteurs!B3'] = +(h['Gains acteurs!B3'] * 0.5).toFixed(2); delete h['Hypotheses!B40']; delete h['Hypotheses!C40']; delete h['Hypotheses!D40']; return h; }
   function leverValue(L) {
     if (L.k === 'GB3') return state.hyp['Gains acteurs!B3'];
     if (L.apply === 'seedall') return +(((state.values && state.values['Hypotheses!B17']) || 0) * 100).toFixed(2);
@@ -290,7 +292,13 @@
     const ok = N.ctrlOK.every((x) => x === N.ctrlTotal);
     $('#ctrl').className = 'ctrl ' + (ok ? 'ok' : 'ko');
     $('#ctrl').textContent = ok ? '✓ 7/7 contrôles de cohérence OK sur 2027, 2028 et 2029' : '⚠ Un contrôle de cohérence signale un écart : vérifier les hypothèses avancées';
-    $('#gains').innerHTML = `Avec P = <b>${S.P} FCFA/kg</b> : producteur ${S.prixProdAv} → <b>${S.prixProdAp}</b> FCFA/kg (+30 %), acheteur ${S.P} → <b>${S.prixAchAp}</b> FCFA/kg (−15 %). Sur ${S.mais27} t en 2027 : <b>${S.gainP27} M FCFA</b> de recettes brutes en plus pour les producteurs et autant d’économies pour les acheteurs. <em>Gains conditionnels, jamais ajoutés au CA SOLEVO.</em>`;
+    $('#gains').innerHTML = `<b>Partage du prix du maïs</b> (P = prix bord champ = <b>${S.P} FCFA/kg</b>) : sans intermédiaire, le producteur reçoit <b>${S.prixProdAp}</b> au lieu de ${S.prixProdAv} FCFA/kg (<b>+15 %</b>) et l’éleveur paie <b>${S.prixAchAp}</b> au lieu de ${S.prixAchAv} FCFA/kg (<b>−15,6 %</b>), transport (${S.transpKg}) et entrepôt (${S.entrepotKg}) compris. Sur ${S.mais27} t en 2027 : <b>${S.gainP27} M FCFA</b> en plus pour les producteurs et <b>${S.econA27} M FCFA</b> d’économies pour les éleveurs. <em>Montants indicatifs, hors chiffre d’affaires SOLEVO : SOLEVO ne revend pas le maïs.</em>`;
+    { const tb = $('#prjTable tbody'); if (tb) {
+      const rows = [['Producteur', '100 %', '115 %', S.prixProdAv, S.prixProdAp], ['Transport', '15 %', '15 %', S.transpKg, S.transpKg], ['Entrepôt', '5 %', '5 %', S.entrepotKg, S.entrepotKg], ['Majoration intermédiaire', '40 %', '0 %', S.majorKg, '0']];
+      tb.innerHTML = rows.map((r, i) => `<tr><td>${r[0]}</td><td${i === 3 ? '' : ''}>${r[1]}</td><td>${r[2]}</td><td${i === 3 ? ' class="cut"' : ''}>${r[3]}</td><td>${r[4]}</td></tr>`).join('') + `<tr class="tot"><td>Prix payé par l’éleveur</td><td>160 %</td><td>135 %</td><td>${S.prixAchAv}</td><td>${S.prixAchAp}</td></tr>`;
+      $('#prjP').innerHTML = `P = prix bord champ de référence du maïs : <b>${S.P} FCFA/kg</b> dans ce scénario (modifiable dans l’onglet Scénario).`;
+      $('#prjGain').innerHTML = `Par tonne : <b>+${S.gainProdT} FCFA</b> pour le producteur (avant remboursement éventuel de son crédit) et <b>−${S.econAchT} FCFA</b> pour l’éleveur. En 2027, sur ${S.mais27} t : <b>${S.gainP27} M FCFA</b> en plus pour les producteurs et <b>${S.econA27} M FCFA</b> d’économies pour les éleveurs.`;
+    } }
     syncInputs();
     renderSim();
     renderObj();
@@ -645,7 +653,7 @@
         c.type = $('#pcType').value; c.n = parseFloat($('#pcN').value) || 0;
         const a = c.type === 'chair' ? c.n * N.kgPoulet * N.cycles / 1000 : c.type === 'pondeuse' ? c.n * N.pondJour * 365 / 1000 : c.n * N.kgPorc / 1000;
         const incl = { chair: N.inclChair, pondeuse: N.inclPonte, porc: N.inclPorc }[c.type];
-        const sacs = a / (N.sacKg / 1000 / incl), mais = a * N.txMais, eco = mais * 1000 * (N.P - N.prixAchAp);
+        const sacs = a / (N.sacKg / 1000 / incl), mais = a * N.txMais, eco = mais * 1000 * (N.prixAchAv - N.prixAchAp);
         c.res = { type: { chair: 'Poulets de chair', pondeuse: 'Pondeuses', porc: 'Porcs' }[c.type], q: c.n, u: { chair: 'places', pondeuse: 'têtes', porc: 'porcs/an' }[c.type], aliment: a, sacs, mais, eco };
         cells = [[fr(a, 1) + ' t', 'd’aliment par an'], [fr(sacs, 0), 'sacs de prémix par an (' + fr(sacs / 12, 1) + ' par mois)'], [fr(mais, 1) + ' t', 'de maïs par an'], [fr(eco / 1e6, 2) + ' M', 'FCFA d’économies attendues par an']];
       } else {
@@ -709,7 +717,7 @@
     msgRappel: 'Bonjour {prenom}, merci de votre patience sur le stand SOLEVO Côte d’Ivoire. {agent} vous reçoit très bientôt {lieu}. Restez à proximité, votre nom s’affichera à l’écran.', bilanAuto: false, bilanHour: '19:00', bilanTo: 'elvis.lehito@solevogroup.com, arnaud.agohi@solevogroup.com, lehitognakoury@gmail.com', finalTo: 'elvis.lehito@solevogroup.com, arnaud.agohi@solevogroup.com, christophe.kouame@solevogroup.com, olivier.konan@solevogroup.com, jean-noel.kouakou@solevogroup.com, lehitognakoury@gmail.com', bilanLast: '',
     msgTable: 'Bonjour {prenom}, merci pour votre inscription sur le stand SOLEVO Côte d’Ivoire (SELAB SHOW). Rendez-vous {lieu} avec {agent}, pour un échange sur votre activité ({activite}). Vous êtes {rang} dans la file d’attente. En attendant, une bouteille d’eau et un café vous sont offerts à l’accueil SOLEVO. À tout de suite !',
     ficheUrl: '',
-    msgMerci: 'Bonjour {prenom}, merci pour votre visite et votre échange avec {agent} sur le stand SOLEVO Côte d’Ivoire.\n\nSISSÊ~KABA relie les producteurs de maïs et les éleveurs : maïs mieux payé au producteur (+30 % visés), maïs moins cher pour l’éleveur (−15 % visés), prémix et intrants SOLEVO, appui des techniciens.\n\n👉 Pour vous inscrire au projet, répondez « OUI » à ce message{lien}.\n\n🎬 Revoyez la présentation du stand SOLEVO (promo, formules, coûts, contacts) : {video}\n\nVos contacts SOLEVO :\n{contacts}{mail}',
+    msgMerci: 'Bonjour {prenom}, merci pour votre visite et votre échange avec {agent} sur le stand SOLEVO Côte d’Ivoire.\n\nSISSÊ~KABA relie les producteurs de maïs et les éleveurs : maïs payé 15 % plus cher au producteur, maïs environ 15 % moins cher pour l’éleveur grâce à la suppression des intermédiaires, prémix et intrants SOLEVO, appui des techniciens.\n\n👉 Pour vous inscrire au projet, répondez « OUI » à ce message{lien}.\n\n🎬 Revoyez la présentation du stand SOLEVO (promo, formules, coûts, contacts) : {video}\n\nVos contacts SOLEVO :\n{contacts}{mail}',
   };
   const ECRAN_URL = 'https://lehito1989.github.io/sisse-kaba-APP/ecran/';
   state.pros = []; state.standCfg = JSON.parse(JSON.stringify(CFG_DEFAULT));
@@ -1910,8 +1918,8 @@
     for (let r = 0; r < n; r++) { let c0 = -1; for (let k = 0; k <= n; k++) { const on = k < n && q.isDark(r, k); if (on && c0 < 0) c0 = k; if (!on && c0 >= 0) { rects.push({ type: 'rect', x: (m + c0) * cell * mm, y: (m + r) * cell * mm, w: (k - c0) * cell * mm + 0.2, h: cell * mm + 0.2, color: 'black' }); c0 = -1; } } }
     return rects;
   }
-  const gainPct = () => { const S = (state.V && state.V.S) || {}; const n = (x) => parseFloat(String(x || '').replace(/\s/g, '').replace(',', '.')); const av = n(S.prixProdAv), ap = n(S.prixProdAp); return av > 0 && ap > 0 ? String(Math.round((ap / av - 1) * 100)) : '30'; };
-  const gainKg = () => String((state.V && state.V.S && state.V.S.gainProdKg) || '30').replace(/,0+$/, '');
+  const gainPct = () => { const S = (state.V && state.V.S) || {}; const n = (x) => parseFloat(String(x || '').replace(/\s/g, '').replace(',', '.')); const av = n(S.prixProdAv), ap = n(S.prixProdAp); return av > 0 && ap > 0 ? String(Math.round((ap / av - 1) * 100)) : '15'; };
+  const gainKg = () => String((state.V && state.V.S && state.V.S.gainProdKg) || '15').replace(/,0+$/, '');
   /* visuel carré 1080 × 1080 (WhatsApp, Facebook) annonçant le stand */
   async function squarePng() {
     if (!imgs.solevoBig) { try { await loadImages(); } catch (e) { console.error(e); } }
@@ -1936,7 +1944,7 @@
     g.fillStyle = '#9BBB59'; g.fillRect(60, 646, 6, 66);
     const duo = (lab, txt, y) => { g.font = '800 27px Arial, sans-serif'; g.fillStyle = '#B5E07A'; g.fillText(lab, 80, y); const w = g.measureText(lab + ' ').width; g.fillStyle = '#fff'; fit(txt, 80 + w, y, 590 - w, ['600 Spx Arial, sans-serif', 27]); };
     duo('Producteur', 'maïs mieux payé, +' + gainPct() + ' % bord champ', 672);
-    duo('Éleveur', 'maïs moins cher, −15 % sur son prix d’achat', 708);
+    duo('Éleveur', 'maïs moins cher, −15,6 % sur son prix d’achat', 708);
     rr(56, 742, 600, 76, 14, '#37A028'); g.fillStyle = '#fff'; g.font = '800 40px Arial, sans-serif'; g.fillText('20 – 22 novembre 2026', 80, 794);
     g.fillStyle = '#fff'; g.font = '600 34px Arial, sans-serif'; g.fillText('Parc des sports d’Abidjan', 60, 920);
     g.font = '400 28px Arial, sans-serif'; g.fillStyle = '#C8D4E8'; g.fillText('Eau et café offerts • Entretien avec nos techniciens', 60, 968); g.fillText('Inscriptions : ' + SOLEVO_TEL, 60, 1012);
@@ -1973,7 +1981,7 @@
     fit('−30 à 40 % sur vos coûts de production', 76, 878, 930, '800 Spx Arial, sans-serif', 44);
     g.fillStyle = '#9BBB59'; g.fillRect(76, 925, 8, 110);
     const duo = (lab, txt, y) => { g.font = '800 40px Arial, sans-serif'; g.fillStyle = '#B5E07A'; g.fillText(lab, 104, y); const w = g.measureText(lab + ' ').width; g.fillStyle = '#fff'; fit(txt, 104 + w, y, 900 - w, '600 Spx Arial, sans-serif', 40); };
-    duo('Producteur', 'maïs mieux payé, +' + gainPct() + ' % bord champ', 965); duo('Éleveur', 'maïs moins cher, −15 % sur son prix d’achat', 1020);
+    duo('Producteur', 'maïs mieux payé, +' + gainPct() + ' % bord champ', 965); duo('Éleveur', 'maïs moins cher, −15,6 % sur son prix d’achat', 1020);
     rr(70, 1085, 940, 110, 20, '#37A028'); g.fillStyle = '#fff'; g.font = '800 62px Arial, sans-serif'; g.textAlign = 'center'; g.fillText('20 – 22 novembre 2026', W / 2, 1162);
     g.font = '700 46px Arial, sans-serif'; g.fillText('Parc des sports d’Abidjan', W / 2, 1265);
     rr(300, 1310, 480, 480, 28, '#fff');
@@ -2583,7 +2591,7 @@
     $('#qrReset').addEventListener('click', () => { qi.value = ''; qi.dispatchEvent(new Event('change')); });
     $('#qrTest').addEventListener('click', () => { window.open(state.qrLink, '_blank', 'noopener'); });
     $('#prezBtn').addEventListener('click', () => { refreshMenu(); temoForm(); $('#pzMenu').hidden = false; });
-    const DESC = { sem1: 'Gagnoa et Agnibilékrou : SWOT, 7 M, biosécurité, perspectives, quiz', sem2: 'Prémix 2 % en une diapo, formules chair, poulette, ponte, démarrage', sem3: 'Version corrigée : AA digestibles et soja, enzymes, minéraux, son de blé', fil1: 'Décideurs, investisseurs, ADVANS CI : marché, risques, indicateurs', fil2: 'Chair, poulettes, pondeuses : références et simulations', fil3: 'PPA, biosécurité, indice de consommation', fil4: 'Saison sèche, fourrages, lait et marchés', fil5: 'Qualité, dosage, prémix, concentré, aliment complet', fil6: 'Matrice de décision, plan d’action, tableau de bord', fil7: '10 questions avec corrigé', selab: 'Éleveurs, producteurs, partenaires • 20–22 novembre 2026', codir: 'Objectifs, économie du programme, décisions attendues', it: 'Cadrage fonctionnel et technique de la plateforme', eleveur: 'Court et concret : maïs −15 %, besoins de l’élevage, inscription', producteur: 'Court et concret : +30 % sur le prix, recettes par hectare, inscription', fx: 'Aliment formulé, coût du poulet, de la poulette et de l’œuf, marges et devis selon la quantité' };
+    const DESC = { sem1: 'Gagnoa et Agnibilékrou : SWOT, 7 M, biosécurité, perspectives, quiz', sem2: 'Prémix 2 % en une diapo, formules chair, poulette, ponte, démarrage', sem3: 'Version corrigée : AA digestibles et soja, enzymes, minéraux, son de blé', fil1: 'Décideurs, investisseurs, ADVANS CI : marché, risques, indicateurs', fil2: 'Chair, poulettes, pondeuses : références et simulations', fil3: 'PPA, biosécurité, indice de consommation', fil4: 'Saison sèche, fourrages, lait et marchés', fil5: 'Qualité, dosage, prémix, concentré, aliment complet', fil6: 'Matrice de décision, plan d’action, tableau de bord', fil7: '10 questions avec corrigé', selab: 'Éleveurs, producteurs, partenaires • 20–22 novembre 2026', codir: 'Objectifs, économie du programme, décisions attendues', it: 'Cadrage fonctionnel et technique de la plateforme', eleveur: 'Court et concret : maïs −15,6 %, besoins de l’élevage, inscription', producteur: 'Court et concret : +15 % sur le prix bord champ, recettes par hectare, inscription', fx: 'Aliment formulé, coût du poulet, de la poulette et de l’œuf, marges et devis selon la quantité' };
     window.__skRefreshMenu = () => {
     const card = (d, i) => `<button data-pzopen="${d.short}" class="pzm-c c${i + 1}"><em>${visSlides(d).length} diapos</em><b>${d.menu}</b><span>${DESC[d.short] || ''}</span></button>`;
     $('#pzmList').innerHTML = '<div class="pzm-sep">Présentations</div>' + SKD.short.slice(0, 3).map(card).join('') + '<div class="pzm-sep">Stand SOLEVO : visiteurs</div>' + SKD.short.slice(3).map((d, i) => card(d, i + 3)).join('') + card(FXDECK, 5) + ((window.SKD_SEM || []).length ? '<div class="pzm-sep">Séminaires SOLEVO</div>' + window.SKD_SEM.map((d, i) => card(d, (i + 1) % 6)).join('') : '') + ((window.SKD_FIL || []).length ? '<div class="pzm-sep">Filières élevage et alimentation animale : versions courtes</div>' + window.SKD_FIL.map((d, i) => card(d, i % 6)).join('') : '');
@@ -2637,9 +2645,11 @@
     }
     L.push({ cat: 'excel', folder: '05_Canvas_et_canevas', name: nm('SISSE_KABA_Canvas_Modifiable', 'xlsx'), kind: 'xlsx', label: 'Canvas modifiable (Excel A3)', gen: async () => SKG.xlsxStrings(JSZip, await getBuf('tpl/Canvas_Modifiable.xlsx'), state.V.S) });
     for (const f of ['SISSE_KABA_Contrat_Producteurs_Mais', 'SISSE_KABA_Contrat_Eleveurs']) {
-      for (const ext of ['docx', 'pdf']) L.push({ cat: 'contrats', folder: '04_Contrats', name: `${f}.${ext}`, kind: ext, label: (f.includes('Eleveurs') ? 'Contrat éleveurs' : 'Contrat producteurs de maïs') + ' (modèle inchangé)', gen: async () => new Uint8Array(await getBuf('static/' + f + '.' + ext)) });
+      for (const ext of ['docx', 'pdf']) L.push({ cat: 'contrats', folder: '04_Contrats', name: `${f}.${ext}`, kind: ext, label: (f.includes('Eleveurs') ? 'Contrat éleveurs' : 'Contrat producteurs de maïs') + ' (modèle, partage du prix mis à jour)', gen: async () => new Uint8Array(await getBuf('static/' + f + '.' + ext)) });
     }
     const stat = (cat, folder, f, kind, label, kit) => L.push({ cat, kit: !!kit, folder, name: f, kind, label, gen: async () => new Uint8Array(await getBuf('static/' + f)) });
+    stat('docs', '06_Dossier_et_notes', 'SISSE_KABA_Strategie_ADVANS_Repartition_2026-11-17.pdf', 'pdf', 'Stratégie de fonctionnement : ADVANS et répartition du prix du maïs (PDF)', true);
+    stat('docs', '06_Dossier_et_notes', 'SISSE_KABA_Strategie_ADVANS_Repartition_2026-11-17.docx', 'docx', 'Stratégie de fonctionnement : ADVANS et répartition du prix du maïs (Word)');
     stat('filieres', '08_Filieres_elevage_alimentation', 'Filieres_Elevage_Alimentation_Animale_Cote_Ivoire.pptx', 'pptx', 'Filières élevage et alimentation animale en Côte d’Ivoire (60 diapositives, quiz, bibliographie)');
     stat('filieres', '08_Filieres_elevage_alimentation', 'Filieres_Elevage_Alimentation_Animale_Cote_Ivoire.pdf', 'pdf', 'Filières élevage et alimentation animale (PDF des diapositives)');
     stat('filieres', '08_Filieres_elevage_alimentation', 'Filieres_Elevage_Notes_du_presentateur.pdf', 'pdf', 'Filières élevage : notes du présentateur');
@@ -2681,7 +2691,7 @@
     L.push({ cat: 'kit', kit: true, folder: '02_Lancement_SELAB', name: nm('SISSE_KABA_QR_inscription_tables', 'pdf'), kind: 'pdf', label: 'QR codes d’inscription à imprimer (accueil + une page par table)', gen: () => qrPdfBytes() });
     L.push({ kit: true, cat: 'logos', folder: '07_Logo', name: 'Logo_SISSE_KABA.png', kind: 'png', label: 'Logo SISSÊ~KABA', gen: async () => new Uint8Array(await getBuf('assets/logo_sisse.png')) });
     L.push({ kit: true, cat: 'logos', folder: '07_Logo', name: 'Logo_SOLEVO.png', kind: 'png', label: 'Logo SOLEVO', gen: async () => new Uint8Array(await getBuf('assets/Logo_SOLEVO.png')) });
-    L.push({ cat: 'scenario', folder: '00_Scenario', name: nm('SISSE_KABA_Scenario', 'json'), kind: 'json', label: 'Paramètres du scénario (réimportables)', gen: () => JSON.stringify({ label: state.label, hyp: state.hyp, date: today().iso }, null, 1) });
+    L.push({ cat: 'scenario', folder: '00_Scenario', name: nm('SISSE_KABA_Scenario', 'json'), kind: 'json', label: 'Paramètres du scénario (réimportables)', gen: () => JSON.stringify({ pBordChamp: 1, label: state.label, hyp: state.hyp, date: today().iso }, null, 1) });
     return L;
   }
   function readme() {
@@ -2879,7 +2889,7 @@
     if (!opts && !$('#mailOk').checked) { status('Cochez la case de confirmation avant l’envoi.', 'err'); return; }
     if (opts) {
       // rétablit le scénario et le contenu de l’envoi d’origine
-      state.hyp = Object.assign({}, state.base, opts.hyp || {}); state.label = opts.label; state.autoLabel = false; state.userLabel = true;
+      state.hyp = Object.assign({}, state.base, migP(opts.hyp, opts)); state.label = opts.label; state.autoLabel = false; state.userLabel = true;
       $('#preset').value = 'custom'; recalc();
     }
     state.busy = true; const btn = $('#mailBtn'); btn.disabled = true;
@@ -2903,7 +2913,7 @@
         total = parts.reduce((a, p) => a + p.bytes.length, 0);
         start = opts && opts.mode === mode ? Math.min(opts.start || 0, n - 1) : 0;
         sent = start;
-        base = { to, cats: catLabel, catKeys: cats, parts: n, size: total, quality: `${q.ok}/${q.total}`, hyp: state.hyp, label: state.label, resendOf: opts ? opts.id : null, mode };
+        base = { to, cats: catLabel, catKeys: cats, parts: n, size: total, quality: `${q.ok}/${q.total}`, hyp: state.hyp, pBordChamp: 1, label: state.label, resendOf: opts ? opts.id : null, mode };
         let fallback = false;
         for (let i = start; i < n; i++) {
           const p = parts[i];
@@ -2915,7 +2925,7 @@
           <p><b>Contrôle qualité :</b> ${q.ok}/${q.total} fichiers conformes.</p>
           <p><b>Contenu de cette partie :</b></p><ul>${list}</ul>
           ${n > 1 ? '<p>Chaque partie est une archive autonome : extraire toutes les parties dans le même dossier pour reconstituer le dossier complet.</p>' : ''}
-          ${cats.includes('kit') ? `<div style="border:2px solid #37A028;border-radius:10px;padding:10px 14px;margin:12px 0"><p style="margin:0 0 6px"><b style="color:#002060">Validation avant impression (marketing Agro)</b></p><ol style="margin:0;padding-left:18px"><li>Couleurs SOLEVO (vert #37A028, bleu #002060 / #0B5FA1) et lisibilité</li><li>Logos SOLEVO et SISSÊ~KABA : version, taille, position</li><li>Mentions légales et réglementaires (raison sociale, contacts, mentions produits, mention « Gains estimés selon les conditions d’exploitation »)</li><li>Messages : « Dépensez moins, gagnez plus » (−30 à 40 % sur les coûts de production), producteur +30 % sur le prix bord champ (selon le scénario), éleveur −15 % sur son prix d’achat du maïs</li><li>Dates, lieu et numéros : 20–22/11/2026, Parc des sports d’Abidjan, ${SOLEVO_TEL}</li><li>QR codes : test de scan sur deux téléphones</li><li>Formats d’impression : kakémono 85 × 200 cm, fiches A5 recto-verso, QR A4, visuels 1080 × 1080 et 1080 × 1920</li></ol><p style="margin:8px 0 0">Merci de répondre <b>« KIT VALIDÉ »</b> ou d’indiquer vos corrections, fichier par fichier.</p></div>` : ''}
+          ${cats.includes('kit') ? `<div style="border:2px solid #37A028;border-radius:10px;padding:10px 14px;margin:12px 0"><p style="margin:0 0 6px"><b style="color:#002060">Validation avant impression (marketing Agro)</b></p><ol style="margin:0;padding-left:18px"><li>Couleurs SOLEVO (vert #37A028, bleu #002060 / #0B5FA1) et lisibilité</li><li>Logos SOLEVO et SISSÊ~KABA : version, taille, position</li><li>Mentions légales et réglementaires (raison sociale, contacts, mentions produits, mention « Gains estimés selon les conditions d’exploitation »)</li><li>Messages : « Dépensez moins, gagnez plus » (−30 à 40 % sur les coûts de production), producteur +15 % sur le prix bord champ (115 % de P), éleveur −15,6 % sur son prix d’achat du maïs (135 % de P au lieu de 160 %)</li><li>Dates, lieu et numéros : 20–22/11/2026, Parc des sports d’Abidjan, ${SOLEVO_TEL}</li><li>QR codes : test de scan sur deux téléphones</li><li>Formats d’impression : kakémono 85 × 200 cm, fiches A5 recto-verso, QR A4, visuels 1080 × 1080 et 1080 × 1920</li></ol><p style="margin:8px 0 0">Merci de répondre <b>« KIT VALIDÉ »</b> ou d’indiquer vos corrections, fichier par fichier.</p></div>` : ''}
           <p>Hypothèses et budgets soumis à validation. Résultat avant financement et impôt : ni bénéfice net, ni gain additionnel garanti.</p>`;
           const att = { filename: p.name, mimeType: 'application/zip', content: mode === 'file' ? { $file: { data: new Blob([p.bytes], { type: 'application/zip' }), name: p.name, type: 'application/zip' } } : b64(p.bytes) };
           const input = { to, subject: `SISSÊ~KABA – ${cats.length >= Object.keys(CATS).length - 1 && !cats.includes('kit') ? 'Dossier' : catLabel} ${S.scenarioTag} du ${S.date}${n > 1 ? ` – Partie ${i + 1}/${n}` : ''}`, htmlBody: html, attachments: [att] };
@@ -2988,7 +2998,7 @@
     }).join('');
     $$('#log [data-resend]').forEach((b) => b.addEventListener('click', () => {
       const r = (state.logRows || []).find((x) => x.id === b.dataset.resend); if (!r) return;
-      sendMail({ resend: true, id: r.id, to: String(r.to).split(/,\s*/), cats: r.catKeys, hyp: r.hyp, label: r.label || r.scenario, start: r.sent || 0, mode: r.sent ? r.mode : null });
+      sendMail({ resend: true, id: r.id, to: String(r.to).split(/,\s*/), cats: r.catKeys, hyp: r.hyp, pBordChamp: r.pBordChamp, label: r.label || r.scenario, start: r.sent || 0, mode: r.sent ? r.mode : null });
     }));
     $('#logSrc').textContent = src === 'db' ? 'Journal conservé avec l’artefact (visible sur tous vos appareils).' : src === 'local' ? 'Journal conservé dans ce navigateur uniquement.' : '';
   }
@@ -3092,18 +3102,18 @@
   function setRef() { state.ref = SKV.build(state.values, {}); $('#refInfo').textContent = 'Référence figée : ' + state.label; render(); }
   function storeList() { try { return JSON.parse(localStorage.getItem('sk_scen') || '[]'); } catch (e) { return []; } }
   function storeSave() {
-    const l = storeList().filter((x) => x.label !== state.label); l.unshift({ label: state.label, hyp: state.hyp });
+    const l = storeList().filter((x) => x.label !== state.label); l.unshift({ label: state.label, hyp: state.hyp, pBordChamp: 1 });
     try { localStorage.setItem('sk_scen', JSON.stringify(l.slice(0, 12))); status('Scénario mémorisé dans ce navigateur.', 'ok'); } catch (e) { status('Mémorisation indisponible : utilisez l’export JSON.', 'err'); }
     renderStore();
   }
   function renderStore() {
     const l = storeList(); const s = $('#stored');
     s.innerHTML = l.length ? l.map((x, i) => `<button data-s="${i}">${x.label}</button>`).join('') : '<em>Aucun scénario mémorisé.</em>';
-    $$('#stored [data-s]').forEach((b) => b.addEventListener('click', () => { const x = l[+b.dataset.s]; state.hyp = Object.assign({}, state.base, x.hyp); state.label = x.label; state.autoLabel = false; state.userLabel = true; $('#preset').value = 'custom'; recalc(); }));
+    $$('#stored [data-s]').forEach((b) => b.addEventListener('click', () => { const x = l[+b.dataset.s]; state.hyp = Object.assign({}, state.base, migP(x.hyp, x)); state.label = x.label; state.autoLabel = false; state.userLabel = true; $('#preset').value = 'custom'; recalc(); }));
   }
   function importJson(file) {
     const r = new FileReader();
-    r.onload = () => { try { const x = JSON.parse(r.result); state.hyp = Object.assign({}, state.base, x.hyp || {}); state.label = x.label || 'Scénario importé'; state.autoLabel = false; state.userLabel = true; $('#preset').value = 'custom'; recalc(); status('Scénario importé.', 'ok'); } catch (e) { status('Fichier JSON invalide.', 'err'); } };
+    r.onload = () => { try { const x = JSON.parse(r.result); state.hyp = Object.assign({}, state.base, migP(x.hyp, x)); state.label = x.label || 'Scénario importé'; state.autoLabel = false; state.userLabel = true; $('#preset').value = 'custom'; recalc(); status('Scénario importé.', 'ok'); } catch (e) { status('Fichier JSON invalide.', 'err'); } };
     r.readAsText(file);
   }
 

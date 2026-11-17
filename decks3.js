@@ -75,14 +75,14 @@ TRANSITION : « Voici l’ambition pour 2027. »` },
 CHIFFRES : {{premix27}} t de prémix permettent de fabriquer {{aliment27}} t d’aliment, qui contiennent {{mais27}} t de maïs. Il faut pour cela {{haTerrain27}} ha et environ {{prod27}} producteurs de {{surf}} ha ; côté élevage, {{eleveursMix27}} éleveurs.
 TRANSITION : « Que gagne chacun ? Commençons par le producteur. »` },
       { type: 'content', title: 'Ce que gagne le producteur', sub: 'Un débouché sûr et un meilleur prix',
-        blocks: [{ k: 'kpis', items: [{ v: '{{prixProdAv}} → {{prixProdAp}}', l: 'FCFA/kg payés au producteur (+30 %)' }, { v: '{{gainParProd}} M', l: 'FCFA de recettes en plus par producteur et par an' }, { v: '{{gainP27}} M', l: 'FCFA de recettes en plus pour tous les producteurs en 2027' }] }],
+        blocks: [{ k: 'kpis', items: [{ v: '{{prixProdAv}} → {{prixProdAp}}', l: 'FCFA/kg payés au producteur (+15 %)' }, { v: '{{gainParProd}} M', l: 'FCFA de recettes en plus par producteur et par an' }, { v: '{{gainP27}} M', l: 'FCFA de recettes en plus pour tous les producteurs en 2027' }] }],
         comments: ['Gains attendus si les conditions du programme sont réunies (prix illustratif P = {{P}} FCFA/kg).', 'Ces gains ne sont pas ajoutés au chiffre d’affaires SOLEVO.'],
         notes: `OBJECTIF : convaincre les producteurs.
-CALCUL : le producteur vend aujourd’hui autour de {{prixProdAv}} FCFA/kg bord champ ; le programme vise {{prixProdAp}} FCFA/kg (+30 %) grâce au contrat et à la qualité. Pour {{maisParProd}} t livrées en moyenne, cela fait {{gainParProd}} M FCFA de recettes en plus par an.
+CALCUL : le producteur vend aujourd’hui autour de {{prixProdAv}} FCFA/kg bord champ ; le programme vise {{prixProdAp}} FCFA/kg (+15 %) car la majoration intermédiaire (40 % de P) est supprimée. Pour {{maisParProd}} t livrées en moyenne, cela fait {{gainParProd}} M FCFA de recettes en plus par an.
 POINT DE VIGILANCE : ce sont des gains attendus, pas garantis ; ils dépendent du rendement, de la qualité et du respect du contrat.
 TRANSITION : « Et l’éleveur ? »` },
       { type: 'content', title: 'Ce que gagne l’éleveur', sub: 'Un maïs moins cher et plus régulier',
-        blocks: [{ k: 'kpis', items: [{ v: '{{P}} → {{prixAchAp}}', l: 'FCFA/kg payés pour le maïs (−15 %)' }, { v: '{{econParFerme}} M', l: 'FCFA d’économies par élevage et par an' }, { v: '{{alimParFerme}} t', l: 'd’aliment par élevage et par an' }] }],
+        blocks: [{ k: 'kpis', items: [{ v: '{{prixAchAv}} → {{prixAchAp}}', l: 'FCFA/kg payés pour le maïs (−15,6 %)' }, { v: '{{econParFerme}} M', l: 'FCFA d’économies par élevage et par an' }, { v: '{{alimParFerme}} t', l: 'd’aliment par élevage et par an' }] }],
         comments: ['Économies attendues, à confirmer avec les prix réels de la campagne.'],
         notes: `OBJECTIF : convaincre les éleveurs.
 CALCUL : en achetant directement aux producteurs sous contrat, l’éleveur vise un maïs à {{prixAchAp}} FCFA/kg au lieu de {{P}} FCFA/kg, soit {{econParFerme}} M FCFA d’économies par an pour un élevage qui consomme {{alimParFerme}} t d’aliment.
@@ -271,7 +271,7 @@ TRANSITION : « Qui utilise la plateforme ? »` },
 POINT CLÉ : les producteurs ont souvent un téléphone simple ; prévoir un accès par SMS ou WhatsApp et la saisie par l’ATE.
 TRANSITION : « Voici le parcours du producteur. »` },
       { type: 'content', title: 'Parcours producteur', sub: 'De l’inscription au paiement',
-        blocks: [{ k: 'steps', items: [{ h: 'Inscription', t: 'Par l’ATE ou en autonomie : identité, localité, surface.' }, { h: 'Contrat', t: 'Volume de maïs, qualité, prix de référence.' }, { h: 'Intrants', t: 'Commande du panier SEED et suivi du crédit éventuel.' }, { h: 'Récolte', t: 'Déclaration, contrôle qualité, date de livraison.' }, { h: 'Paiement', t: 'Réception, pesée, paiement et historique.' }] }],
+        blocks: [{ k: 'steps', items: [{ h: 'Inscription', t: 'Par l’ATE ou en autonomie : identité, localité, surface.' }, { h: 'Contrat', t: 'Volume de maïs, qualité, prix de référence.' }, { h: 'Intrants', t: 'Commande du panier SEED et suivi du crédit éventuel.' }, { h: 'Livraison', t: 'Dépôt en entrepôt : pesée, contrôle qualité, lot identifié.' }, { h: 'Paiement', t: 'Après encaissement de l’éleveur via ADVANS, retenue autorisée déduite.' }] }],
         comments: ['Notifications SMS à chaque étape.'],
         notes: `OBJECTIF : décrire le parcours producteur.
 EXIGENCE : écrans très simples, saisie possible par l’ATE pour le compte du producteur.
@@ -354,13 +354,13 @@ CONCLUSION : proposer un atelier de cadrage avec l’IT dans les deux semaines s
     slides: [
       { type: 'cover', slogan: 'Dépensez moins, gagnez plus', sloganSub: 'Prémix et intrants SOLEVO : −30 à 40 % sur vos coûts de production', rule: '1 sac MG2MIX de 20 kg = 1 tonne d’aliment', ruleSub: 'Démarrage poulet de chair : 22 kg par tonne (1 sac + 2 kg)', pres: 'Elvis LEHITO', presSub: 'Key Account Manager FEED • SOLEVO Côte d’Ivoire\nAvec Ibrahim OUATTARA et Kouassi François KOUADIO', theme: 'eleveur', tag: 'Stand SOLEVO • Espace éleveurs', title: 'Votre maïs, sécurisé', sub: 'Un maïs moins cher et régulier, un prémix adapté et un technicien à vos côtés',
         aud: 'Éleveurs de chair, de pondeuses et de porcs', band: 'SELAB SHOW • 20–22 novembre 2026 • Stand SOLEVO',
-        figs: [{ v: '−15 %', l: 'sur le prix du maïs' }, { v: '{{econAnChair}} M', l: 'FCFA économisés par an (élevage de {{placesFerme}} poulets)' }, { v: '3 + {{depNew}}', l: 'dépôts de prémix près de chez vous' }],
+        figs: [{ v: '−15,6 %', l: 'sur le prix du maïs' }, { v: '{{econAnChair}} M', l: 'FCFA économisés par an (élevage de {{placesFerme}} poulets)' }, { v: '3 + {{depNew}}', l: 'dépôts de prémix près de chez vous' }],
         notes: `OBJECTIF : accrocher l’éleveur en moins de 30 secondes.
 QUESTION D’OUVERTURE : « Quel élevage avez-vous, et combien d’animaux ? » Adapter ensuite les chiffres de la diapo 3.
 MESSAGE CLÉ : SISSÊ~KABA vous relie à des producteurs de maïs sous contrat, avec le prémix SOLEVO et l’appui d’un technicien.
 TRANSITION : « Voici ce que vous y gagnez. »` },
       { type: 'content', title: 'Ce que vous y gagnez', sub: 'Pour votre élevage, dès la première campagne',
-        blocks: [{ k: 'kpis', items: [{ v: '{{P}} → {{prixAchAp}}', l: 'FCFA/kg de maïs (−15 %)' }, { v: 'Régularité', l: 'maïs sous contrat, moins de ruptures' }, { v: 'Qualité', l: 'maïs contrôlé, conseils de formulation' }] }],
+        blocks: [{ k: 'kpis', items: [{ v: '{{prixAchAv}} → {{prixAchAp}}', l: 'FCFA/kg de maïs (−15,6 %)' }, { v: 'Régularité', l: 'maïs sous contrat, moins de ruptures' }, { v: 'Qualité', l: 'maïs contrôlé, conseils de formulation' }] }],
         comments: ['Économies attendues, à confirmer avec les prix réels de la campagne (prix illustratif {{P}} FCFA/kg).'],
         notes: `OBJECTIF : montrer le bénéfice concret.
 CHIFFRES : le maïs représente environ {{txMais}} de l’aliment. En l’achetant à {{prixAchAp}} FCFA/kg au lieu de {{P}}, l’éleveur réduit fortement son coût d’aliment.
@@ -380,7 +380,7 @@ TRANSITION : « Comment ça se passe pour vous ? »` },
         blocks: [{ k: 'steps', items: [
           { h: 'Inscription', t: 'Aujourd’hui sur le stand ou auprès d’un technicien SOLEVO.' },
           { h: 'Vos besoins', t: 'Le technicien calcule votre aliment, votre maïs et vos sacs de prémix.' },
-          { h: 'Commande', t: 'Prémix au dépôt le plus proche, maïs auprès des producteurs sous contrat.' },
+          { h: 'Commande', t: 'Prémix au dépôt ; maïs contrôlé en entrepôt, payé via ADVANS avant livraison.' },
           { h: 'Suivi', t: 'Livraisons contrôlées et conseils pour améliorer vos résultats.' }] }],
         comments: ['Dépôts actifs : Abidjan, Yamoussoukro, Agnibilékrou ; {{depNew}} autres en installation.'],
         notes: `OBJECTIF : rendre l’adhésion simple.
@@ -407,13 +407,13 @@ CONCLUSION : remettre la plaquette, remercier, proposer une visite du technicien
     slides: [
       { type: 'cover', pres: 'Arnaud AGOHI', presSub: 'Key Account Manager SEED • SOLEVO Côte d’Ivoire\nAvec Aubin Ghislain KOFFI', theme: 'producteur', tag: 'Stand SOLEVO • Espace producteurs', title: 'Votre maïs mieux vendu', sub: 'Un acheteur sûr avant la récolte, de meilleurs intrants et un meilleur prix',
         aud: 'Producteurs de maïs et coopératives', band: 'SELAB SHOW • 20–22 novembre 2026 • Stand SOLEVO',
-        figs: [{ v: '+30 %', l: 'sur le prix bord champ' }, { v: '{{gainHa}}', l: 'FCFA de recettes en plus par hectare' }, { v: '{{panier}}', l: 'FCFA : panier d’intrants par hectare' }],
+        figs: [{ v: '+15 %', l: 'sur le prix bord champ' }, { v: '{{gainHa}}', l: 'FCFA de recettes en plus par hectare' }, { v: '{{panier}}', l: 'FCFA : panier d’intrants par hectare' }],
         notes: `OBJECTIF : accrocher le producteur en moins de 30 secondes.
 QUESTION D’OUVERTURE : « Combien d’hectares de maïs cultivez-vous, et à qui vendez-vous votre récolte ? »
 MESSAGE CLÉ : SISSÊ~KABA vous trouve des éleveurs acheteurs avant la récolte, avec un prix de référence et l’appui de SOLEVO.
 TRANSITION : « Voici ce que vous y gagnez. »` },
       { type: 'content', title: 'Ce que vous y gagnez', sub: 'Un débouché sûr et un meilleur prix',
-        blocks: [{ k: 'kpis', items: [{ v: '{{prixProdAv}} → {{prixProdAp}}', l: 'FCFA/kg payés au producteur (+30 %)' }, { v: 'Débouché', l: 'des éleveurs acheteurs sous contrat' }, { v: 'Appui', l: 'intrants de qualité et conseil technique' }] }],
+        blocks: [{ k: 'kpis', items: [{ v: '{{prixProdAv}} → {{prixProdAp}}', l: 'FCFA/kg payés au producteur (+15 %)' }, { v: 'Débouché', l: 'des éleveurs acheteurs sous contrat' }, { v: 'Appui', l: 'intrants de qualité et conseil technique' }] }],
         comments: ['Gains attendus si les conditions du programme sont réunies (prix illustratif P = {{P}} FCFA/kg).'],
         notes: `OBJECTIF : montrer le bénéfice concret.
 CHIFFRES : le prix bord champ visé passe de {{prixProdAv}} à {{prixProdAp}} FCFA/kg grâce au contrat et à la qualité.
@@ -433,8 +433,8 @@ TRANSITION : « Comment ça se passe pour vous ? »` },
           { h: 'Inscription', t: 'Aujourd’hui sur le stand ou auprès d’un technicien SOLEVO.' },
           { h: 'Contrat', t: 'Volume, qualité et prix de référence fixés avant la campagne.' },
           { h: 'Intrants', t: 'Panier SEED et conseil technique pendant la culture.' },
-          { h: 'Récolte', t: 'Contrôle qualité et date de livraison planifiée.' },
-          { h: 'Paiement', t: 'Pesée à la livraison et paiement suivi.' }] }],
+          { h: 'Livraison', t: 'Maïs déposé en entrepôt : pesée et contrôle qualité.' },
+          { h: 'Paiement', t: 'Après paiement de l’éleveur, moins le remboursement autorisé.' }] }],
         comments: ['Producteurs individuels et coopératives bienvenus.'],
         notes: `OBJECTIF : rendre l’adhésion simple et rassurante.
 QUESTION PROBABLE : « Qui fixe le prix ? » Un prix de référence convenu avant la campagne entre producteurs et éleveurs, avec l’appui du programme.

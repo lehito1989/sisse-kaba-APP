@@ -54,7 +54,7 @@ TRANSITION : « Voyons comment chaque segment contribue. »` },
           { n: '01', h: 'Production', t: 'SEED : producteurs et coopératives déclarent surfaces et lots ; vente de semences et intrants.' },
           { n: '02', h: 'Demande', t: 'FEED : éleveurs et fabricants expriment volumes et spécifications ; vente de prémix.' },
           { n: '03', h: 'Coordination', t: 'SOLEVO facilite la mise en relation et le suivi via la plateforme IT SOLEVO-CI.' },
-          { n: '04', h: 'Transaction', t: 'Vendeur et acheteur conviennent du prix et de la livraison du maïs, directement.' }] }],
+          { n: '04', h: 'Paiement et livraison', t: 'L’éleveur paie via le circuit ADVANS ; producteur, transport et entrepôt sont réglés ensuite.' }] }],
         comments: ['Aucun portage de stock, financement de récolte ni commission sur le maïs n’est présumé pour SOLEVO.', 'Le CA SOLEVO = prémix FEED + intrants SEED uniquement.'],
         notes: `OBJECTIF : clarifier le modèle économique et ce que SOLEVO vend réellement.
 MESSAGES CLÉS :
@@ -355,7 +355,7 @@ DISCOURS D’OUVERTURE (1 min) : « SOLEVO Côte d’Ivoire, avec ses segments F
 PUBLIC : producteurs, coopératives, éleveurs, fabricants d’aliments, prestataires logistiques, partenaires.
 PRUDENCE : présentation publique ; ne pas citer de chiffres financiers internes ni de partenaires non signés.
 TRANSITION : « Voici le programme de cette présentation. »` },
-      { type: 'agenda', title: 'Agenda', items: ['Le projet national de SOLEVO-CI', 'Le besoin partagé des acteurs', 'Le fonctionnement de SISSÊ~KABA', 'Nos propositions aux producteurs et aux éleveurs', 'Le partage de valeur visé', 'Qualité, traçabilité et plateforme', 'Comment participer'],
+      { type: 'agenda', title: 'Agenda', items: ['Le projet national de SOLEVO-CI', 'Le besoin partagé des acteurs', 'Le fonctionnement de SISSÊ~KABA', 'Nos propositions aux producteurs et aux éleveurs', 'Le partage du prix du maïs', 'Qualité, traçabilité et plateforme', 'Comment participer'],
         notes: `OBJECTIF : donner la structure (environ 20 minutes + questions). Inviter le public à garder ses questions pour la fin et à passer au stand FEED et SEED.` },
       { type: 'section', title: 'Le projet national de SOLEVO-CI', notes: `Séparateur. Présenter les deux segments porteurs.` },
       { type: 'content', title: 'Le projet national de SOLEVO-CI', sub: 'Une coopération entre les segments FEED et SEED',
@@ -381,9 +381,9 @@ TRANSITION : « Voici comment SISSÊ~KABA fonctionne. »` },
         blocks: [{ k: 'cards', items: [
           { n: '01', h: 'Production', t: 'Les producteurs et coopératives déclarent leurs surfaces et lots.' },
           { n: '02', h: 'Demande', t: 'Les acheteurs expriment leurs volumes et spécifications.' },
-          { n: '03', h: 'Coordination', t: 'SOLEVO facilite la mise en relation et le suivi des opérations.' },
-          { n: '04', h: 'Transaction', t: 'Le vendeur et l’acheteur conviennent du prix et de la livraison.' }] }],
-        comments: ['SOLEVO coordonne ; la vente de maïs engage directement le vendeur et l’acheteur.'],
+          { n: '03', h: 'Coordination', t: 'Tout maïs passe par un entrepôt : pesé, contrôlé, puis proposé aux éleveurs.' },
+          { n: '04', h: 'Paiement et livraison', t: 'L’éleveur paie via ADVANS, le producteur est payé, puis le lot est livré.' }] }],
+        comments: ['SOLEVO coordonne et vend ses intrants et son prémix ; il n’achète pas le maïs pour le revendre.'],
         notes: `OBJECTIF : rendre le parcours simple et concret.
 DÉTAIL : 1) le producteur ou la coopérative s’inscrit et déclare surfaces et lots ; 2) l’éleveur ou le fabricant déclare son besoin mensuel et la qualité attendue ; 3) les équipes SOLEVO rapprochent offres et demandes et suivent les opérations sur la plateforme ; 4) vendeur et acheteur signent leur accord de prix et de livraison.
 À DIRE CLAIREMENT : SOLEVO n’achète pas le maïs et ne prend pas de commission sur le maïs ; SOLEVO vend ses produits FEED et SEED et accompagne.
@@ -405,27 +405,26 @@ TRANSITION : « Et pour les éleveurs et fabricants ? »` },
         notes: `OBJECTIF : convaincre les éleveurs et fabricants d’aliments.
 ARGUMENTS : planifier ses besoins de maïs avec des lots identifiés, une qualité convenue à l’avance (humidité, impuretés, mycotoxines) et des livraisons programmées ; bénéficier du prémix et de l’appui technique FEED.
 TRANSITION : « Le programme vise aussi un meilleur partage de la valeur. »` },
-      { type: 'section', title: 'Le partage de valeur visé', notes: `Séparateur. Présenter le schéma base 100 et les bénéfices visés.` },
-      { type: 'content', title: 'Le partage de valeur visé', sub: 'Prix ancien payé par l’acheteur pris comme base 100',
+      { type: 'section', title: 'Le partage du prix du maïs', notes: `Séparateur. Présenter le partage du prix en % du prix bord champ P.` },
+      { type: 'content', title: 'Le partage du prix du maïs', sub: 'En % du prix bord champ de référence P',
         blocks: [
-          { k: 'table', head: ['Répartition proposée', 'Avant', 'Avec projet'], w: [2.6, 1, 1.2], rows: [
-            ['Producteur', '50', '65'], ['Emballage et stockage', '5', '5'], ['Transport', '15', '15'], ['Intermédiation', '30', '0'], ['Total payé par l’acheteur', '100', '85']] },
-          { k: 'chart', type: 'stack', title: 'Répartition pour 100 de prix ancien', cats: ['Avant', 'Avec projet'], series: [
-            { name: 'Producteur', vals: ['50', '65'] }, { name: 'Emballage et stockage', vals: ['5', '5'] }, { name: 'Transport', vals: ['15', '15'] }, { name: 'Intermédiation', vals: ['30', '0'] }] }],
-        comments: ['Schéma proposé, soumis à des coûts comparables et aux accords des parties.'],
+          { k: 'table', head: ['Poste', 'Avant', 'Avec SISSÊ~KABA'], w: [2.4, 1.1, 1.5], rows: [
+            ['Producteur', '100 %', '115 %'], ['Transport', '15 %', '15 %'], ['Entrepôt', '5 %', '5 %'], ['Majoration intermédiaire', '40 %', '0 %'], ['Prix payé par l’éleveur', '160 %', '135 %']] },
+          { k: 'chart', type: 'stack', title: 'Pour P = 100', cats: ['Avant', 'Avec SISSÊ~KABA'], series: [
+            { name: 'Producteur', vals: ['100', '115'] }, { name: 'Transport', vals: ['15', '15'] }, { name: 'Entrepôt', vals: ['5', '5'] }, { name: 'Majoration intermédiaire', vals: ['40', '0'] }] }],
+        comments: ['Référence « avant » à vérifier à qualité, période et lieu de livraison équivalents.'],
         notes: `OBJECTIF : expliquer simplement d’où vient le gain.
-LECTURE : pour 100 FCFA payés autrefois par l’acheteur, le producteur recevait 50 ; l’intermédiation captait 30. En rapprochant directement vendeurs et acheteurs, ces 30 points sont partagés : +15 pour le producteur (qui passe à 65) et −15 pour l’acheteur (qui paie 85). Emballage, stockage et transport restent payés.
-PRUDENCE : les fonctions de l’intermédiaire (collecte, séchage, tri, avance) ne disparaissent pas ; elles doivent être assurées et leur coût réel vérifié corridor par corridor.
+LECTURE : avant, pour 100 FCFA reçus par le producteur, l’éleveur payait 160 : transport 15, entrepôt 5 et majoration intermédiaire 40. Avec SISSÊ~KABA, la majoration disparaît : le producteur reçoit 115 et l’éleveur paie 135. Transport et entrepôt restent payés.
 TRANSITION : « Concrètement, cela donne les bénéfices suivants. »` },
-      { type: 'content', title: 'Les bénéfices économiques recherchés', sub: 'Objectifs de partage de valeur',
+      { type: 'content', title: 'Ce que chacun y gagne', sub: 'Les 40 % de majoration redistribués',
         blocks: [{ k: 'kpis', items: [
-          { v: '+30 %', l: 'Recettes brutes par kg visées pour le producteur' },
-          { v: '−15 %', l: 'Prix du maïs visé pour l’acheteur' },
-          { v: 'Même base', l: 'Qualité, lieu, période et coûts comparables' }] }],
-        comments: ['Aucun gain net agricole ni baisse du coût total de l’aliment n’est garanti.', 'La baisse de 15 % porte sur le maïs, pas sur le coût total de l’aliment fini.'],
-        notes: `OBJECTIF : énoncer les deux bénéfices visés avec leurs conditions.
-EXPLICATION : passer de 50 à 65 représente +30 % de recettes brutes par kilo pour le producteur ; passer de 100 à 85 représente −15 % sur le prix du maïs pour l’acheteur.
-CONDITIONS : comparer à qualité, lieu, période, fiscalité et coûts identiques. Le gain net du producteur dépend aussi de ses coûts de production ; l’effet sur l’aliment dépend de la part du maïs dans la formule.
+          { v: '+15 %', l: 'pour le producteur : 115 au lieu de 100' },
+          { v: '−15,6 %', l: 'pour l’éleveur : 135 au lieu de 160' },
+          { v: '0 FCFA', l: 'pour SOLEVO sur le maïs : SOLEVO ne revend pas le maïs' }] }],
+        comments: ['Paiement de l’éleveur par le circuit convenu avec ADVANS, avant livraison ; producteur payé après confirmation des fonds.', 'La baisse porte sur le maïs, pas sur tout le coût de l’aliment fini.'],
+        notes: `OBJECTIF : énoncer les deux bénéfices.
+EXPLICATION : 15 points de P vont en plus au producteur (+15 %) ; 25 points restent à l’éleveur, soit 25 ÷ 160 = 15,6 % de moins sur son maïs.
+CONDITIONS : maïs conforme livré en entrepôt, éleveur à jour de son contrat FEED (au moins 80 % des engagements échus), accords signés.
 TRANSITION : « Notre objectif de mobilisation pour 2027. »` },
       { type: 'content', title: 'L’objectif de mobilisation pour 2027', sub: 'Scénario de travail soumis à validation',
         blocks: [{ k: 'kpis', items: [
@@ -508,113 +507,141 @@ QUESTIONS FRÉQUENTES : « Faut-il payer pour s’inscrire ? » Non. « SOLEVO a
     id: 'acteurs',
     folder: '06_Dossier_et_notes',
     file: 'SISSE_KABA_Presentation_Acteurs_Gains',
-    name: 'Présentation Gains des acteurs',
+    name: 'Présentation SISSÊ~KABA : fonctionnement et partage du prix',
     slides: [
-      { type: 'title', title: 'Gains des producteurs et des éleveurs', sub: 'SISSÊ~KABA — partage de valeur', date: '{{dateGarde}}',
-        notes: `OBJECTIF : présenter, chiffres à l’appui, ce que le programme vise pour les producteurs de maïs et pour les acheteurs (éleveurs, fabricants d’aliments).
-PUBLIC : coopératives, fédérations d’éleveurs, partenaires techniques et financiers, équipes terrain.
-PRÉCAUTION : tous les montants sont illustratifs ; ils reposent sur un prix ancien de référence P = {{P}} FCFA/kg, à remplacer par un prix comparable observé localement.` },
-      { type: 'agenda', title: 'Agenda', items: ['Le principe du partage de valeur', 'L’illustration au kilo et à la tonne', 'Les gains à l’échelle du programme', 'Ce que cela représente par acteur', 'Les conditions de réalisation', 'Le suivi des gains'],
-        notes: `OBJECTIF : annoncer le déroulé (environ 20 minutes). Préciser d’emblée que ces gains ne sont pas des revenus SOLEVO.` },
-      { type: 'section', title: 'Le principe du partage de valeur', notes: `Séparateur.` },
-      { type: 'content', title: 'D’où vient la valeur à partager', sub: 'Le prix ancien payé par l’acheteur sert de base 100',
-        blocks: [
-          { k: 'table', head: ['Poste pour 100 de prix ancien', 'Avant', 'Avec projet'], w: [2.6, 1, 1.2], rows: [
-            ['Producteur', '50', '65'], ['Emballage et stockage', '5', '5'], ['Transport', '15', '15'], ['Intermédiation', '30', '0'], ['Prix payé par l’acheteur', '100', '85']] },
-          { k: 'chart', type: 'stack', title: 'Répartition pour 100', cats: ['Avant', 'Avec projet'], series: [
-            { name: 'Producteur', vals: ['50', '65'] }, { name: 'Emballage et stockage', vals: ['5', '5'] }, { name: 'Transport', vals: ['15', '15'] }, { name: 'Intermédiation', vals: ['30', '0'] }] }],
-        comments: ['Les 30 points d’intermédiation sont partagés : +15 producteur, −15 acheteur.', 'Schéma fourni par le porteur, à tester corridor par corridor.'],
-        notes: `OBJECTIF : expliquer la mécanique du partage.
-LECTURE : avant projet, sur 100 FCFA payés par l’acheteur, le producteur reçoit 50, l’emballage et le stockage 5, le transport 15 et l’intermédiation 30. Avec le projet, la mise en relation directe supprime la marge d’intermédiation : le producteur reçoit 65 et l’acheteur ne paie plus que 85.
-POINT CLÉ : il s’agit d’un objectif de redistribution, pas d’une statistique de marché. Les fonctions de l’intermédiaire (collecte, agrégation, séchage, avance de trésorerie) devront être assurées par quelqu’un : leur coût réduit d’autant la valeur à partager.
-TRANSITION : « Traduisons cela en francs CFA. »` },
-      { type: 'content', title: 'Les effets visés', sub: 'Par kilogramme de maïs, à base comparable',
+      { type: 'title', title: 'SISSÊ~KABA : comment ça marche', sub: 'Fonctionnement opérationnel et partage du prix du maïs', date: '{{dateGarde}}',
+        notes: `OBJECTIF : expliquer simplement le fonctionnement de SISSÊ~KABA et ce que chacun y gagne.
+PUBLIC : producteurs et coopératives, éleveurs et fabricants d’aliments, ADVANS, partenaires et équipes terrain.
+MESSAGE CLÉ : en supprimant la majoration des intermédiaires, le producteur gagne 15 % de plus et l’éleveur paie environ 15,6 % de moins. SOLEVO ne revend pas le maïs.` },
+      { type: 'agenda', title: 'Agenda', items: ['Le projet en une phrase', 'Qui fait quoi', 'Le circuit du maïs et de l’argent', 'Le partage du prix', 'Exemple chiffré et gains sur trois ans', 'Les règles du programme'],
+        notes: `OBJECTIF : annoncer le déroulé (environ 15 minutes). Préciser dès le début que les montants du maïs ne sont pas des revenus de SOLEVO.` },
+      { type: 'content', title: 'Le projet en une phrase', sub: 'Relier directement les producteurs de maïs et les éleveurs',
         blocks: [{ k: 'kpis', items: [
-          { v: '+30 %', l: 'Recettes brutes producteur (50 → 65)' },
-          { v: '−15 %', l: 'Prix du maïs acheteur (100 → 85)' },
-          { v: '0 FCFA', l: 'Revenu SOLEVO sur le maïs' }] }],
-        comments: ['+15 points de P = +30 % pour le producteur, car sa base de départ est 50.', 'SOLEVO ne prend aucune commission sur le maïs dans ce scénario.'],
-        notes: `OBJECTIF : expliquer pourquoi le même écart de 15 points produit +30 % d’un côté et −15 % de l’autre.
-EXPLICATION : le producteur part de 50 : +15 points représentent +30 % de ses recettes brutes par kilo. L’acheteur part de 100 : −15 points représentent −15 % sur son prix du maïs.
-MESSAGE IMPORTANT : ces gains restent chez les producteurs et les acheteurs. SOLEVO se rémunère uniquement sur ses ventes de prémix et d’intrants.
-TRANSITION : « Avec un prix de référence, voici les montants. »` },
-      { type: 'section', title: 'L’illustration au kilo et à la tonne', notes: `Séparateur.` },
-      { type: 'content', title: 'Illustration avec un prix ancien de {{P}} FCFA/kg', sub: 'Prix de référence illustratif, pas une cotation',
-        blocks: [{ k: 'table', head: ['Prix', 'Avant', 'Avec projet', 'Écart'], w: [2.2, 1.1, 1.3, 1.1], rows: [
-          ['Prix producteur (FCFA/kg)', '{{prixProdAv}}', '{{prixProdAp}}', '+{{gainProdKg}}'],
-          ['Prix acheteur (FCFA/kg)', '{{P}}', '{{prixAchAp}}', '−{{gainProdKg}}'],
-          ['Gain ou économie par tonne (FCFA)', '—', '—', '{{gainProdT}}']] }],
-        comments: ['Le prix P se renseigne en B3 de l’onglet « Gains acteurs » du modèle opérationnel.', 'Remplacer P par un prix comparable : même qualité, lieu, période et fiscalité.'],
+          { v: '+15 %', l: 'pour le producteur : 115 % du prix bord champ au lieu de 100 %' },
+          { v: '−15,6 %', l: 'pour l’éleveur : il paie 135 % de P au lieu de 160 %' },
+          { v: '0 %', l: 'de majoration intermédiaire (40 % de P supprimés)' }] }],
+        comments: ['P = prix bord champ de référence du maïs, en FCFA/kg. Tous les pourcentages sont calculés sur P.', 'SOLEVO coordonne et vend ses intrants SEED et ses produits FEED ; il n’achète pas le maïs pour le revendre.'],
+        notes: `OBJECTIF : donner l’essentiel en une diapositive.
+EXPLICATION : aujourd’hui, entre le champ et la mangeoire, les intermédiaires ajoutent une majoration d’environ 40 % du prix bord champ. SISSÊ~KABA la supprime : 15 % de P vont en plus au producteur, 25 % de P restent dans la poche de l’éleveur.
+TRANSITION : « Voyons qui fait quoi. »` },
+      { type: 'content', title: 'Qui fait quoi', sub: 'Cinq acteurs, des responsabilités claires',
+        blocks: [{ k: 'table', head: ['Acteur', 'Rôle principal'], w: [1.6, 4.4], rows: [
+          ['Producteurs et coopératives', 'Déclarer surfaces et récoltes, produire, livrer un maïs conforme, respecter les engagements.'],
+          ['SOLEVO SEED et FEED', 'Fournir semences, intrants et prémix, accompagner les acteurs, coordonner via la plateforme.'],
+          ['ADVANS', 'Partenaire SEED de SOLEVO : étudier les financements et organiser les règlements.'],
+          ['Entrepôts et transporteurs', 'Réceptionner, peser, contrôler, conserver, tracer et livrer les lots.'],
+          ['Éleveurs et fabricants d’aliments', 'Déclarer les besoins, respecter le contrat FEED, payer avant livraison.']] }],
+        comments: ['Les modalités propres au projet (financement, comptes, frais, responsabilités) seront formalisées dans les conventions.'],
+        notes: `OBJECTIF : montrer que chaque maillon a un rôle précis.
+POINT CLÉ : SOLEVO coordonne mais ne revend pas le maïs. Les paiements du maïs, du transport et de l’entrepôt restent distincts de son chiffre d’affaires.
+TRANSITION : « Comment circulent le maïs et l’argent ? »` },
+      { type: 'content', title: 'Le circuit du maïs et de l’argent', sub: 'Six étapes, du paiement de l’éleveur à la livraison',
+        blocks: [{ k: 'steps', items: [
+          { h: 'Commande', t: 'Lot disponible, conforme, prix, délai et éleveur éligible vérifiés.' },
+          { h: 'Paiement', t: 'L’éleveur paie par le circuit convenu avec ADVANS.' },
+          { h: 'Validation', t: 'Les fonds sont confirmés avant tout règlement.' },
+          { h: 'Producteur payé', t: 'Sa rémunération, moins le remboursement autorisé.' },
+          { h: 'Livraison', t: 'Sortie du lot de l’entrepôt et transport.' },
+          { h: 'Prestataires', t: 'Transport et entrepôt payés sur justificatifs.' }] }],
+        comments: ['Le dépôt du maïs en entrepôt ne déclenche pas, à lui seul, le paiement du producteur.', 'ADVANS ne préfinance pas l’achat des stocks de maïs.'],
+        notes: `OBJECTIF : expliquer l’ordre des opérations.
+LECTURE : rien n’est livré ni payé tant que l’argent de l’éleveur n’est pas confirmé. Le producteur est payé ensuite, déduction faite du remboursement de son crédit intrants s’il l’a autorisé. Les prestataires logistiques sont payés sur preuve de service.
+TRANSITION : « Et le financement des intrants ? »` },
+      { type: 'content', title: 'Le financement des intrants avec ADVANS', sub: 'S’appuyer sur la collaboration SEED existante',
+        blocks: [{ k: 'cards', items: [
+          { n: '01', h: 'Le producteur déclare', t: 'Superficies, besoins en semences et intrants, calendrier, production prévue.' },
+          { n: '02', h: 'SOLEVO SEED chiffre', t: 'Offre technique et commerciale correspondante.' },
+          { n: '03', h: 'ADVANS décide', t: 'Étude du dossier ; après accord, règlement de la facture d’intrants SOLEVO.' },
+          { n: '04', h: 'Remboursement', t: 'Retenue sur la vente du maïs, avec l’autorisation écrite du producteur.' }] }],
+        comments: ['Critères de financement, frais et délais : selon les accords à signer entre les parties.'],
+        notes: `OBJECTIF : rassurer sur le financement.
+EXPLICATION : ADVANS travaille déjà avec SOLEVO sur le SEED. Le producteur reçoit ses intrants et l’appui technique ; il rembourse sur ses ventes de maïs, uniquement s’il l’a autorisé dans son contrat. Les frais financiers éventuels sont explicités contractuellement, jamais ajoutés en cachette à la grille de prix.
+TRANSITION : « Voyons maintenant le partage du prix. »` },
+      { type: 'section', title: 'Le partage du prix du maïs', notes: `Séparateur.` },
+      { type: 'content', title: 'Le partage du prix, en % du prix bord champ P', sub: 'La majoration intermédiaire disparaît',
+        blocks: [
+          { k: 'table', head: ['Poste', 'Avant', 'Avec SISSÊ~KABA'], w: [2.4, 1.1, 1.5], rows: [
+            ['Producteur', '100 %', '115 %'], ['Transport', '15 %', '15 %'], ['Entrepôt', '5 %', '5 %'], ['Majoration intermédiaire', '40 %', '0 %'], ['Prix payé par l’éleveur', '160 %', '135 %']] },
+          { k: 'chart', type: 'stack', title: 'Pour P = 100', cats: ['Avant', 'Avec SISSÊ~KABA'], series: [
+            { name: 'Producteur', vals: ['100', '115'] }, { name: 'Transport', vals: ['15', '15'] }, { name: 'Entrepôt', vals: ['5', '5'] }, { name: 'Majoration intermédiaire', vals: ['40', '0'] }] }],
+        comments: ['Les 40 % de P supprimés : 15 % au producteur, 25 % d’économie pour l’éleveur. Aucune réserve ni commission n’est conservée.'],
+        notes: `OBJECTIF : expliquer d’où vient le gain.
+LECTURE : avant, pour 100 FCFA payés au producteur, l’éleveur payait 160 : 15 de transport, 5 d’entrepôt et 40 de majoration intermédiaire. Avec SISSÊ~KABA, la majoration disparaît : le producteur reçoit 115, l’éleveur paie 135. Transport et entrepôt restent payés.
+CALCUL : 25 ÷ 160 = 15,6 % d’économie pour l’éleveur ; 15 ÷ 100 = +15 % pour le producteur.
+PRUDENCE : la référence « avant » est une hypothèse à vérifier à qualité, période et lieu de livraison équivalents.
+TRANSITION : « Prenons un exemple chiffré. »` },
+      { type: 'content', title: 'Exemple avec P = {{P}} FCFA/kg', sub: 'Par kilo et par tonne de maïs',
+        blocks: [{ k: 'table', head: ['Affectation', 'Avant', 'Avec SISSÊ~KABA', 'Écart'], w: [2.2, 1.2, 1.5, 1.1], rows: [
+          ['Producteur (FCFA/kg)', '{{prixProdAv}}', '{{prixProdAp}}', '+{{gainProdKg}}'],
+          ['Transport (FCFA/kg)', '{{transpKg}}', '{{transpKg}}', '0'],
+          ['Entrepôt (FCFA/kg)', '{{entrepotKg}}', '{{entrepotKg}}', '0'],
+          ['Majoration intermédiaire (FCFA/kg)', '{{majorKg}}', '0', '−{{majorKg}}'],
+          ['Prix payé par l’éleveur (FCFA/kg)', '{{prixAchAv}}', '{{prixAchAp}}', '−{{econAchKg}}'],
+          ['Par tonne : producteur / éleveur', '—', '—', '+{{gainProdT}} / −{{econAchT}}']] }],
+        comments: ['Le supplément producteur est indiqué avant remboursement éventuel de son financement.', 'P se renseigne dans le simulateur ou en B3 de l’onglet « Gains acteurs » du modèle Excel.'],
         notes: `OBJECTIF : rendre les gains concrets.
-CALCUL : avec P = {{P}} FCFA/kg, le producteur passe de {{prixProdAv}} à {{prixProdAp}} FCFA/kg (+{{gainProdKg}}) et l’acheteur de {{P}} à {{prixAchAp}} FCFA/kg (−{{gainProdKg}}). Sur une tonne, l’écart est de {{gainProdT}} FCFA pour chacun.
-COMMENT ADAPTER : demander aux participants leur prix réel de la dernière campagne dans leur zone et refaire le calcul en direct (le simulateur et l’onglet Gains acteurs le permettent).
-TRANSITION : « À l’échelle du programme, cela représente des montants significatifs. »` },
-      { type: 'section', title: 'Les gains à l’échelle du programme', notes: `Séparateur.` },
-      { type: 'content', title: 'Les gains bruts visés sur trois ans', sub: 'Millions FCFA, pour P = {{P}} FCFA/kg',
+CALCUL : avec P = {{P}} FCFA/kg, le producteur reçoit {{prixProdAp}} au lieu de {{prixProdAv}} FCFA/kg (+{{gainProdKg}}), l’éleveur paie {{prixAchAp}} au lieu de {{prixAchAv}} (−{{econAchKg}}). Par tonne : +{{gainProdT}} FCFA pour le producteur, −{{econAchT}} FCFA pour l’éleveur. Pour Q tonnes, multiplier par Q.
+TRANSITION : « À l’échelle du programme, cela donne… »` },
+      { type: 'content', title: 'Les gains sur trois ans', sub: 'Millions FCFA, pour P = {{P}} FCFA/kg',
         blocks: [
           { k: 'table', head: ['M FCFA', '2027', '2028', '2029'], w: [2.6, 1.1, 1.1, 1.1], rows: [
             ['Maïs du programme (t)', '{{mais27}}', '{{mais28}}', '{{mais29}}'],
-            ['Recettes brutes supplémentaires producteurs', '{{gainP27}}', '{{gainP28}}', '{{gainP29}}'],
-            ['Économies acheteurs sur le maïs', '{{gainP27}}', '{{gainP28}}', '{{gainP29}}']] },
-          { k: 'chart', type: 'col', title: 'Gain producteurs = économie acheteurs (M FCFA)', cats: ['2027', '2028', '2029'], series: [
-            { name: 'Gain producteurs', vals: ['{{gainP27n}}', '{{gainP28n}}', '{{gainP29n}}'] }] }],
-        comments: ['Montants bruts et conditionnels, non additionnés au CA SOLEVO.', 'Le gain net agricole dépend des coûts de production, des pertes et du crédit.'],
-        notes: `OBJECTIF : montrer l’impact global visé.
-CALCUL : gain par tonne ({{gainProdT}} FCFA) × tonnes de maïs du programme. En 2027 : {{mais27}} t × {{gainProdT}} = {{gainP27}} M FCFA de recettes brutes supplémentaires pour les producteurs et autant d’économies pour les acheteurs ; {{gainP29}} M en 2029.
-PRÉCAUTIONS : ce sont des montants bruts ; ils ne deviennent réels que si les lots sont comparables et si les fonctions de l’intermédiaire sont assurées à moindre coût. Ils ne sont jamais ajoutés au chiffre d’affaires de SOLEVO.
-TRANSITION : « Que représentent ces montants pour un producteur et pour une ferme ? »` },
-      { type: 'content', title: 'Ce que cela représente par acteur', sub: 'Équivalents de dimensionnement 2027, à titre indicatif',
+            ['Supplément des producteurs (15 % de P)', '{{gainP27}}', '{{gainP28}}', '{{gainP29}}'],
+            ['Économie des éleveurs (25 % de P)', '{{econA27}}', '{{econA28}}', '{{econA29}}']] },
+          { k: 'chart', type: 'col', title: 'M FCFA', cats: ['2027', '2028', '2029'], series: [
+            { name: 'Producteurs', vals: ['{{gainP27n}}', '{{gainP28n}}', '{{gainP29n}}'] }, { name: 'Éleveurs', vals: ['{{econA27n}}', '{{econA28n}}', '{{econA29n}}'] }] }],
+        comments: ['Montants indicatifs et bruts, jamais ajoutés au chiffre d’affaires de SOLEVO.'],
+        notes: `OBJECTIF : montrer l’impact global.
+CALCUL : tonnes de maïs × {{gainProdT}} FCFA/t pour les producteurs et × {{econAchT}} FCFA/t pour les éleveurs. En 2027 : {{gainP27}} M FCFA en plus pour les producteurs, {{econA27}} M FCFA d’économies pour les éleveurs.
+TRANSITION : « Ce que cela représente par exploitation. »` },
+      { type: 'content', title: 'Ce que cela représente par acteur', sub: 'Équivalents 2027, à titre indicatif',
         blocks: [{ k: 'kpis', items: [
-          { v: '{{gainParProdF}} FCFA', l: 'Recettes brutes en plus par producteur de {{surf}} ha ({{maisParProd}} t livrées)' },
-          { v: '{{alimParFerme}} t', l: 'Aliment par ferme chair équivalente de {{placesFerme}} places' },
-          { v: '{{econParFermeF}} FCFA', l: 'Économie maïs par ferme chair équivalente' }] }],
-        comments: ['Moyennes de dimensionnement : {{prod27}} producteurs et {{chair27}} fermes chair équivalentes.', 'Les situations individuelles varient selon surfaces, rendements et formules.'],
+          { v: '{{gainParProdF}} FCFA', l: 'en plus par producteur de {{surf}} ha ({{maisParProd}} t livrées)' },
+          { v: '{{alimParFerme}} t', l: 'd’aliment par ferme chair équivalente de {{placesFerme}} places' },
+          { v: '{{econParFermeF}} FCFA', l: 'd’économie sur le maïs par ferme chair équivalente' }] }],
+        comments: ['Moyennes : {{prod27}} producteurs et {{chair27}} fermes chair équivalentes. Les situations réelles varient.'],
         notes: `OBJECTIF : traduire les gains à l’échelle d’une exploitation.
-CALCUL PRODUCTEUR : {{mais27}} t réparties sur {{prod27}} producteurs équivalents = {{maisParProd}} t chacun ; × {{gainProdT}} FCFA/t = {{gainParProdF}} FCFA de recettes brutes supplémentaires par campagne.
-CALCUL FERME CHAIR : {{aliment27}} t d’aliment pour {{chair27}} fermes = {{alimParFerme}} t par ferme et par an, dont {{txMais}} de maïs ; l’économie visée sur le maïs est d’environ {{econParFermeF}} FCFA par an.
-PRÉCAUTION : ce sont des moyennes de dimensionnement ; les fermes réelles peuvent être plus petites ou plus grandes, et quelques industriels peuvent absorber une large part des volumes.
-TRANSITION : « Ces gains supposent des conditions précises. »` },
-      { type: 'content', title: 'L’effet sur le coût de l’aliment', sub: 'La baisse de 15 % porte sur le maïs, pas sur l’aliment',
+LECTURE : un producteur moyen livre {{maisParProd}} t et gagne {{gainParProdF}} FCFA de plus ; une ferme chair équivalente économise {{econParFermeF}} FCFA sur son maïs.
+TRANSITION : « Attention à ce que représente cette baisse. »` },
+      { type: 'content', title: 'L’effet sur le coût de l’aliment', sub: 'La baisse de 15,6 % porte sur le maïs',
         blocks: [{ k: 'cards', items: [
-          { h: 'Ce qui baisse', t: 'Le prix du maïs payé par l’acheteur : −15 % à base comparable.' },
-          { h: 'Ce qui ne baisse pas', t: 'Prémix, tourteaux, autres matières premières, fabrication et transport de l’aliment.' },
-          { h: 'Ordre de grandeur', t: 'Le maïs représente {{txMais}} du poids de l’aliment : l’effet sur le coût total est inférieur à 15 %.' }] }],
-        comments: ['Effet sur le coût de l’aliment = 15 % × part du maïs dans le coût de la formule (à calculer par élevage).'],
-        notes: `OBJECTIF : éviter un contresens fréquent.
-EXPLICATION : si le maïs coûte 15 % moins cher, seul le poste maïs de la formule baisse. Le maïs pèse {{txMais}} du poids de l’aliment dans ce scénario, mais sa part dans le coût dépend des prix des autres matières premières. L’économie sur le coût total de l’aliment est donc égale à 15 % multipliés par la part du maïs dans le coût de la formule : elle est toujours inférieure à 15 %.
-CONSEIL TERRAIN : faire le calcul avec la formule réelle de l’éleveur (outil de formulation FEED).
-TRANSITION : « Voici les conditions pour que ces gains se réalisent. »` },
-      { type: 'section', title: 'Les conditions de réalisation', notes: `Séparateur.` },
-      { type: 'content', title: 'Les conditions de réalisation', sub: 'Des gains conditionnels, à vérifier corridor par corridor',
+          { h: 'Ce qui baisse', t: 'Le prix du maïs payé par l’éleveur : 135 % de P au lieu de 160 %.' },
+          { h: 'Ce qui ne baisse pas', t: 'Prémix, tourteaux, autres matières premières, fabrication.' },
+          { h: 'Ordre de grandeur', t: 'Le maïs pèse {{txMais}} de l’aliment : l’effet sur le coût total est plus faible que 15,6 %.' }] }],
+        comments: ['Effet sur l’aliment ≈ 15,6 % × part du maïs dans le coût de la formule (à calculer par élevage).'],
+        notes: `OBJECTIF : éviter un contresens.
+EXPLICATION : seul le poste maïs baisse. L’économie sur l’aliment complet dépend de la part du maïs dans le coût de la formule ; combinée au prémix MG2MIX, elle s’ajoute aux autres leviers de formulation.
+TRANSITION : « Voici les règles qui sécurisent le programme. »` },
+      { type: 'section', title: 'Les règles du programme', notes: `Séparateur.` },
+      { type: 'content', title: 'Les règles du programme', sub: 'Des stocks réels, des acheteurs éligibles, des coûts justifiés',
         blocks: [{ k: 'cards', items: [
-          { n: '01', h: 'Base comparable', t: 'Même qualité, même lieu, même période et même fiscalité que le prix ancien.' },
-          { n: '02', h: 'Fonctions reprises', t: 'Collecte, séchage, tri et stockage assurés et financés par des opérateurs identifiés.' },
-          { n: '03', h: 'Coûts réels', t: 'Transport, emballage, pertes et contrôle vérifiés sur devis.' },
-          { n: '04', h: 'Accords signés', t: 'Prix ou règle de fixation, qualité, livraison et paiement contractualisés.' }] }],
-        comments: ['Toute commission nouvelle ou hausse de coût réduit la valeur à partager.'],
-        notes: `OBJECTIF : être transparent sur ce qui peut réduire les gains.
-DÉTAIL : 1) comparer des choses comparables ; 2) l’intermédiaire rendait des services (collecte, agrégation, séchage, avance) qui doivent être assurés ; 3) vérifier les coûts réels ; 4) contractualiser. Les contrats producteurs et éleveurs du dossier reprennent ces principes (modèles à compléter et à valider juridiquement).
-TRANSITION : « Et ce que ces gains ne sont pas. »` },
+          { n: '01', h: 'Tout passe par l’entrepôt', t: 'Lot réceptionné, pesé, identifié et contrôlé ; seuls les lots acceptés sont proposés.' },
+          { n: '02', h: 'Stocks d’abord', t: 'Stocks en entrepôt prioritaires ; collectes complémentaires 5 à 7 jours avant livraison.' },
+          { n: '03', h: 'Éleveurs éligibles', t: 'Au moins 80 % des engagements FEED échus respectés, échéances payées.' },
+          { n: '04', h: 'Entrepôt : 5 % de P', t: 'Charges convenues et justifiées, sans double comptage ; vérifié au pilote.' }] }],
+        comments: ['Les quantités réservées sont déduites pour éviter toute double affectation. Les coordonnées des producteurs restent réservées aux coordinateurs autorisés.'],
+        notes: `OBJECTIF : montrer que le dispositif est sécurisé.
+DÉTAIL : 1) aucun maïs « virtuel » n’est vendu ; 2) on écoule d’abord ce qui est stocké ; 3) l’accès aux conditions du programme est lié au respect du contrat FEED (seuil proposé de 80 % des engagements échus, en tenant compte du cheptel et du calendrier) ; 4) l’enveloppe entrepôt couvre réception, manutention, stockage et frais retenus.
+TRANSITION : « Ce que ces gains ne sont pas. »` },
       { type: 'content', title: 'Ce que ces gains ne sont pas', sub: 'Trois clarifications indispensables',
         blocks: [{ k: 'cards', items: [
           { h: 'Pas un revenu SOLEVO', t: 'SOLEVO se rémunère sur le prémix (FEED) et les intrants (SEED), jamais sur le maïs.' },
-          { h: 'Pas un gain net garanti', t: 'Le gain net agricole dépend des coûts de production, des pertes et du crédit.' },
-          { h: 'Pas une promesse de prix', t: 'Le prix se négocie entre vendeur et acheteur ; P est une référence de comparaison.' }] }],
-        comments: ['Ces messages doivent être repris à l’identique dans toute communication publique.'],
-        notes: `OBJECTIF : sécuriser la communication et la conformité.
-MESSAGE : ne jamais présenter ces gains comme garantis, ni comme un revenu de SOLEVO. Les équipes terrain doivent utiliser le vocabulaire « visé », « à base comparable », « sous réserve d’accords ».
-TRANSITION : « Pour vérifier les gains réels, un suivi est prévu. »` },
-      { type: 'content', title: 'Le suivi des gains réels', sub: 'Indicateurs à collecter par lot et par corridor',
-        blocks: [{ k: 'table', head: ['Indicateur (KPI)', 'Source', 'Fréquence'], w: [2.6, 2, 1.1], rows: [
-          ['Prix producteur obtenu vs P de référence', 'Fiche transaction', 'Par lot'],
-          ['Prix rendu acheteur vs P de référence', 'Facture acheteur', 'Par lot'],
-          ['Coûts logistiques réels (FCFA/t)', 'Devis et factures', 'Mensuelle'],
-          ['Taux de rejet ou de décote', 'Fiche réception', 'Par lot'],
-          ['Délai de paiement producteur', 'Plateforme', 'Mensuelle']] }],
+          { h: 'Pas un gain garanti', t: 'La référence « avant » est à vérifier à qualité, période et lieu équivalents.' },
+          { h: 'Pas de frais cachés', t: 'Frais financiers éventuels explicités par contrat, jamais ajoutés à la grille.' }] }],
+        comments: ['Ces messages sont repris à l’identique dans toute communication publique.'],
+        notes: `OBJECTIF : sécuriser la communication.
+MESSAGE : utiliser les mots « indicatif », « à base comparable », « selon les conventions ». Les paiements du maïs, du transport et de l’entrepôt restent distincts du chiffre d’affaires SOLEVO.
+TRANSITION : « Ce qu’il reste à formaliser avant le pilote. »` },
+      { type: 'content', title: 'À formaliser avant le pilote', sub: 'Décisions et preuves attendues',
+        blocks: [{ k: 'table', head: ['Domaine', 'Décision ou preuve attendue'], w: [1.8, 4.2], rows: [
+          ['Financement et règlements', 'Convention ADVANS, autorisations de retenue, frais et délais de paiement.'],
+          ['Stocks et qualité', 'Propriété des lots, transfert des risques, critères d’acceptation, pertes, assurance.'],
+          ['Logistique', 'Périmètre des coûts, contrats entrepôts et transporteurs, preuves de service.'],
+          ['Relations commerciales', 'Contrats producteurs et éleveurs, engagements FEED, réclamations.'],
+          ['Suivi du pilote', 'Tonnes acceptées et livrées, délais, conformité, paiements, coûts réels.']] }],
         comments: ['Les gains réels sont publiés seulement après rapprochement des preuves de prix et de coûts.'],
-        notes: `OBJECTIF : montrer que les gains seront mesurés et non seulement annoncés.
-MÉTHODE : pour chaque lot, comparer le prix obtenu au prix de référence P documenté ; déduire les coûts logistiques réels ; suivre le taux de rejet et le délai de paiement. Ces données alimentent le tableau de bord mensuel du projet.
-CONCLUSION : « Notre objectif est un partage plus juste de la valeur, démontré par les chiffres, lot après lot. »` },
+        notes: `OBJECTIF : terminer sur les prochaines étapes concrètes.
+CONCLUSION : « SISSÊ~KABA, c’est un partage plus juste du prix du maïs : le producteur gagne plus, l’éleveur paie moins, et chaque franc est tracé. »` },
       { type: 'section', title: 'Merci — Questions et échanges', notes: `Clôture. Contact projet : {{contact}}.` },
     ],
   };
