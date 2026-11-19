@@ -855,6 +855,9 @@
     const al = (r.chair || 0) * N.kgPoulet * N.cycles / 1000 + (r.pondeuse || 0) * N.pondJour * 365 / 1000 + (r.porc || 0) * N.kgPorc / 1000;
     if (al) { r.aliment = al; r.mais = al * N.txMais; r.sacs = (r.chair || 0) * N.kgPoulet * N.cycles / 1000 / (N.sacKg / 1000 / N.inclChair) + (r.pondeuse || 0) * N.pondJour * 365 / 1000 / (N.sacKg / 1000 / N.inclPonte) + (r.porc || 0) * N.kgPorc / 1000 / (N.sacKg / 1000 / N.inclPorc); r.eco = r.mais * 1000 * (N.prixAchAv - N.prixAchAp); }
     const ad = alimDecl(r.alimQ, r.alimU, r.alimP);
+    r.maisEst = al ? al * N.txMais : 0;
+    if (ad) { r.maisEcart = r.maisEst ? (ad.mais - r.maisEst) / r.maisEst : null; r.maisCtrl = r.maisEst ? (Math.abs(r.maisEcart) > MAIS_SEUIL_ECART ? 'À vérifier' : 'Cohérent') : 'Effectif non renseigné'; r.maisClasse = maisClasse(ad.mais); }
+    else { delete r.maisEcart; delete r.maisCtrl; delete r.maisClasse; }
     if (ad) { r.alimAn = ad.an; r.maisDecl = ad.mais; r.aliment = ad.an; r.mais = ad.mais; r.eco = r.mais * 1000 * (N.prixAchAv - N.prixAchAp); if (!al) r.sacs = 0; } else { delete r.alimAn; delete r.maisDecl; }
     if (r.surface) { const t = r.surface * N.tHa; r.maisP = t; r.gain = t * 1000 * (N.prixProdAp - N.prixProdAv); r.panier = r.surface * N.panier27; }
     return r;
@@ -889,6 +892,23 @@
   const ALIM_P = { 'par jour': 365, 'par semaine': 52, 'par mois': 12, 'par an': 1 };
   const txMaisV = () => (state.V && state.V.N && state.V.N.txMais) || 0.6;
   function alimDecl(q, u, p) { q = parseFloat(String(q || '').replace(',', '.')); if (!(q > 0) || !ALIM_U[u] || !ALIM_P[p]) return null; const an = q * ALIM_U[u] * ALIM_P[p]; return { an, mais: an * txMaisV() }; }
+  /* contrôle et classement du maïs déclaré */
+  const MAIS_SEUIL_ECART = 0.5;           // écart toléré entre besoin déclaré et estimation par l’effectif (±50 %)
+  const MAIS_CLASSES = [[100, 'A'], [25, 'B'], [0, 'C']]; // t de maïs par an : A ≥ 100, B 25–100, C < 25
+  const maisClasse = (t) => (t > 0 ? MAIS_CLASSES.find(([m]) => t >= m)[1] : '');
+  function maisCtrlTxt(r) { if (!r.maisDecl) return ''; if (r.maisCtrl === 'À vérifier') return `À vérifier : déclaré ${fr(r.maisDecl, 1)} t, estimé ${fr(r.maisEst, 1)} t (${r.maisEcart > 0 ? '+' : ''}${fr(r.maisEcart * 100, 0)} %)`; return r.maisCtrl || ''; }
+  function maisRank(L) { const N = state.V.N; return L.filter((r) => r.maisDecl > 0).sort((a, b) => b.maisDecl - a.maisDecl).map((r, i) => ({ r, rang: i + 1, cl: maisClasse(r.maisDecl), ha: N.tHa ? r.maisDecl / N.tHa : 0 })); }
+  function maisHtml(L, top) {
+    const R = maisRank(L); if (!R.length) return '<h3 style="color:#002060">Potentiel maïs déclaré</h3><p>Aucun visiteur n’a encore déclaré sa quantité d’aliment.</p>';
+    const N = state.V.N, t = R.reduce((a, x) => a + x.r.maisDecl, 0), ha = N.tHa ? t / N.tHa : 0, pr = N.surf ? Math.ceil(ha / N.surf) : 0, av = R.filter((x) => x.r.maisCtrl === 'À vérifier').length;
+    const cl = (k) => R.filter((x) => x.cl === k).length;
+    const S = top ? R.slice(0, top) : R;
+    return `<h3 style="color:#002060">Potentiel maïs déclaré par les éleveurs</h3>
+      <p><b>${fr(t, 1)} t de maïs par an</b> déclarées par <b>${R.length}</b> visiteur(s) (aliment déclaré × ${fr(txMaisV() * 100)} % de maïs), soit ≈ <b>${fr(ha, 1)} ha</b> à cultiver${pr ? ' et ≈ <b>' + fr(pr) + ' producteurs</b>' : ''} à mobiliser (rendement utile ${fr(N.tHa, 2)} t/ha, ${fr(N.surf, 1)} ha par producteur). Classes : A (≥ 100 t/an) <b>${cl('A')}</b> • B (25 à 100 t) <b>${cl('B')}</b> • C (&lt; 25 t) <b>${cl('C')}</b>. Fiches à vérifier (écart de plus de ${fr(MAIS_SEUIL_ECART * 100)} % avec l’estimation par l’effectif) : <b>${av}</b>.</p>
+      <table cellpadding="4" border="1" style="border-collapse:collapse;font-size:12px"><tr style="background:#37A028;color:#fff"><th>Rang</th><th>Classe</th><th>Nom</th><th>Téléphone</th><th>Localité</th><th>Aliment déclaré</th><th>Maïs / an (t)</th><th>≈ ha</th><th>Contrôle</th><th>Relance par</th></tr>
+      ${S.map((x) => `<tr><td>${x.rang}</td><td><b>${x.cl}</b></td><td>${esc(x.r.nom)}</td><td>${esc(x.r.tel)}</td><td>${esc(x.r.localite)}</td><td>${esc(fr(x.r.alimQ, x.r.alimQ % 1 ? 2 : 0) + ' ' + x.r.alimU + ' ' + x.r.alimP)}</td><td align="right"><b>${fr(x.r.maisDecl, 1)}</b></td><td align="right">${fr(x.ha, 1)}</td><td>${esc(maisCtrlTxt(x.r))}</td><td>${esc(maisKam(x.r))}</td></tr>`).join('')}</table>${top && R.length > top ? `<p style="font-size:12px;color:#5b6476">${top} premiers sur ${R.length} ; classement complet dans le fichier Excel joint.</p>` : ''}`;
+  }
+  function maisKam(r) { const c = maisClasse(r.maisDecl); if (c !== 'A') return ''; return isProd(r) && isElev(r) ? TM.lehito.court + ' et ' + TM.agohi.court : TM.lehito.court; }
   function visForm(r, editor) {
     const chk = (name, v, arr) => `<label class="chip"><input type="checkbox" name="${name}" value="${esc(v)}" ${arr && arr.includes(v) ? 'checked' : ''}><span>${v}</span></label>`;
     const rad = (name, v, cur) => `<label class="chip"><input type="radio" name="${name}" value="${esc(v)}" ${cur === v ? 'checked' : ''}><span>${v}</span></label>`;
@@ -1467,6 +1487,7 @@
       <p>Personnes reçues : <b>${B.pers}</b> dont <b>${B.deleg}</b> délégation(s) ou association(s) en salle de conférence • <b>${B.transf}</b> transfert(s) vers les Key Account Managers (dont <b>${B.transfIns}</b> inscrit(s) au projet) • accueil : <b>${B.eau}</b> bouteille(s) d’eau et <b>${B.cafe}</b> café(s) offerts</p>
       <table cellpadding="6"><tr valign="top"><td><b>Par profil</b><ul>${li(B.profil)}</ul></td><td><b>Par mode d’inscription</b><ul>${li(B.source)}</ul></td><td><b>Localités</b><ul>${li(B.loc)}</ul></td><td><b>Par table</b><ul>${B.tables.map((x) => `<li>${esc(tLab(x.t.n))} (${esc(x.t.agent)}) : <b>${x.n}</b> dont ${x.fin} terminés</li>`).join('')}</ul></td></tr></table>
       ${simuHtml(simuStats(B.L))}
+      ${maisHtml(B.L, 10)}
       <h3 style="color:#002060">Intérêts forts et inscriptions au projet (${B.forts.length})</h3>${tb(B.forts)}
       <h3 style="color:#002060">À rappeler par les ATE (${B.relance.length})</h3>${tb(B.relance)}
       <p style="color:#5b6476;font-size:12px;margin-top:16px">Liste complète : simulateur SISSÊ~KABA, onglet Stand, « Exporter la liste (Excel) ». Données personnelles à usage interne SOLEVO Côte d’Ivoire.</p></div>`;
@@ -1477,8 +1498,8 @@
     if (!state.mcp) { status('Envoi du bilan disponible seulement dans claude.ai avec Gmail connecté.', 'err'); return; }
     try {
       const B = bilanData(dayIso);
-      const rows = B.L.map((r) => [r.date, r.source, r.public, r.nom, r.tel, r.email, r.localite, r.depot, activite(r), (r.prios || []).join(', '), tLab(r.table), r.agent, r.etat, r.interet, r.inscription, r.action, r.ate, r.statut, r.note]);
-      const x = await SKG.xlsxTable(JSZip, 'Visiteurs ' + dayIso, ['Date', 'Source', 'Profil', 'Nom', 'Téléphone', 'E-mail', 'Localité', 'Dépôt', 'Activité', 'Priorités', 'Table', 'Agent', 'Entretien', 'Intérêt', 'Inscription', 'Action', 'ATE', 'Statut', 'Note'], rows, [16, 14, 16, 24, 15, 24, 15, 14, 30, 30, 6, 22, 12, 9, 11, 14, 22, 12, 30]);
+      const rows = B.L.map((r) => [r.date, r.source, r.public, r.nom, r.tel, r.email, r.localite, r.depot, activite(r), r.maisDecl ? Math.round(r.maisDecl * 10) / 10 : '', r.maisClasse || '', maisCtrlTxt(r), (r.prios || []).join(', '), tLab(r.table), r.agent, r.etat, r.interet, r.inscription, r.action, r.ate, r.statut, r.note]).sort((a, b) => (+b[9] || 0) - (+a[9] || 0));
+      const x = await SKG.xlsxTable(JSZip, 'Visiteurs ' + dayIso, ['Date', 'Source', 'Profil', 'Nom', 'Téléphone', 'E-mail', 'Localité', 'Dépôt', 'Activité', 'Maïs déclaré / an (t)', 'Classe maïs', 'Contrôle besoin maïs', 'Priorités', 'Table', 'Agent', 'Entretien', 'Intérêt', 'Inscription', 'Action', 'ATE', 'Statut', 'Note'], rows, [16, 14, 16, 24, 15, 24, 15, 14, 30, 12, 8, 36, 30, 6, 22, 12, 9, 11, 14, 22, 12, 30]);
       const name = 'SISSE_KABA_Bilan_stand_' + dayIso + '.xlsx';
       await state.mcp.callTool('Gmail', 'send_message', { to, subject: 'SISSÊ~KABA – Bilan du stand SOLEVO du ' + dayIso.split('-').reverse().join('/'), htmlBody: bilanHtml(dayIso),
         attachments: [{ filename: name, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', content: b64(x) }] });
@@ -1584,13 +1605,14 @@
     const ech = (j) => new Date(base + j * DAY_MS).toISOString().slice(0, 10).split('-').reverse().join('/');
     return L.filter((r) => r.statut !== 'Pas intéressé' && r.inscription !== 'Non').map((r) => {
       let p, j, act;
-      if (r.inscription === 'Oui' || r.interet === 'Fort' || r.transfert || isDeleg(r)) { p = 'P1'; j = 2; act = r.action && r.action !== 'Aucune' ? r.action : 'Appel puis visite terrain'; }
+      if (r.inscription === 'Oui' || r.interet === 'Fort' || r.transfert || isDeleg(r) || maisClasse(r.maisDecl) === 'A') { p = 'P1'; j = 2; act = r.action && r.action !== 'Aucune' ? r.action : 'Appel puis visite terrain'; }
       else if (r.interet === 'Moyen' || r.inscription === 'À relancer' || r.etat !== 'Terminé') { p = 'P2'; j = 7; act = r.etat !== 'Terminé' ? 'Appel (entretien non réalisé au stand)' : (r.action && r.action !== 'Aucune' ? r.action : 'Appel de relance'); }
       else { p = 'P3'; j = 14; act = 'Message WhatsApp puis appel'; }
       const kamOf = () => { const k = r.transfert ? (r.transfert.dk || (/FEED/.test(r.transfert.vers) ? 'feed' : /SEED/.test(r.transfert.vers) ? 'seed' : 'salle')) : ''; const kk = k === 'feed' || r.kam === KAMS[0] ? KAMS[0] : k === 'seed' || r.kam === KAMS[1] ? KAMS[1] : KAMS[2]; return kk === KAMS[0] ? TM.lehito.court : kk === KAMS[1] ? TM.agohi.court : TM.lehito.court + ' et ' + TM.agohi.court; };
-      const ate = r.transfert || isDeleg(r) ? kamOf() : r.ate && r.ate !== 'À attribuer' ? r.ate : (isProd(r) && !isElev(r) ? TM.koffi.nom : (ATE_BY_DEP[r.depot] || 'À attribuer'));
+      const ate = r.transfert || isDeleg(r) ? kamOf() : maisKam(r) ? maisKam(r) : r.ate && r.ate !== 'À attribuer' ? r.ate : (isProd(r) && !isElev(r) ? TM.koffi.nom : (ATE_BY_DEP[r.depot] || 'À attribuer'));
+      if (maisClasse(r.maisDecl) === 'A' && !(r.action && r.action !== 'Aucune')) act = 'Appel KAM : contrat maïs SISSÊ~KABA (' + fr(r.maisDecl, 0) + ' t/an)';
       return { r, p, ech: ech(j), act, ate };
-    }).sort((a, b) => a.ate.localeCompare(b.ate) || a.p.localeCompare(b.p) || String(a.r.at).localeCompare(String(b.r.at)));
+    }).sort((a, b) => a.ate.localeCompare(b.ate) || a.p.localeCompare(b.p) || (b.r.maisDecl || 0) - (a.r.maisDecl || 0) || String(a.r.at).localeCompare(String(b.r.at)));
   }
   function daysBetween(a, b) { const out = []; for (let t = new Date(a + 'T00:00:00Z').getTime(); t <= new Date(b + 'T00:00:00Z').getTime(); t += DAY_MS) out.push(new Date(t).toISOString().slice(0, 10)); return out; }
   /* efficacité des transferts vers les Key Account Managers */
@@ -1666,6 +1688,9 @@
       rows: M.rows.map((x) => { const m = x.r.simu; return [x.r.nom, x.r.tel, x.r.localite, m.sp === 'chair' ? 'Poulet de chair' : m.sp === 'porc' ? 'Porcs' : 'Pondeuses', Math.round(m.effectif || 0), m.formule, Math.round(m.cout || 0), Math.round(m.marge || 0), Math.round(m.margeAn || 0), Math.round((m.margeAn || 0) / 656), Math.round(x.c), Math.round(x.p), Math.round(x.k || 0), Math.round(x.ca), Math.round(x.ca / 656), x.r.simuAuto || '', m.valide ? (x.r.simuValide || 'Oui') : 'Non', x.r.inscription || '']; })
         .concat([['TOTAL', '', '', '', '', '', '', '', '', '', Math.round(M.tC * 1000), Math.round(M.tP * 1000), Math.round((M.tK || 0) * 1000), Math.round(M.ca), Math.round(M.ca / 656), '', M.valide + ' validée(s)', '']]),
       widths: [24, 15, 14, 14, 9, 22, 12, 12, 15, 12, 13, 13, 13, 17, 14, 30, 22, 12] }); }
+    sheets.push({ name: 'Classement maïs', head: ['Rang', 'Classe', 'Nom', 'Téléphone', 'Profil', 'Localité', 'Aliment déclaré', 'Aliment / an (t)', 'Maïs déclaré / an (t)', 'Maïs estimé par l’effectif (t)', 'Écart (%)', 'Contrôle', 'Hectares équivalents', 'Relance KAM', 'Priorité', 'Échéance'],
+      rows: maisRank(F.L).map((x) => { const pl = F.plan.find((y) => y.r.id === x.r.id) || {}; return [x.rang, x.cl, x.r.nom, x.r.tel, x.r.public, x.r.localite, fr(x.r.alimQ, x.r.alimQ % 1 ? 2 : 0) + ' ' + x.r.alimU + ' ' + x.r.alimP, Math.round((x.r.alimAn || 0) * 10) / 10, Math.round(x.r.maisDecl * 10) / 10, x.r.maisEst ? Math.round(x.r.maisEst * 10) / 10 : '', x.r.maisEcart != null ? Math.round(x.r.maisEcart * 100) : '', x.r.maisCtrl || '', Math.round(x.ha * 10) / 10, maisKam(x.r), pl.p || '', pl.ech || '']; }),
+      widths: [6, 7, 24, 15, 16, 14, 26, 11, 12, 14, 9, 22, 11, 26, 8, 11] });
     sheets.push({ name: 'Visiteurs', head: ['Date', 'Source', 'Profil', 'Nom', 'Téléphone', 'E-mail', 'Localité', 'Dépôt', 'Activité', 'Priorités', 'Lieu d’entretien', 'Agent', 'Entretien', 'Intérêt', 'Inscription', 'Action', 'ATE', 'Statut', 'Réponse', 'Note'], rows: vis, widths: [16, 14, 16, 24, 15, 24, 14, 14, 30, 28, 18, 24, 12, 9, 11, 14, 22, 12, 30, 30] });
     return SKG.xlsxBook(JSZip, sheets);
   }
@@ -1682,6 +1707,7 @@
         return `<h3 style="color:#002060">Efficacité des transferts vers les Key Account Managers</h3><p>${S.all.n} visiteur(s) transféré(s), dont <b>${S.all.ins}</b> inscrit(s) au projet (<b>${p(S.all.taux)}</b>) contre ${p(S.non.taux)} pour les visiteurs non transférés${S.ecart == null ? '' : ` : écart de <b>${S.ecart > 0 ? '+' : ''}${fr(S.ecart, 1)} point(s)</b>`}. KAM prévenus sur leur téléphone : ${S.prevenus}/${S.all.n}.</p>
         <table cellpadding="5" border="1" style="border-collapse:collapse;font-size:12px"><tr style="background:#0B5FA1;color:#fff"><th>Groupe</th><th>Visiteurs</th><th>Inscrits</th><th>Taux d’inscription</th><th>Intérêts forts</th></tr>${row(S.all, 'Transférés vers un KAM')}${row(S.non, 'Non transférés')}${S.dests.filter((x) => x.n).map((x) => row(x, 'Vers ' + x.lab)).join('')}${S.from.map((x) => row(x, 'Depuis ' + x.lab)).join('')}</table>`; })()}
       ${simuHtml(F.simu || simuStats(F.L))}
+      ${maisHtml(F.L, 25)}
       <p><b>Localités les plus représentées :</b> ${Object.entries(loc).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, v]) => esc(k) + ' (' + v + ')').join(', ') || '—'}</p>
       <h3 style="color:#002060">Plan de relance par ATE</h3><p style="font-size:12px;color:#5b6476">P1 : inscrits ou intérêt fort, relance sous 48 h • P2 : intérêt moyen, à relancer ou entretien non réalisé, sous 7 jours • P3 : autres, sous 14 jours. Visiteurs « Pas intéressé » exclus.</p>
       ${byAte.map(({ a, L }) => `<h4 style="margin:12px 0 4px;color:#0B5FA1">${esc(a)} – ${L.length} contact(s) (P1 : ${L.filter((x) => x.p === 'P1').length})</h4><table cellpadding="4" border="1" style="border-collapse:collapse;font-size:12px"><tr style="background:#002060;color:#fff"><th>Priorité</th><th>Échéance</th><th>Nom</th><th>Téléphone</th><th>Profil</th><th>Localité</th><th>Activité</th><th>Action</th></tr>${L.map((x) => `<tr><td>${x.p}</td><td>${x.ech}</td><td>${esc(x.r.nom)}</td><td>${esc(x.r.tel)}</td><td>${esc(x.r.public)}</td><td>${esc(x.r.localite)}</td><td>${esc(activite(x.r))}</td><td>${esc(x.act)}</td></tr>`).join('')}</table>`).join('') || '<p>Aucun contact à relancer.</p>'}
@@ -1726,7 +1752,7 @@
   /* ---- liste (éditeur) ---- */
   function prosBesoin(r) {
     const a = [];
-    if (r.maisDecl) a.push(`Aliment déclaré : ${fr(r.alimQ, r.alimQ % 1 ? 2 : 0)} ${esc(r.alimU)} ${esc(r.alimP)} • <b>${fr(r.maisDecl, 1)} t maïs/an</b> (besoin réel)`);
+    if (r.maisDecl) a.push(`Aliment déclaré : ${fr(r.alimQ, r.alimQ % 1 ? 2 : 0)} ${esc(r.alimU)} ${esc(r.alimP)} • <b>${fr(r.maisDecl, 1)} t maïs/an</b> (besoin réel) • classe ${r.maisClasse || maisClasse(r.maisDecl)}${r.maisCtrl === 'À vérifier' ? ` <span class="mctl ko">⚠ ${esc(maisCtrlTxt(r))}</span>` : r.maisCtrl === 'Cohérent' ? ' <span class="mctl ok">✓ cohérent avec l’effectif</span>' : ''}`);
     if (r.aliment) a.push(`${activite(r)} • ${r.sacs ? fr(r.sacs, 0) + ' sacs/an • ' : ''}${fr(r.mais || 0, 1)} t maïs • ${fr((r.eco || 0) / 1e6, 2)} M éco.`);
     if (r.surface) a.push(`${fr(r.surface, 1)} ha • ${fr(r.maisP || 0, 1)} t maïs • +${fr((r.gain || 0) / 1e6, 2)} M recettes`);
     return a.join('<br>') || esc(activite(r));
@@ -1735,14 +1761,16 @@
     { const tb = $('#testBan'); if (tb) tb.hidden = !state.standCfg.testMode; }
     try { renderKitVal(); } catch (e) { /* */ }
     if (!$('#prosTbl')) return;
-    const f = $('#prosFilter').value; const L = state.pros.filter((r) => !f || r.statut === f || r.public === f || r.etat === f || tLab(r.table) === f);
+    const f = $('#prosFilter').value; const L = state.pros.filter((r) => !f || r.statut === f || r.public === f || r.etat === f || tLab(r.table) === f || (f === 'Maïs à vérifier' && r.maisCtrl === 'À vérifier'));
+    if (state.prosMaisSort) L.sort((a, b) => (b.maisDecl || 0) - (a.maisDecl || 0));
+    { const bt = $('#prosMais'); if (bt) bt.classList.toggle('on', !!state.prosMaisSort); }
     const cnt = (k, v) => state.pros.filter((r) => r[k] === v).length;
     { const nd = dupGroups().length; const bt = $('#prosDup'); if (bt) { bt.textContent = nd ? '⚠ Fusionner les doublons (' + nd + ')' : 'Doublons : aucun'; bt.classList.toggle('warn', !!nd); } }
     $('#prosK').innerHTML = [[state.pros.length, 'visiteurs enregistrés'], [cnt('etat', 'En attente'), 'en attente d’entretien'], [cnt('etat', 'En entretien'), 'en entretien'], [cnt('etat', 'Terminé'), 'entretiens terminés'], [cnt('inscription', 'Oui'), 'inscrits au projet'], [cnt('statut', 'À rappeler'), 'à rappeler']].map(([v, l]) => `<div><b>${v}</b>${l}</div>`).join('') + (() => {
       const D = state.pros.filter((r) => r.maisDecl > 0); if (!D.length) return '';
       const N = state.V.N, t = D.reduce((a, r) => a + r.maisDecl, 0), ha = N.tHa ? t / N.tHa : 0, pr = N.surf ? ha / N.surf : 0;
       return `<div class="pot" title="Besoin réel en maïs déclaré par les visiteurs (quantité d’aliment × ${fr(txMaisV() * 100)} % de maïs), converti en surface avec le rendement utile du scénario (${fr(N.tHa, 2)} t/ha)"><b>${fr(t, 1)} t/an</b>potentiel maïs déclaré (${D.length} visiteur${D.length > 1 ? 's' : ''}) ≈ ${fr(ha, 1)} ha${pr ? ' • ≈ ' + fr(Math.ceil(pr)) + ' producteur' + (Math.ceil(pr) > 1 ? 's' : '') : ''} à mobiliser</div>`; })();
-    const opts = ['', 'En attente', 'En entretien', 'Terminé', 'Éleveur', 'Producteur', 'Éleveur et producteur', ...STATUTS, ...(state.standCfg.tables || []).map((t) => tLab(t.n))];
+    const opts = ['', 'Maïs à vérifier', 'En attente', 'En entretien', 'Terminé', 'Éleveur', 'Producteur', 'Éleveur et producteur', ...STATUTS, ...(state.standCfg.tables || []).map((t) => tLab(t.n))];
     if ($('#prosFilter').options.length !== opts.length) $('#prosFilter').innerHTML = opts.map((o) => `<option value="${o}" ${o === f ? 'selected' : ''}>${o || 'Tous les visiteurs'}</option>`).join('');
     $('#prosTbl tbody').innerHTML = L.length ? L.map((r) => `<tr><td>${r.date}<br><small>${esc(r.source || '')}</small></td><td>${esc(r.public)}</td><td><b>${esc(r.nom)}</b><br><a href="tel:+${waNum(r.tel)}">${esc(r.tel)}</a>${r.email ? '<br><small>' + esc(r.email) + '</small>' : ''}</td><td>${esc(r.localite)}<br><small>${esc(r.depot)}</small></td><td class="bes">${prosBesoin(r)}</td>
       <td>${r.table ? esc(tLab(r.table)) + '<br><small>' + esc(r.agent || '') + '</small>' : '—'}<br><span class="et et${ETATS.indexOf(r.etat)}">${esc(r.etat || '')}</span></td>
@@ -1760,11 +1788,11 @@
   async function prosExport() {
     if (!state.pros.length) { status('Aucun visiteur à exporter.', 'err'); return; }
     const head = ['Date', 'Source', 'Profil', 'Nom', 'Téléphone', 'E-mail', 'Localité', 'Dépôt le plus proche', 'Poulets de chair', 'Pondeuses', 'Porcs / an', 'Aliment', 'Maïs acheté / mois (t)', 'Prémix ou aliment actuel', 'Surface maïs (ha)', 'Coopérative', 'Achète des intrants', 'Priorités', 'Contact préféré',
-      'Aliment déclaré', 'Aliment déclaré / an (t)', 'Besoin réel en maïs déclaré / an (t)', 'Aliment / an (t)', 'Sacs de prémix / an', 'Maïs / an (t)', 'Économies maïs / an (FCFA)', 'Gain recettes / an (FCFA)', 'Visite', 'Personnes', 'Coopérative ou association', 'KAM demandé', ...VEILLE.map(([, l, u]) => 'Prix ' + l + ' (' + u + ')'), 'Sac prémix chair (kg)', 'Sac prémix ponte (kg)', 'Simulation MG2MIX', 'Marge annuelle simulée (FCFA)', 'Prémix MG2MIX simulé (kg/cycle)', 'Accueil offert', 'Transfert vers KAM', 'Table', 'Agent', 'Entretien', 'Intérêt', 'Inscription au projet', 'Prochaine action', 'ATE de suivi', 'Statut', 'Message table', 'Message merci', 'E-mail merci', 'Note', 'Consentement'];
+      'Aliment déclaré', 'Aliment déclaré / an (t)', 'Besoin réel en maïs déclaré / an (t)', 'Classe maïs', 'Contrôle besoin maïs', 'Aliment / an (t)', 'Sacs de prémix / an', 'Maïs / an (t)', 'Économies maïs / an (FCFA)', 'Gain recettes / an (FCFA)', 'Visite', 'Personnes', 'Coopérative ou association', 'KAM demandé', ...VEILLE.map(([, l, u]) => 'Prix ' + l + ' (' + u + ')'), 'Sac prémix chair (kg)', 'Sac prémix ponte (kg)', 'Simulation MG2MIX', 'Marge annuelle simulée (FCFA)', 'Prémix MG2MIX simulé (kg/cycle)', 'Accueil offert', 'Transfert vers KAM', 'Table', 'Agent', 'Entretien', 'Intérêt', 'Inscription au projet', 'Prochaine action', 'ATE de suivi', 'Statut', 'Message table', 'Message merci', 'E-mail merci', 'Note', 'Consentement'];
     const rd = (x, d) => Math.round((x || 0) * Math.pow(10, d || 0)) / Math.pow(10, d || 0);
     const rows = state.pros.map((r) => [r.date, r.source, r.profil || r.public, r.nom, r.tel, r.email, r.localite, r.depot, r.chair || '', r.pondeuse || '', r.porc || '', r.fabrique, r.maisMois || '', r.fournisseur, r.surface || '', r.coop, r.intrants, (r.prios || []).join(', '), r.contact,
-      r.alimQ ? r.alimQ + ' ' + r.alimU + ' ' + r.alimP : '', rd(r.alimAn, 1), rd(r.maisDecl, 1), rd(r.aliment, 1), rd(r.sacs), rd((r.mais || 0) + (r.maisP || 0), 1), rd(r.eco), rd(r.gain), r.visite || 'Seul(e)', nbP(r), r.org || '', r.kam || '', ...VEILLE.map(([k]) => (r.veille || {})[k] || ''), (r.veille || {}).pxChairKg || '', (r.veille || {}).pxPonteKg || '', r.simu ? (r.simu.sp === 'chair' ? 'Chair ' : 'Ponte ') + fr(r.simu.effectif) + ' sujets • ' + r.simu.formule + ' • coût ' + fr(r.simu.cout) + ' F' : '', r.simu ? Math.round(r.simu.margeAn) : '', r.simu ? Math.round(r.simu.premixKg) : '', accLab(r) + (r.servi ? ' (servi)' : ''), r.transfert ? r.transfert.de + ' → ' + r.transfert.vers + ' (' + r.transfert.motif + ')' : '', tLab(r.table), r.agent, r.etat, r.interet, r.inscription, r.action, r.ate, r.statut, r.msgTable, r.msgMerci, r.mailMerci, r.note, r.consent ? 'Oui' : 'Non']);
-    const b = await SKG.xlsxTable(JSZip, 'Visiteurs stand', head, rows, [16, 14, 18, 24, 15, 24, 15, 15, 10, 10, 10, 16, 10, 18, 10, 16, 10, 30, 12, 26, 12, 14, 10, 10, 10, 14, 14, 18, 9, 22, 24, ...VEILLE.map(() => 12), 10, 10, 24, 30, 7, 22, 12, 9, 12, 14, 22, 13, 18, 18, 16, 30, 10]);
+      r.alimQ ? r.alimQ + ' ' + r.alimU + ' ' + r.alimP : '', rd(r.alimAn, 1), rd(r.maisDecl, 1), r.maisClasse || '', maisCtrlTxt(r), rd(r.aliment, 1), rd(r.sacs), rd((r.mais || 0) + (r.maisP || 0), 1), rd(r.eco), rd(r.gain), r.visite || 'Seul(e)', nbP(r), r.org || '', r.kam || '', ...VEILLE.map(([k]) => (r.veille || {})[k] || ''), (r.veille || {}).pxChairKg || '', (r.veille || {}).pxPonteKg || '', r.simu ? (r.simu.sp === 'chair' ? 'Chair ' : 'Ponte ') + fr(r.simu.effectif) + ' sujets • ' + r.simu.formule + ' • coût ' + fr(r.simu.cout) + ' F' : '', r.simu ? Math.round(r.simu.margeAn) : '', r.simu ? Math.round(r.simu.premixKg) : '', accLab(r) + (r.servi ? ' (servi)' : ''), r.transfert ? r.transfert.de + ' → ' + r.transfert.vers + ' (' + r.transfert.motif + ')' : '', tLab(r.table), r.agent, r.etat, r.interet, r.inscription, r.action, r.ate, r.statut, r.msgTable, r.msgMerci, r.mailMerci, r.note, r.consent ? 'Oui' : 'Non']);
+    const b = await SKG.xlsxTable(JSZip, 'Visiteurs stand', head, rows, [16, 14, 18, 24, 15, 24, 15, 15, 10, 10, 10, 16, 10, 18, 10, 16, 10, 30, 12, 26, 12, 14, 8, 36, 10, 10, 10, 14, 14, 18, 9, 22, 24, ...VEILLE.map(() => 12), 10, 10, 24, 30, 7, 22, 12, 9, 12, 14, 22, 13, 18, 18, 16, 30, 10]);
     await save('SISSE_KABA_Visiteurs_Stand_SELAB_suivi_ATE_' + today().iso + '.xlsx', b);
   }
   function renderTeam() {
@@ -2404,7 +2432,7 @@
   }
   function initStand() {
     renderTeam();
-    $('#prosExport').addEventListener('click', prosExport); $('#prosFilter').addEventListener('change', renderPros);
+    $('#prosExport').addEventListener('click', prosExport); $('#prosFilter').addEventListener('change', renderPros); { const bm = $('#prosMais'); if (bm) bm.addEventListener('click', () => { state.prosMaisSort = !state.prosMaisSort; renderPros(); }); }
     $('#prosAdd').addEventListener('click', () => editVisitor(null));
     $('#prosImport').addEventListener('click', importWa);
     $('#prosCfg').addEventListener('click', editCfg);

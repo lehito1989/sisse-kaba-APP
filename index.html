@@ -459,6 +459,7 @@ ul.jj{padding-left:18px;line-height:1.6}
 details.veille{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:8px 0;background:#FAFCFF}details.veille summary{cursor:pointer;font-weight:700;color:var(--navy)}details.veille summary span,details.veille small{font-weight:400;color:var(--mut);font-size:12px}details.veille .vg{margin-top:8px}details.veille .sacs{grid-column:1/-1;margin:-2px 0 4px}details.veille .sacs b{font-size:12.5px;color:var(--navy)}
 .alq{margin:10px 0 4px;padding:10px 12px;border:1px dashed #C9D3E3;border-radius:12px;background:#fff}.alq>b{color:#002060}.alq .note{margin:4px 0 8px}.alo{margin-top:6px;padding:8px 10px;border-radius:10px;background:#EAF6E6;color:#1E5E1A;line-height:1.4}
 #prosK div.pot{background:#EAF6E6;border-color:#37A028}
+.mctl{display:inline-block;font-size:12px;padding:1px 6px;border-radius:8px;margin-left:4px}.mctl.ko{background:#FDECEA;color:#B3261E}.mctl.ok{background:#EAF6E6;color:#1E5E1A}#prosMais.on{background:#37A028;color:#fff}
 </style>
 </head>
 <body>
@@ -914,7 +915,7 @@ body.m-mobile header .prezbtn[onclick]{display:none}
       <button id="prosCfg" type="button">⚙ Tables, agents et messages</button>
     </div>
     <div class="simk" id="prosK"></div>
-    <div class="prosbar"><select id="prosFilter"><option value="">Tous les visiteurs</option></select>
+    <div class="prosbar"><select id="prosFilter"><option value="">Tous les visiteurs</option></select><button type="button" id="prosMais" title="Classer les visiteurs par maïs déclaré (t/an) pour prioriser les relances">🌽 Classer par maïs déclaré</button>
       <button id="prosExport" type="button">⬇ Exporter la liste (Excel)</button></div>
     <div class="tw"><table class="sim" id="prosTbl"><thead><tr><th>Date</th><th>Profil</th><th>Visiteur</th><th>Localité / dépôt</th><th>Activité et besoin calculé</th><th>Table / entretien</th><th>Suivi ATE</th><th>Messages</th><th></th></tr></thead><tbody></tbody></table></div>
   </div>
