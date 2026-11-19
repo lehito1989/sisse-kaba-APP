@@ -853,7 +853,9 @@
     if (!r.ate || r.ate === 'À attribuer') r.ate = isProd(r) && !isElev(r) ? TM.koffi.nom : (ATE_BY_DEP[r.depot] || 'À attribuer');
     const N = state.V.N;
     const al = (r.chair || 0) * N.kgPoulet * N.cycles / 1000 + (r.pondeuse || 0) * N.pondJour * 365 / 1000 + (r.porc || 0) * N.kgPorc / 1000;
-    if (al) { r.aliment = al; r.mais = al * N.txMais; r.sacs = (r.chair || 0) * N.kgPoulet * N.cycles / 1000 / (N.sacKg / 1000 / N.inclChair) + (r.pondeuse || 0) * N.pondJour * 365 / 1000 / (N.sacKg / 1000 / N.inclPonte) + (r.porc || 0) * N.kgPorc / 1000 / (N.sacKg / 1000 / N.inclPorc); r.eco = r.mais * 1000 * (N.P - N.prixAchAp); }
+    if (al) { r.aliment = al; r.mais = al * N.txMais; r.sacs = (r.chair || 0) * N.kgPoulet * N.cycles / 1000 / (N.sacKg / 1000 / N.inclChair) + (r.pondeuse || 0) * N.pondJour * 365 / 1000 / (N.sacKg / 1000 / N.inclPonte) + (r.porc || 0) * N.kgPorc / 1000 / (N.sacKg / 1000 / N.inclPorc); r.eco = r.mais * 1000 * (N.prixAchAv - N.prixAchAp); }
+    const ad = alimDecl(r.alimQ, r.alimU, r.alimP);
+    if (ad) { r.alimAn = ad.an; r.maisDecl = ad.mais; r.aliment = ad.an; r.mais = ad.mais; r.eco = r.mais * 1000 * (N.prixAchAv - N.prixAchAp); if (!al) r.sacs = 0; } else { delete r.alimAn; delete r.maisDecl; }
     if (r.surface) { const t = r.surface * N.tHa; r.maisP = t; r.gain = t * 1000 * (N.prixProdAp - N.prixProdAv); r.panier = r.surface * N.panier27; }
     return r;
   }
@@ -882,6 +884,11 @@
   }
   function prosFallback() { state.prosLocal = true; try { state.pros = JSON.parse(localStorage.getItem('sk_pros') || '[]'); } catch (e) { state.pros = []; } renderPros(); }
   /* ---- formulaire (borne et éditeur) ---- */
+  /* besoin réel en maïs déclaré par le visiteur : le maïs représente 60 % de l’aliment fini (taux du scénario) */
+  const ALIM_U = { 'sacs de 50 kg': 0.05, 'sacs de 25 kg': 0.025, 'kg': 0.001, 'tonnes': 1 };
+  const ALIM_P = { 'par jour': 365, 'par semaine': 52, 'par mois': 12, 'par an': 1 };
+  const txMaisV = () => (state.V && state.V.N && state.V.N.txMais) || 0.6;
+  function alimDecl(q, u, p) { q = parseFloat(String(q || '').replace(',', '.')); if (!(q > 0) || !ALIM_U[u] || !ALIM_P[p]) return null; const an = q * ALIM_U[u] * ALIM_P[p]; return { an, mais: an * txMaisV() }; }
   function visForm(r, editor) {
     const chk = (name, v, arr) => `<label class="chip"><input type="checkbox" name="${name}" value="${esc(v)}" ${arr && arr.includes(v) ? 'checked' : ''}><span>${v}</span></label>`;
     const rad = (name, v, cur) => `<label class="chip"><input type="radio" name="${name}" value="${esc(v)}" ${cur === v ? 'checked' : ''}><span>${v}</span></label>`;
@@ -895,6 +902,11 @@
         <p class="note fx-gr">Chaque table reçoit 4 personnes au plus. Les délégations de coopératives et les associations sont reçues en salle de conférence par les Key Account Managers.</p></fieldset>
       <fieldset class="fx-el"><legend>Votre élevage</legend><div class="vg"><label>Poulets de chair (places)<input name="chair" type="number" inputmode="numeric" min="0" value="${r.chair || ''}"></label><label>Pondeuses (têtes)<input name="pondeuse" type="number" inputmode="numeric" min="0" value="${r.pondeuse || ''}"></label>
         <label>Porcs produits par an<input name="porc" type="number" inputmode="numeric" min="0" value="${r.porc || ''}"></label><label>Maïs acheté par mois (t)<input name="maisMois" type="number" inputmode="decimal" min="0" step="0.5" value="${r.maisMois || ''}"></label></div>
+        <div class="alq"><b>Quantité d’aliment utilisée pour nourrir vos animaux</b><p class="note">Cette évaluation nous permet de calculer votre besoin réel en maïs sur l’année, afin que les producteurs SISSÊ~KABA cultivent assez de maïs pour vous livrer toute l’année.</p>
+          <div class="vg"><label>Quantité d’aliment<input name="alimQ" type="number" inputmode="decimal" min="0" step="any" value="${r.alimQ || ''}" placeholder="ex. 20"></label>
+          <label>Unité<select name="alimU">${Object.keys(ALIM_U).map((u) => `<option ${u === (r.alimU || 'sacs de 50 kg') ? 'selected' : ''}>${u}</option>`).join('')}</select></label>
+          <label>Période<select name="alimP">${Object.keys(ALIM_P).map((u) => `<option ${u === (r.alimP || 'par semaine') ? 'selected' : ''}>${u}</option>`).join('')}</select></label></div>
+          <div class="alo" hidden></div></div>
         <div class="chips"><b>Votre aliment :</b>${['Je le fabrique', 'Je l’achète complet', 'Les deux'].map((v) => rad('fabrique', v, r.fabrique)).join('')}</div>
         <label class="w">Prémix ou aliment utilisé aujourd’hui (marque)<input name="fournisseur" value="${esc(r.fournisseur)}"></label></fieldset>
       <fieldset class="fx-pr"><legend>Votre production de maïs</legend><div class="vg"><label>Surface en maïs (ha)<input name="surface" type="number" inputmode="decimal" min="0" step="0.5" value="${r.surface || ''}"></label><label>Coopérative (si membre)<input name="coop" value="${esc(r.coop)}"></label></div>
@@ -925,13 +937,16 @@
       if (v === 'Seul(e)' && f.elements.nb) f.elements.nb.value = 1; else if (f.elements.nb && +f.elements.nb.value < 2) f.elements.nb.value = 2; };
     $$('[name=visite]', f).forEach((i) => i.addEventListener('change', vis2)); vis2();
     $$('[name=profil]', f).forEach((i) => i.addEventListener('change', vis)); vis();
+    const alShow = () => { const o = $('.alo', f); if (!o || !f.elements.alimQ) return; const a = alimDecl(f.elements.alimQ.value, f.elements.alimU.value, f.elements.alimP.value);
+      o.hidden = !a; if (a) o.innerHTML = `Aliment utilisé : <b>${fr(a.an, a.an % 1 ? 1 : 0)} t par an</b>.<br>Besoin réel en maïs (${fr(txMaisV() * 100)} % de l’aliment fini) : <b>${fr(a.mais, 1)} t par an</b>, soit ${fr(a.mais / 12, 2)} t par mois.`; };
+    ['alimQ', 'alimU', 'alimP'].forEach((n) => { if (f.elements[n]) { f.elements[n].addEventListener('input', alShow); f.elements[n].addEventListener('change', alShow); } }); alShow();
     f.addEventListener('submit', async (e) => {
       e.preventDefault();
       const g = (n) => (f.elements[n] ? f.elements[n].value.trim() : '');
       const num = (n) => parseFloat(String(g(n)).replace(',', '.')) || 0;
       const err = $('.ferr', f);
       r.profil = (f.querySelector('[name=profil]:checked') || {}).value || '';
-      Object.assign(r, { nom: g('nom'), tel: g('tel'), localite: g('localite'), email: g('email'), chair: num('chair'), pondeuse: num('pondeuse'), porc: num('porc'), maisMois: num('maisMois'),
+      Object.assign(r, { nom: g('nom'), tel: g('tel'), localite: g('localite'), email: g('email'), chair: num('chair'), pondeuse: num('pondeuse'), porc: num('porc'), maisMois: num('maisMois'), alimQ: num('alimQ'), alimU: g('alimU'), alimP: g('alimP'),
         fournisseur: g('fournisseur'), surface: num('surface'), coop: g('coop'), depot: g('depot'),
         fabrique: (f.querySelector('[name=fabrique]:checked') || {}).value || '', intrants: (f.querySelector('[name=intrants]:checked') || {}).value || '',
         contact: (f.querySelector('[name=contact]:checked') || {}).value || 'WhatsApp', prios: $$('[name=prios]:checked', f).map((i) => i.value), consent: f.elements.consent.checked,
@@ -994,7 +1009,7 @@
     const pk = Object.keys(kv).find((k) => /^profil/.test(k)); const pv = pk ? kv[pk] : '';
     const pvn = pv.toLowerCase(); const pf = pick(pv, PROFILS) || (/lev/.test(pvn) && /produc/.test(pvn) ? 'Éleveur et producteur' : /produc/.test(pvn) ? 'Producteur de maïs' : /lev/.test(pvn) ? 'Éleveur' : /fabric/.test(pvn) ? 'Fabricant d’aliment' : '');
     Object.assign(r, { profil: pf, nom: g('nom'), tel: g('telephone'), localite: g('localite'), email: g('e mail', 'email'), visite: pick(g('visite'), VISITES) || 'Seul(e)', nb: Math.max(1, n('nombre de personnes')), org: g('organisation'),
-      kam: pick(g('entretien souhaite avec'), KAMS), chair: n('poulets de chair'), pondeuse: n('pondeuses'), porc: n('porcs par an'), maisMois: n('mais achete par mois t'), fabrique: g('aliment'), fournisseur: g('fournisseur'),
+      kam: pick(g('entretien souhaite avec'), KAMS), chair: n('poulets de chair'), pondeuse: n('pondeuses'), porc: n('porcs par an'), maisMois: n('mais achete par mois t'), ...(() => { const m = g('aliment utilise').match(/^([\d\s.,]+)\s+(sacs de 50 kg|sacs de 25 kg|kg|tonnes)\s+(par jour|par semaine|par mois|par an)/i); return m ? { alimQ: parseFloat(m[1].replace(/\s/g, '').replace(',', '.')) || 0, alimU: m[2].toLowerCase(), alimP: m[3].toLowerCase() } : {}; })(), fabrique: g('aliment'), fournisseur: g('fournisseur'),
       surface: n('surface mais ha'), coop: g('cooperative'), intrants: g('intrants'), prios: g('priorites').split(/\s*,\s*/).filter((x) => PRIOS.includes(x)), depot: pick(g('depot'), DEPOTS_S) || DEPOTS_S[0], contact: pick(g('contact'), CONTACTS) || 'WhatsApp',
       veille: Object.fromEntries(VEILLE.flatMap(([k, l, u]) => { const v = n('prix ' + nrm(l) + ' ' + nrm(u)); const sk = n('sac ' + nrm(l) + ' kg'); return v > 0 ? [[k, v]].concat(sk > 0 ? [[k + 'Kg', sk]] : []) : []; })), tableVoulue: g('table souhaitee'), accueil: ACCUEIL.filter((a) => new RegExp(a, 'i').test(g('accueil'))), consent: /oui/i.test(g('accord')), note: 'Fiche d’inscription remplie sur téléphone (QR code de la borne).' });
     return r;
@@ -1711,7 +1726,8 @@
   /* ---- liste (éditeur) ---- */
   function prosBesoin(r) {
     const a = [];
-    if (r.aliment) a.push(`${activite(r)} • ${fr(r.sacs || 0, 0)} sacs/an • ${fr(r.mais || 0, 1)} t maïs • ${fr((r.eco || 0) / 1e6, 2)} M éco.`);
+    if (r.maisDecl) a.push(`Aliment déclaré : ${fr(r.alimQ, r.alimQ % 1 ? 2 : 0)} ${esc(r.alimU)} ${esc(r.alimP)} • <b>${fr(r.maisDecl, 1)} t maïs/an</b> (besoin réel)`);
+    if (r.aliment) a.push(`${activite(r)} • ${r.sacs ? fr(r.sacs, 0) + ' sacs/an • ' : ''}${fr(r.mais || 0, 1)} t maïs • ${fr((r.eco || 0) / 1e6, 2)} M éco.`);
     if (r.surface) a.push(`${fr(r.surface, 1)} ha • ${fr(r.maisP || 0, 1)} t maïs • +${fr((r.gain || 0) / 1e6, 2)} M recettes`);
     return a.join('<br>') || esc(activite(r));
   }
@@ -1722,7 +1738,10 @@
     const f = $('#prosFilter').value; const L = state.pros.filter((r) => !f || r.statut === f || r.public === f || r.etat === f || tLab(r.table) === f);
     const cnt = (k, v) => state.pros.filter((r) => r[k] === v).length;
     { const nd = dupGroups().length; const bt = $('#prosDup'); if (bt) { bt.textContent = nd ? '⚠ Fusionner les doublons (' + nd + ')' : 'Doublons : aucun'; bt.classList.toggle('warn', !!nd); } }
-    $('#prosK').innerHTML = [[state.pros.length, 'visiteurs enregistrés'], [cnt('etat', 'En attente'), 'en attente d’entretien'], [cnt('etat', 'En entretien'), 'en entretien'], [cnt('etat', 'Terminé'), 'entretiens terminés'], [cnt('inscription', 'Oui'), 'inscrits au projet'], [cnt('statut', 'À rappeler'), 'à rappeler']].map(([v, l]) => `<div><b>${v}</b>${l}</div>`).join('');
+    $('#prosK').innerHTML = [[state.pros.length, 'visiteurs enregistrés'], [cnt('etat', 'En attente'), 'en attente d’entretien'], [cnt('etat', 'En entretien'), 'en entretien'], [cnt('etat', 'Terminé'), 'entretiens terminés'], [cnt('inscription', 'Oui'), 'inscrits au projet'], [cnt('statut', 'À rappeler'), 'à rappeler']].map(([v, l]) => `<div><b>${v}</b>${l}</div>`).join('') + (() => {
+      const D = state.pros.filter((r) => r.maisDecl > 0); if (!D.length) return '';
+      const N = state.V.N, t = D.reduce((a, r) => a + r.maisDecl, 0), ha = N.tHa ? t / N.tHa : 0, pr = N.surf ? ha / N.surf : 0;
+      return `<div class="pot" title="Besoin réel en maïs déclaré par les visiteurs (quantité d’aliment × ${fr(txMaisV() * 100)} % de maïs), converti en surface avec le rendement utile du scénario (${fr(N.tHa, 2)} t/ha)"><b>${fr(t, 1)} t/an</b>potentiel maïs déclaré (${D.length} visiteur${D.length > 1 ? 's' : ''}) ≈ ${fr(ha, 1)} ha${pr ? ' • ≈ ' + fr(Math.ceil(pr)) + ' producteur' + (Math.ceil(pr) > 1 ? 's' : '') : ''} à mobiliser</div>`; })();
     const opts = ['', 'En attente', 'En entretien', 'Terminé', 'Éleveur', 'Producteur', 'Éleveur et producteur', ...STATUTS, ...(state.standCfg.tables || []).map((t) => tLab(t.n))];
     if ($('#prosFilter').options.length !== opts.length) $('#prosFilter').innerHTML = opts.map((o) => `<option value="${o}" ${o === f ? 'selected' : ''}>${o || 'Tous les visiteurs'}</option>`).join('');
     $('#prosTbl tbody').innerHTML = L.length ? L.map((r) => `<tr><td>${r.date}<br><small>${esc(r.source || '')}</small></td><td>${esc(r.public)}</td><td><b>${esc(r.nom)}</b><br><a href="tel:+${waNum(r.tel)}">${esc(r.tel)}</a>${r.email ? '<br><small>' + esc(r.email) + '</small>' : ''}</td><td>${esc(r.localite)}<br><small>${esc(r.depot)}</small></td><td class="bes">${prosBesoin(r)}</td>
@@ -1741,11 +1760,11 @@
   async function prosExport() {
     if (!state.pros.length) { status('Aucun visiteur à exporter.', 'err'); return; }
     const head = ['Date', 'Source', 'Profil', 'Nom', 'Téléphone', 'E-mail', 'Localité', 'Dépôt le plus proche', 'Poulets de chair', 'Pondeuses', 'Porcs / an', 'Aliment', 'Maïs acheté / mois (t)', 'Prémix ou aliment actuel', 'Surface maïs (ha)', 'Coopérative', 'Achète des intrants', 'Priorités', 'Contact préféré',
-      'Aliment / an (t)', 'Sacs de prémix / an', 'Maïs / an (t)', 'Économies maïs / an (FCFA)', 'Gain recettes / an (FCFA)', 'Visite', 'Personnes', 'Coopérative ou association', 'KAM demandé', ...VEILLE.map(([, l, u]) => 'Prix ' + l + ' (' + u + ')'), 'Sac prémix chair (kg)', 'Sac prémix ponte (kg)', 'Simulation MG2MIX', 'Marge annuelle simulée (FCFA)', 'Prémix MG2MIX simulé (kg/cycle)', 'Accueil offert', 'Transfert vers KAM', 'Table', 'Agent', 'Entretien', 'Intérêt', 'Inscription au projet', 'Prochaine action', 'ATE de suivi', 'Statut', 'Message table', 'Message merci', 'E-mail merci', 'Note', 'Consentement'];
+      'Aliment déclaré', 'Aliment déclaré / an (t)', 'Besoin réel en maïs déclaré / an (t)', 'Aliment / an (t)', 'Sacs de prémix / an', 'Maïs / an (t)', 'Économies maïs / an (FCFA)', 'Gain recettes / an (FCFA)', 'Visite', 'Personnes', 'Coopérative ou association', 'KAM demandé', ...VEILLE.map(([, l, u]) => 'Prix ' + l + ' (' + u + ')'), 'Sac prémix chair (kg)', 'Sac prémix ponte (kg)', 'Simulation MG2MIX', 'Marge annuelle simulée (FCFA)', 'Prémix MG2MIX simulé (kg/cycle)', 'Accueil offert', 'Transfert vers KAM', 'Table', 'Agent', 'Entretien', 'Intérêt', 'Inscription au projet', 'Prochaine action', 'ATE de suivi', 'Statut', 'Message table', 'Message merci', 'E-mail merci', 'Note', 'Consentement'];
     const rd = (x, d) => Math.round((x || 0) * Math.pow(10, d || 0)) / Math.pow(10, d || 0);
     const rows = state.pros.map((r) => [r.date, r.source, r.profil || r.public, r.nom, r.tel, r.email, r.localite, r.depot, r.chair || '', r.pondeuse || '', r.porc || '', r.fabrique, r.maisMois || '', r.fournisseur, r.surface || '', r.coop, r.intrants, (r.prios || []).join(', '), r.contact,
-      rd(r.aliment, 1), rd(r.sacs), rd((r.mais || 0) + (r.maisP || 0), 1), rd(r.eco), rd(r.gain), r.visite || 'Seul(e)', nbP(r), r.org || '', r.kam || '', ...VEILLE.map(([k]) => (r.veille || {})[k] || ''), (r.veille || {}).pxChairKg || '', (r.veille || {}).pxPonteKg || '', r.simu ? (r.simu.sp === 'chair' ? 'Chair ' : 'Ponte ') + fr(r.simu.effectif) + ' sujets • ' + r.simu.formule + ' • coût ' + fr(r.simu.cout) + ' F' : '', r.simu ? Math.round(r.simu.margeAn) : '', r.simu ? Math.round(r.simu.premixKg) : '', accLab(r) + (r.servi ? ' (servi)' : ''), r.transfert ? r.transfert.de + ' → ' + r.transfert.vers + ' (' + r.transfert.motif + ')' : '', tLab(r.table), r.agent, r.etat, r.interet, r.inscription, r.action, r.ate, r.statut, r.msgTable, r.msgMerci, r.mailMerci, r.note, r.consent ? 'Oui' : 'Non']);
-    const b = await SKG.xlsxTable(JSZip, 'Visiteurs stand', head, rows, [16, 14, 18, 24, 15, 24, 15, 15, 10, 10, 10, 16, 10, 18, 10, 16, 10, 30, 12, 10, 10, 10, 14, 14, 18, 9, 22, 24, ...VEILLE.map(() => 12), 10, 10, 24, 30, 7, 22, 12, 9, 12, 14, 22, 13, 18, 18, 16, 30, 10]);
+      r.alimQ ? r.alimQ + ' ' + r.alimU + ' ' + r.alimP : '', rd(r.alimAn, 1), rd(r.maisDecl, 1), rd(r.aliment, 1), rd(r.sacs), rd((r.mais || 0) + (r.maisP || 0), 1), rd(r.eco), rd(r.gain), r.visite || 'Seul(e)', nbP(r), r.org || '', r.kam || '', ...VEILLE.map(([k]) => (r.veille || {})[k] || ''), (r.veille || {}).pxChairKg || '', (r.veille || {}).pxPonteKg || '', r.simu ? (r.simu.sp === 'chair' ? 'Chair ' : 'Ponte ') + fr(r.simu.effectif) + ' sujets • ' + r.simu.formule + ' • coût ' + fr(r.simu.cout) + ' F' : '', r.simu ? Math.round(r.simu.margeAn) : '', r.simu ? Math.round(r.simu.premixKg) : '', accLab(r) + (r.servi ? ' (servi)' : ''), r.transfert ? r.transfert.de + ' → ' + r.transfert.vers + ' (' + r.transfert.motif + ')' : '', tLab(r.table), r.agent, r.etat, r.interet, r.inscription, r.action, r.ate, r.statut, r.msgTable, r.msgMerci, r.mailMerci, r.note, r.consent ? 'Oui' : 'Non']);
+    const b = await SKG.xlsxTable(JSZip, 'Visiteurs stand', head, rows, [16, 14, 18, 24, 15, 24, 15, 15, 10, 10, 10, 16, 10, 18, 10, 16, 10, 30, 12, 26, 12, 14, 10, 10, 10, 14, 14, 18, 9, 22, 24, ...VEILLE.map(() => 12), 10, 10, 24, 30, 7, 22, 12, 9, 12, 14, 22, 13, 18, 18, 16, 30, 10]);
     await save('SISSE_KABA_Visiteurs_Stand_SELAB_suivi_ATE_' + today().iso + '.xlsx', b);
   }
   function renderTeam() {
