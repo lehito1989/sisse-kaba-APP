@@ -854,6 +854,7 @@
     const N = state.V.N;
     const al = (r.chair || 0) * N.kgPoulet * N.cycles / 1000 + (r.pondeuse || 0) * N.pondJour * 365 / 1000 + (r.porc || 0) * N.kgPorc / 1000;
     if (al) { r.aliment = al; r.mais = al * N.txMais; r.sacs = (r.chair || 0) * N.kgPoulet * N.cycles / 1000 / (N.sacKg / 1000 / N.inclChair) + (r.pondeuse || 0) * N.pondJour * 365 / 1000 / (N.sacKg / 1000 / N.inclPonte) + (r.porc || 0) * N.kgPorc / 1000 / (N.sacKg / 1000 / N.inclPorc); r.eco = r.mais * 1000 * (N.prixAchAv - N.prixAchAp); }
+    { const g = geoFind(r.localite); if (g) { r.region = g.region; r.depotConseil = g.depot; r.depotKm = g.km; r.depotFutur = g.futur ? g.futur.nom : ''; } else { delete r.region; delete r.depotConseil; delete r.depotKm; delete r.depotFutur; } }
     const ad = alimDecl(r.alimQ, r.alimU, r.alimP);
     r.maisEst = al ? al * N.txMais : 0;
     if (ad) { r.maisEcart = r.maisEst ? (ad.mais - r.maisEst) / r.maisEst : null; r.maisCtrl = r.maisEst ? (Math.abs(r.maisEcart) > MAIS_SEUIL_ECART ? 'À vérifier' : 'Cohérent') : 'Effectif non renseigné'; r.maisClasse = maisClasse(ad.mais); }
@@ -887,6 +888,48 @@
   }
   function prosFallback() { state.prosLocal = true; try { state.pros = JSON.parse(localStorage.getItem('sk_pros') || '[]'); } catch (e) { state.pros = []; } renderPros(); }
   /* ---- formulaire (borne et éditeur) ---- */
+  /* principales localités de Côte d’Ivoire : [nom, région ou district, latitude, longitude] (coordonnées approchées) */
+  var GEO_CI = [
+    ['Abidjan', 'District autonome d’Abidjan', 5.36, -4.01], ['Anyama', 'District autonome d’Abidjan', 5.49, -4.05], ['Bingerville', 'District autonome d’Abidjan', 5.36, -3.89], ['Songon', 'District autonome d’Abidjan', 5.32, -4.25], ['Abobo', 'District autonome d’Abidjan', 5.42, -4.02], ['Yopougon', 'District autonome d’Abidjan', 5.34, -4.08], ['Cocody', 'District autonome d’Abidjan', 5.35, -3.99], ['Port-Bouët', 'District autonome d’Abidjan', 5.26, -3.93],
+    ['Yamoussoukro', 'District autonome de Yamoussoukro', 6.82, -5.28], ['Attiégouakro', 'District autonome de Yamoussoukro', 6.78, -5.12],
+    ['Bouaké', 'Gbêkê', 7.69, -5.03], ['Béoumi', 'Gbêkê', 7.67, -5.58], ['Sakassou', 'Gbêkê', 7.45, -5.29], ['Botro', 'Gbêkê', 7.85, -5.31],
+    ['Daloa', 'Haut-Sassandra', 6.88, -6.45], ['Issia', 'Haut-Sassandra', 6.49, -6.59], ['Vavoua', 'Haut-Sassandra', 7.38, -6.48], ['Zoukougbeu', 'Haut-Sassandra', 6.76, -6.86],
+    ['San-Pédro', 'San-Pédro', 4.75, -6.64], ['Tabou', 'San-Pédro', 4.42, -7.35], ['Sassandra', 'Gbôklé', 4.95, -6.08], ['Fresco', 'Gbôklé', 5.08, -5.57],
+    ['Soubré', 'Nawa', 5.79, -6.61], ['Méagui', 'Nawa', 5.40, -6.56], ['Buyo', 'Nawa', 6.25, -7.00], ['Gueyo', 'Nawa', 5.69, -6.07],
+    ['Gagnoa', 'Gôh', 6.13, -5.95], ['Oumé', 'Gôh', 6.38, -5.42], ['Divo', 'Lôh-Djiboua', 5.84, -5.36], ['Lakota', 'Lôh-Djiboua', 5.85, -5.68], ['Guitry', 'Lôh-Djiboua', 5.52, -5.24],
+    ['Man', 'Tonkpi', 7.41, -7.55], ['Danané', 'Tonkpi', 7.26, -8.15], ['Biankouma', 'Tonkpi', 7.74, -7.61], ['Zouan-Hounien', 'Tonkpi', 6.92, -8.21],
+    ['Duékoué', 'Guémon', 6.74, -7.35], ['Bangolo', 'Guémon', 7.01, -7.49], ['Guiglo', 'Cavally', 6.54, -7.49], ['Bloléquin', 'Cavally', 6.57, -8.00], ['Toulépleu', 'Cavally', 6.58, -8.41],
+    ['Touba', 'Bafing', 8.28, -7.68], ['Odienné', 'Kabadougou', 9.51, -7.56], ['Minignan', 'Folon', 9.99, -7.84], ['Séguéla', 'Worodougou', 7.96, -6.67], ['Kani', 'Worodougou', 8.48, -6.61], ['Mankono', 'Béré', 8.06, -6.19],
+    ['Korhogo', 'Poro', 9.46, -5.63], ['Sinématiali', 'Poro', 9.58, -5.38], ['M’Bengué', 'Poro', 10.00, -5.90], ['Ferkessédougou', 'Tchologo', 9.59, -5.19], ['Ouangolodougou', 'Tchologo', 9.97, -5.15], ['Kong', 'Tchologo', 9.15, -4.61],
+    ['Boundiali', 'Bagoué', 9.52, -6.49], ['Tengréla', 'Bagoué', 10.48, -6.41], ['Katiola', 'Hambol', 8.14, -5.10], ['Dabakala', 'Hambol', 8.36, -4.43], ['Niakaramandougou', 'Hambol', 8.66, -5.29],
+    ['Bondoukou', 'Gontougo', 8.04, -2.80], ['Tanda', 'Gontougo', 7.80, -3.17], ['Bouna', 'Bounkani', 9.27, -3.00],
+    ['Abengourou', 'Indénié-Djuablin', 6.73, -3.49], ['Agnibilékrou', 'Indénié-Djuablin', 7.13, -3.20], ['Bettié', 'Indénié-Djuablin', 6.07, -3.40],
+    ['Aboisso', 'Sud-Comoé', 5.47, -3.21], ['Adiaké', 'Sud-Comoé', 5.29, -3.30], ['Assinie', 'Sud-Comoé', 5.13, -3.28], ['Grand-Bassam', 'Sud-Comoé', 5.20, -3.74], ['Bonoua', 'Sud-Comoé', 5.27, -3.59],
+    ['Adzopé', 'La Mé', 6.10, -3.86], ['Akoupé', 'La Mé', 6.38, -3.89], ['Alépé', 'La Mé', 5.50, -3.66], ['Yakassé-Attobrou', 'La Mé', 6.18, -3.65], ['Yakassé-Mé', 'La Mé', 5.98, -3.77],
+    ['Agboville', 'Agnéby-Tiassa', 5.93, -4.22], ['Tiassalé', 'Agnéby-Tiassa', 5.90, -4.83], ['Sikensi', 'Agnéby-Tiassa', 5.68, -4.58], ['Taabo', 'Agnéby-Tiassa', 6.22, -5.12],
+    ['Dabou', 'Grands-Ponts', 5.32, -4.38], ['Jacqueville', 'Grands-Ponts', 5.21, -4.42], ['Grand-Lahou', 'Grands-Ponts', 5.14, -5.02],
+    ['Daoukro', 'Iffou', 7.06, -3.96], ['M’Bahiakro', 'Iffou', 7.45, -4.34], ['Prikro', 'Iffou', 7.65, -3.99], ['Dimbokro', 'N’Zi', 6.65, -4.71], ['Bocanda', 'N’Zi', 7.06, -4.50],
+    ['Bongouanou', 'Moronou', 6.65, -4.20], ['Arrah', 'Moronou', 6.67, -3.97], ['M’Batto', 'Moronou', 6.47, -4.36],
+    ['Toumodi', 'Bélier', 6.56, -5.02], ['Tiébissou', 'Bélier', 7.16, -5.22], ['Didiévi', 'Bélier', 7.13, -4.90], ['Djékanou', 'Bélier', 6.48, -5.10],
+    ['Bouaflé', 'Marahoué', 6.99, -5.74], ['Zuénoula', 'Marahoué', 7.43, -6.05], ['Sinfra', 'Marahoué', 6.62, -5.91]
+  ];
+  /* dépôts SOLEVO FEED : actifs et en installation */
+  var DEPOTS_GEO = [['Abidjan', 5.36, -4.01, 1], ['Yamoussoukro', 6.82, -5.28, 1], ['Agnibilékrou', 7.13, -3.20, 1], ['San-Pédro', 4.75, -6.64, 0], ['Gagnoa', 6.13, -5.95, 0], ['Man', 7.41, -7.55, 0], ['Korhogo', 9.46, -5.63, 0]];
+  var GEO_ALIAS = { 'agnibilekro': 'Agnibilékrou', 'san pedro': 'San-Pédro', 'sanpedro': 'San-Pédro', 'ferke': 'Ferkessédougou', 'yakro': 'Yamoussoukro', 'bassam': 'Grand-Bassam', 'niakara': 'Niakaramandougou', 'ouangolo': 'Ouangolodougou' };
+  function geoKey(x) { return String(x || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’']/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim(); }
+  function geoFind(loc) {
+    var k = geoKey(loc); if (!k) return null;
+    var byKey = function (key) { for (var i = 0; i < GEO_CI.length; i++) if (geoKey(GEO_CI[i][0]) === key) return GEO_CI[i]; return null; };
+    var hit = byKey(k) || (GEO_ALIAS[k] ? byKey(geoKey(GEO_ALIAS[k])) : null);
+    if (!hit) { var best = null; GEO_CI.forEach(function (g) { var gk = geoKey(g[0]); if ((' ' + k + ' ').indexOf(' ' + gk + ' ') >= 0 && (!best || gk.length > geoKey(best[0]).length)) best = g; }); hit = best; }
+    if (!hit) for (var a in GEO_ALIAS) if ((' ' + k + ' ').indexOf(' ' + a + ' ') >= 0) { hit = byKey(geoKey(GEO_ALIAS[a])); break; }
+    if (!hit) return null;
+    var km = function (d) { var R = 6371, toR = Math.PI / 180, dLa = (d[1] - hit[2]) * toR, dLo = (d[2] - hit[3]) * toR, a = Math.sin(dLa / 2) * Math.sin(dLa / 2) + Math.cos(hit[2] * toR) * Math.cos(d[1] * toR) * Math.sin(dLo / 2) * Math.sin(dLo / 2); return 2 * R * Math.asin(Math.sqrt(a)); };
+    var D = DEPOTS_GEO.map(function (d) { return { nom: d[0], actif: !!d[3], km: Math.round(km(d)) }; }).sort(function (a, b) { return a.km - b.km; });
+    var act = D.filter(function (d) { return d.actif; })[0], fut = D[0].actif ? null : D[0];
+    return { ville: hit[0], region: hit[1], depot: act.nom, km: act.km, futur: fut };
+  }
+
   /* besoin réel en maïs déclaré par le visiteur : le maïs représente 60 % de l’aliment fini (taux du scénario) */
   const ALIM_U = { 'sacs de 50 kg': 0.05, 'sacs de 25 kg': 0.025, 'kg': 0.001, 'tonnes': 1 };
   const ALIM_P = { 'par jour': 365, 'par semaine': 52, 'par mois': 12, 'par an': 1 };
@@ -907,7 +950,7 @@
       <p><b>${fr(t, 1)} t de maïs par an</b> déclarées par <b>${R.length}</b> visiteur(s) (aliment déclaré × ${fr(txMaisV() * 100)} % de maïs), soit ≈ <b>${fr(ha, 1)} ha</b> à cultiver${pr ? ' et ≈ <b>' + fr(pr) + ' producteurs</b>' : ''} à mobiliser (rendement utile ${fr(N.tHa, 2)} t/ha, ${fr(N.surf, 1)} ha par producteur). Classes : A (≥ 100 t/an) <b>${cl('A')}</b> • B (25 à 100 t) <b>${cl('B')}</b> • C (&lt; 25 t) <b>${cl('C')}</b>. Fiches à vérifier (écart de plus de ${fr(MAIS_SEUIL_ECART * 100)} % avec l’estimation par l’effectif) : <b>${av}</b>.</p>
       ${obj ? `<table cellpadding="6" style="border-collapse:collapse;margin:6px 0 10px"><tr><td style="background:#F4F7FB;border-top:3px solid #37A028;text-align:center"><b style="font-size:20px;color:#0B5FA1">${fr(t, 0)} t</b><br><span style="font-size:12px">demande identifiée au stand</span></td><td style="background:#F4F7FB;border-top:3px solid #0B5FA1;text-align:center"><b style="font-size:20px;color:#0B5FA1">${fr(obj, 0)} t</b><br><span style="font-size:12px">maïs prévu par le projet en 2027</span></td><td style="background:#EAF6E6;border-top:3px solid #F6C21A;text-align:center"><b style="font-size:20px;color:#1E5E1A">${fr(part * 100, 1)} %</b><br><span style="font-size:12px">de la demande 2027 déjà identifiée</span></td><td style="background:#F4F7FB;border-top:3px solid #EE9B1D;text-align:center"><b style="font-size:20px;color:#0B5FA1">${fr(Math.max(0, obj - t), 0)} t</b><br><span style="font-size:12px">restent à trouver</span></td></tr></table>
       <div style="background:#E6ECF5;border-radius:6px;height:14px;width:520px;max-width:100%;overflow:hidden;margin-bottom:10px"><div style="background:#37A028;height:14px;width:${Math.min(100, part * 100).toFixed(1)}%"></div></div>` : ''}
-      ${maisJours(Lcum || L)}${maisOffre(Lcum || L)}${maisDep(Lcum || L)}${maisLoc(Lcum || L)}
+      ${maisJours(Lcum || L)}${maisOffre(Lcum || L)}${maisDep(Lcum || L)}${maisReg(Lcum || L)}${maisLoc(Lcum || L)}${recruHtml(Lcum || L)}
       <table cellpadding="4" border="1" style="border-collapse:collapse;font-size:12px"><tr style="background:#37A028;color:#fff"><th>Rang</th><th>Classe</th><th>Nom</th><th>Téléphone</th><th>Localité</th><th>Aliment déclaré</th><th>Maïs / an (t)</th><th>≈ ha</th><th>Contrôle</th><th>Relance par</th></tr>
       ${S.map((x) => `<tr><td>${x.rang}</td><td><b>${x.cl}</b></td><td>${esc(x.r.nom)}</td><td>${esc(x.r.tel)}</td><td>${esc(x.r.localite)}</td><td>${esc(fr(x.r.alimQ, x.r.alimQ % 1 ? 2 : 0) + ' ' + x.r.alimU + ' ' + x.r.alimP)}</td><td align="right"><b>${fr(x.r.maisDecl, 1)}</b></td><td align="right">${fr(x.ha, 1)}</td><td>${esc(maisCtrlTxt(x.r))}</td><td>${esc(maisKam(x.r))}${maisWa(x.r) ? `<br><a href="${maisWa(x.r)}">📲 Message WhatsApp prêt</a>` : ''}</td></tr>`).join('')}</table>${top && R.length > top ? `<p style="font-size:12px;color:#5b6476">${top} premiers sur ${R.length} ; classement complet dans le fichier Excel joint.</p>` : ''}`;
   }
@@ -956,18 +999,51 @@
   /* regroupement par dépôt SOLEVO déclaré par le visiteur (à défaut : localité) */
   function maisDepData(L) {
     const N = state.V.N, parProd = (N.surf || 0) * (N.tHa || 0), G = {};
-    L.forEach((r) => { const dm = r.maisDecl || 0; if (!dm && !isProd(r)) return; const d = r.depot && !/^Autre/.test(r.depot) ? r.depot : 'Autre ou non précisé';
+    L.forEach((r) => { const dm = r.maisDecl || 0; if (!dm && !isProd(r)) return; const d = r.depotConseil || (r.depot && !/^Autre/.test(r.depot) ? r.depot : 'Autre ou non précisé');
       const g = G[d] || (G[d] = { lab: d, locs: {}, el: 0, dem: 0, pr: 0, off: 0 }); if (r.localite) g.locs[locKey(r.localite)] = r.localite.trim(); if (dm) { g.el++; g.dem += dm; } if (isProd(r)) { g.pr++; g.off += r.maisP || 0; } });
     return Object.values(G).map((g) => Object.assign(g, { locs: Object.values(g.locs), solde: g.off - g.dem, manque: parProd && g.dem > g.off ? Math.ceil((g.dem - g.off) / parProd) : 0 })).sort((a, b) => a.solde - b.solde);
   }
   function maisDep(L) {
     const R = maisDepData(L); if (!R.length) return '';
-    return `<h4 style="color:#0B5FA1;margin:10px 0 4px">Demande et offre par dépôt SOLEVO (collecte)</h4><table cellpadding="4" border="1" style="border-collapse:collapse;font-size:12px"><tr style="background:#002060;color:#fff"><th>Dépôt</th><th>Localités</th><th>Éleveurs</th><th>Demande (t/an)</th><th>Producteurs</th><th>Offre (t/an)</th><th>Solde (t)</th><th>Producteurs à mobiliser</th></tr>${R.map((g) => `<tr><td><b>${esc(g.lab)}</b></td><td>${esc(g.locs.join(', ') || '—')}</td><td align="right">${g.el}</td><td align="right">${fr(g.dem, 1)}</td><td align="right">${g.pr}</td><td align="right">${fr(g.off, 1)}</td><td align="right" style="color:${g.solde < 0 ? '#B3261E' : '#1E5E1A'}"><b>${g.solde > 0 ? '+' : ''}${fr(g.solde, 1)}</b></td><td align="right">${g.manque ? '<b>' + g.manque + '</b>' : '—'}</td></tr>`).join('')}</table><p style="font-size:12px;color:#5b6476">Dépôt = dépôt SOLEVO le plus proche indiqué par le visiteur sur sa fiche.</p>`;
+    return `<h4 style="color:#0B5FA1;margin:10px 0 4px">Demande et offre par dépôt SOLEVO (collecte)</h4><table cellpadding="4" border="1" style="border-collapse:collapse;font-size:12px"><tr style="background:#002060;color:#fff"><th>Dépôt</th><th>Localités</th><th>Éleveurs</th><th>Demande (t/an)</th><th>Producteurs</th><th>Offre (t/an)</th><th>Solde (t)</th><th>Producteurs à mobiliser</th></tr>${R.map((g) => `<tr><td><b>${esc(g.lab)}</b></td><td>${esc(g.locs.join(', ') || '—')}</td><td align="right">${g.el}</td><td align="right">${fr(g.dem, 1)}</td><td align="right">${g.pr}</td><td align="right">${fr(g.off, 1)}</td><td align="right" style="color:${g.solde < 0 ? '#B3261E' : '#1E5E1A'}"><b>${g.solde > 0 ? '+' : ''}${fr(g.solde, 1)}</b></td><td align="right">${g.manque ? '<b>' + g.manque + '</b>' : '—'}</td></tr>`).join('')}</table><p style="font-size:12px;color:#5b6476">Dépôt = dépôt SOLEVO actif le plus proche de la localité (calculé) ; à défaut, dépôt indiqué par le visiteur.</p>`;
+  }
+  function maisRegData(L) {
+    const N = state.V.N, parProd = (N.surf || 0) * (N.tHa || 0), G = {};
+    L.forEach((r) => { const dm = r.maisDecl || 0; if (!dm && !isProd(r)) return; const k = r.region || 'Région non reconnue';
+      const g = G[k] || (G[k] = { lab: k, locs: {}, dep: {}, el: 0, dem: 0, pr: 0, off: 0 }); if (r.localite) g.locs[locKey(r.localite)] = r.localite.trim(); if (r.depotConseil) g.dep[r.depotConseil] = 1; if (r.depotFutur) g.fut = r.depotFutur; if (dm) { g.el++; g.dem += dm; } if (isProd(r)) { g.pr++; g.off += r.maisP || 0; } });
+    return Object.values(G).map((g) => Object.assign(g, { locs: Object.values(g.locs), dep: Object.keys(g.dep), solde: g.off - g.dem, manque: parProd && g.dem > g.off ? Math.ceil((g.dem - g.off) / parProd) : 0 })).sort((a, b) => a.solde - b.solde);
+  }
+  function maisReg(L) {
+    const R = maisRegData(L); if (!R.length) return '';
+    return `<h4 style="color:#0B5FA1;margin:10px 0 4px">Demande et offre par région</h4><table cellpadding="4" border="1" style="border-collapse:collapse;font-size:12px"><tr style="background:#002060;color:#fff"><th>Région</th><th>Localités</th><th>Dépôt de collecte</th><th>Éleveurs</th><th>Demande (t/an)</th><th>Producteurs</th><th>Offre (t/an)</th><th>Solde (t)</th><th>Producteurs à mobiliser</th></tr>${R.map((g) => `<tr><td><b>${esc(g.lab)}</b></td><td>${esc(g.locs.join(', ') || '—')}</td><td>${esc(g.dep.join(', ') || '—')}${g.fut ? '<br><small>' + esc(g.fut) + ' en installation</small>' : ''}</td><td align="right">${g.el}</td><td align="right">${fr(g.dem, 1)}</td><td align="right">${g.pr}</td><td align="right">${fr(g.off, 1)}</td><td align="right" style="color:${g.solde < 0 ? '#B3261E' : '#1E5E1A'}"><b>${g.solde > 0 ? '+' : ''}${fr(g.solde, 1)}</b></td><td align="right">${g.manque ? '<b>' + g.manque + '</b>' : '—'}</td></tr>`).join('')}</table><p style="font-size:12px;color:#5b6476">Région reconnue à partir de la localité (principales villes de Côte d’Ivoire) ; « Région non reconnue » : localité à préciser.</p>`;
   }
   /* recrutement de producteurs là où la demande attend */
   function recruMsg(g) {
     const N = state.V.N, t1 = (N.surf || 0) * (N.tHa || 0), gain = t1 * 1000 * (N.prixProdAp - N.prixProdAv);
     return `🌽 Producteurs de maïs de ${g.lab} et environs\n\nLes éleveurs de votre zone ont besoin d’environ ${fr(g.dem, 0)} t de maïs par an. Avec SISSÊ~KABA (SOLEVO Côte d’Ivoire), vous leur vendez directement :\n• payé 115 % du prix bord champ (+15 %), dès que l’éleveur a payé ;\n• semences et intrants SOLEVO, finançables par ADVANS après étude du dossier ;\n• appui de nos techniciens toute la campagne.\n\nExemple : avec ${fr(N.surf, 1)} ha, environ ${fr(t1, 0)} t livrées et ${fr(Math.round(gain / 1000) * 1000)} FCFA de plus par campagne (prix bord champ de ${fr(N.P)} FCFA/kg).\n\n👉 Inscription : ${LINKS.fiche}\nWhatsApp SOLEVO : ${SOLEVO_TEL}`;
+  }
+  /* suivi des recrutements : journal des messages envoyés (zone, date) et inscriptions qui suivent */
+  async function recruLog(e) {
+    const c = state.standCfg; c.recrut = (c.recrut || []).concat([Object.assign({ le: new Date().toISOString() }, e)]).slice(-500);
+    try { await cfgSave(); } catch (x) { /* */ }
+  }
+  function recruStats(L) {
+    const J = state.standCfg.recrut || []; if (!J.length) return [];
+    const fd = (x) => String(x).slice(0, 10).split('-').reverse().join('/'); const Z = {};
+    J.forEach((e) => { const z = Z[e.k] || (Z[e.k] = { k: e.k, lab: e.lab || e.k, n: 0, ind: [], first: e.le, last: e.le }); if (e.t === 'producteur') z.ind.push(e.id); else z.n++; if (e.le < z.first) z.first = e.le; if (e.le > z.last) z.last = e.le; });
+    return Object.values(Z).map((z) => { const P = L.filter((r) => isProd(r) && locKey(r.localite) === z.k && r.at > z.first), I = L.filter((r) => z.ind.includes(r.id));
+      return { lab: z.lab, n: z.n, first: fd(z.first), last: fd(z.last), nouv: P.length, nouvIns: P.filter((r) => r.inscription === 'Oui').length, ind: [...new Set(z.ind)].length, indIns: I.filter((r) => r.inscription === 'Oui').length }; }).sort((a, b) => b.n + b.ind - a.n - a.ind);
+  }
+  function recruHtml(L) {
+    const R = recruStats(L); if (!R.length) return '';
+    return `<h4 style="color:#0B5FA1;margin:10px 0 4px">Suivi des recrutements de producteurs</h4><table cellpadding="4" border="1" style="border-collapse:collapse;font-size:12px"><tr style="background:#37A028;color:#fff"><th>Zone</th><th>Messages de zone</th><th>1er envoi</th><th>Dernier envoi</th><th>Nouveaux producteurs depuis</th><th>dont inscrits au projet</th><th>Relances individuelles</th><th>dont inscrits</th></tr>${R.map((x) => `<tr><td>${esc(x.lab)}</td><td align="right">${x.n}</td><td>${x.first}</td><td>${x.last}</td><td align="right"><b>${x.nouv}</b></td><td align="right">${x.nouvIns}</td><td align="right">${x.ind}</td><td align="right">${x.indIns}</td></tr>`).join('')}</table><p style="font-size:12px;color:#5b6476">Nouveaux producteurs = producteurs de la même localité enregistrés après le premier message de zone.</p>`;
+  }
+  async function recruOpen() {
+    const L = state.pros.filter((r) => !r.test || state.standCfg.testMode), Z = maisLocData(L).filter((g) => g.solde < 0), S = recruStats(L);
+    const b = modal('Recrutement de producteurs', `<p class="note">Zones où la demande en maïs dépasse l’offre. « Envoyer » ouvre WhatsApp avec le message prêt (choisissez le groupe ou les contacts de producteurs), et l’envoi est enregistré avec la date pour mesurer les inscriptions qui suivent.</p>
+      ${Z.length ? `<div class="tw"><table class="sim"><thead><tr><th>Localité</th><th>Demande (t/an)</th><th>Offre (t/an)</th><th>Manque</th><th>Messages envoyés</th><th></th></tr></thead><tbody>${Z.map((g, i) => { const s2 = S.find((x) => x.lab === g.lab) || {}; return `<tr><td>${esc(g.lab)}</td><td>${fr(g.dem, 1)}</td><td>${fr(g.off, 1)}</td><td>${g.manque} producteur(s)</td><td>${s2.n || 0}${s2.last ? ' (dernier le ' + s2.last + ')' : ''}</td><td><a class="mctl wa" target="_blank" rel="noopener" data-rz="${i}" href="https://wa.me/?text=${encodeURIComponent(recruMsg(g))}">📲 Envoyer</a></td></tr>`; }).join('')}</tbody></table></div>` : '<p>Aucune zone en déficit pour le moment.</p>'}
+      <div id="rcS">${recruHtml(L) || '<p class="note">Aucun message de recrutement enregistré.</p>'}</div>`, true);
+    $$('[data-rz]', b).forEach((a) => a.addEventListener('click', async () => { const g = Z[+a.dataset.rz]; await recruLog({ t: 'zone', k: g.k, lab: g.lab }); status('Envoi enregistré : ' + g.lab, 'ok'); $('#rcS', b).innerHTML = recruHtml(L); }));
   }
   function prodMsg(r) {
     const N = state.V.N, t = r.maisP || 0, gain = t * 1000 * (N.prixProdAp - N.prixProdAv), g = maisLocData(state.pros.filter((x) => !x.test || state.standCfg.testMode)).find((x) => x.k === locKey(r.localite));
@@ -1000,7 +1076,7 @@
     return `<form class="visf" autocomplete="off">
       <fieldset><legend>Vous êtes</legend><div class="chips">${PROFILS.map((p) => rad('profil', p, r.profil)).join('')}</div></fieldset>
       <div class="vg"><label>Nom et prénom *<input name="nom" value="${esc(r.nom)}" required></label><label>Téléphone WhatsApp *<input name="tel" type="tel" inputmode="tel" value="${esc(r.tel)}" required placeholder="07 00 00 00 00"></label>
-        <label>Localité *<input name="localite" value="${esc(r.localite)}" required></label><label>E-mail (pour recevoir la présentation)<input name="email" type="email" inputmode="email" value="${esc(r.email)}"></label></div>
+        <label>Localité *<input name="localite" value="${esc(r.localite)}" required list="villesCI2"><span class="geo" hidden></span></label><datalist id="villesCI2">${GEO_CI.map((g) => `<option value="${esc(g[0])}">`).join('')}</datalist><label>E-mail (pour recevoir la présentation)<input name="email" type="email" inputmode="email" value="${esc(r.email)}"></label></div>
       <fieldset><legend>Votre visite</legend><div class="chips">${VISITES.map((v) => rad('visite', v, r.visite || 'Seul(e)')).join('')}</div>
         <div class="vg fx-gr"><label>Nombre de personnes<input name="nb" type="number" inputmode="numeric" min="1" max="60" value="${r.nb || 1}"></label><label class="fx-dl">Coopérative ou association (nom)<input name="org" value="${esc(r.org)}"></label></div>
         <div class="chips fx-dl"><b>Entretien souhaité en salle de conférence avec :</b>${KAMS.map((v) => rad('kam', v, r.kam)).join('')}</div>
@@ -1042,6 +1118,11 @@
       if (v === 'Seul(e)' && f.elements.nb) f.elements.nb.value = 1; else if (f.elements.nb && +f.elements.nb.value < 2) f.elements.nb.value = 2; };
     $$('[name=visite]', f).forEach((i) => i.addEventListener('change', vis2)); vis2();
     $$('[name=profil]', f).forEach((i) => i.addEventListener('change', vis)); vis();
+    { let touched = !!r.id && !!r.localite; if (f.elements.depot) f.elements.depot.addEventListener('change', () => { touched = true; });
+      const gShow = () => { const o = $('.geo', f), g = geoFind(f.elements.localite.value); if (!o) return; o.hidden = !g; if (!g) return;
+        o.innerHTML = `Région : <b>${esc(g.region)}</b> • dépôt SOLEVO le plus proche : <b>${esc(g.depot)}</b> (≈ ${g.km} km)${g.futur ? ` • dépôt de ${esc(g.futur.nom)} en installation à ≈ ${g.futur.km} km` : ''}`;
+        if (!touched && f.elements.depot) f.elements.depot.value = g.depot; };
+      f.elements.localite.addEventListener('input', gShow); f.elements.localite.addEventListener('change', gShow); gShow(); }
     const alShow = () => { const o = $('.alo', f); if (!o || !f.elements.alimQ) return; const a = alimDecl(f.elements.alimQ.value, f.elements.alimU.value, f.elements.alimP.value);
       o.hidden = !a; if (a) o.innerHTML = `Aliment utilisé : <b>${fr(a.an, a.an % 1 ? 1 : 0)} t par an</b>.<br>Besoin réel en maïs (${fr(txMaisV() * 100)} % de l’aliment fini) : <b>${fr(a.mais, 1)} t par an</b>, soit ${fr(a.mais / 12, 2)} t par mois.`; };
     ['alimQ', 'alimU', 'alimP'].forEach((n) => { if (f.elements[n]) { f.elements[n].addEventListener('input', alShow); f.elements[n].addEventListener('change', alShow); } }); alShow();
@@ -1776,7 +1857,7 @@
         .concat([['TOTAL', '', '', '', '', '', '', '', '', '', Math.round(M.tC * 1000), Math.round(M.tP * 1000), Math.round((M.tK || 0) * 1000), Math.round(M.ca), Math.round(M.ca / 656), '', M.valide + ' validée(s)', '']]),
       widths: [24, 15, 14, 14, 9, 22, 12, 12, 15, 12, 13, 13, 13, 17, 14, 30, 22, 12] }); }
     sheets.push({ name: 'Classement maïs', head: ['Rang', 'Classe', 'Nom', 'Téléphone', 'Profil', 'Localité', 'Aliment déclaré', 'Aliment / an (t)', 'Maïs déclaré / an (t)', 'Maïs estimé par l’effectif (t)', 'Écart (%)', 'Contrôle', 'Hectares équivalents', 'Relance KAM', 'Priorité', 'Échéance', 'Message WhatsApp de relance (classes A et B)'],
-      rows: maisRank(F.L).map((x) => { const pl = F.plan.find((y) => y.r.id === x.r.id) || {}; return [x.rang, x.cl, x.r.nom, x.r.tel, x.r.public, x.r.localite, fr(x.r.alimQ, x.r.alimQ % 1 ? 2 : 0) + ' ' + x.r.alimU + ' ' + x.r.alimP, Math.round((x.r.alimAn || 0) * 10) / 10, Math.round(x.r.maisDecl * 10) / 10, x.r.maisEst ? Math.round(x.r.maisEst * 10) / 10 : '', x.r.maisEcart != null ? Math.round(x.r.maisEcart * 100) : '', x.r.maisCtrl || '', Math.round(x.ha * 10) / 10, maisKam(x.r), pl.p || '', pl.ech || '', maisMsgAB(x.r)]; }).concat((() => { const R = maisRank(F.L), t = R.reduce((a, x) => a + x.r.maisDecl, 0), o = state.V.N.mais27 || 0; return R.length ? [[], ['', 'TOTAL', 'Demande identifiée au stand (t/an)', '', '', '', '', '', Math.round(t * 10) / 10], ['', '', 'Maïs prévu par le projet en 2027 (t)', '', '', '', '', '', Math.round(o)], ['', '', 'Part de la demande 2027 déjà identifiée (%)', '', '', '', '', '', o ? Math.round(t / o * 1000) / 10 : ''], ['', '', 'Reste à identifier (t)', '', '', '', '', '', Math.max(0, Math.round(o - t))]].concat((() => { const O = maisOffreData(F.L); return [[], ['', 'OFFRE', 'Producteurs de maïs inscrits au stand', '', '', '', '', '', O.n], ['', '', 'Producteurs nécessaires pour la demande identifiée', '', '', '', '', '', O.besoin], ['', '', 'Maïs productible déclaré (t)', '', '', '', '', '', Math.round(O.off * 10) / 10], ['', '', 'Couverture de la demande par l’offre (%)', '', '', '', '', '', O.couv == null ? '' : Math.round(O.couv * 1000) / 10], ['', '', 'Producteurs à mobiliser en plus', '', '', '', '', '', O.manque]].concat([[], ['', 'LOCALITÉ', 'Localité', 'Éleveurs', 'Demande (t/an)', 'Producteurs', 'Offre (t/an)', 'Solde (t)', 'Producteurs à mobiliser']]).concat(maisLocData(F.L).map((g) => ['', '', g.lab, g.el, Math.round(g.dem * 10) / 10, g.pr, Math.round(g.off * 10) / 10, Math.round(g.solde * 10) / 10, g.manque, '', '', '', '', '', '', '', g.solde < 0 ? recruMsg(g) : ''])).concat([[], ['', 'DÉPÔT', 'Dépôt SOLEVO', 'Éleveurs', 'Demande (t/an)', 'Producteurs', 'Offre (t/an)', 'Solde (t)', 'Producteurs à mobiliser', 'Localités']]).concat(maisDepData(F.L).map((g) => ['', '', g.lab, g.el, Math.round(g.dem * 10) / 10, g.pr, Math.round(g.off * 10) / 10, Math.round(g.solde * 10) / 10, g.manque, g.locs.join(', ')])); })()).concat((() => { const by = {}; R.forEach((x) => { const d = String(x.r.at).slice(0, 10); by[d] = (by[d] || 0) + x.r.maisDecl; }); let c = 0; return [[], ['', 'JOUR', 'Journée', '', '', '', '', 'Maïs déclaré ce jour (t)', 'Cumul (t)', 'Part de 2027 (%)']].concat(Object.keys(by).sort().map((d) => { c += by[d]; return ['', '', d.split('-').reverse().join('/'), '', '', '', '', Math.round(by[d] * 10) / 10, Math.round(c * 10) / 10, o ? Math.round(c / o * 1000) / 10 : '']; })); })()) : []; })()),
+      rows: maisRank(F.L).map((x) => { const pl = F.plan.find((y) => y.r.id === x.r.id) || {}; return [x.rang, x.cl, x.r.nom, x.r.tel, x.r.public, x.r.localite, fr(x.r.alimQ, x.r.alimQ % 1 ? 2 : 0) + ' ' + x.r.alimU + ' ' + x.r.alimP, Math.round((x.r.alimAn || 0) * 10) / 10, Math.round(x.r.maisDecl * 10) / 10, x.r.maisEst ? Math.round(x.r.maisEst * 10) / 10 : '', x.r.maisEcart != null ? Math.round(x.r.maisEcart * 100) : '', x.r.maisCtrl || '', Math.round(x.ha * 10) / 10, maisKam(x.r), pl.p || '', pl.ech || '', maisMsgAB(x.r)]; }).concat((() => { const R = maisRank(F.L), t = R.reduce((a, x) => a + x.r.maisDecl, 0), o = state.V.N.mais27 || 0; return R.length ? [[], ['', 'TOTAL', 'Demande identifiée au stand (t/an)', '', '', '', '', '', Math.round(t * 10) / 10], ['', '', 'Maïs prévu par le projet en 2027 (t)', '', '', '', '', '', Math.round(o)], ['', '', 'Part de la demande 2027 déjà identifiée (%)', '', '', '', '', '', o ? Math.round(t / o * 1000) / 10 : ''], ['', '', 'Reste à identifier (t)', '', '', '', '', '', Math.max(0, Math.round(o - t))]].concat((() => { const O = maisOffreData(F.L); return [[], ['', 'OFFRE', 'Producteurs de maïs inscrits au stand', '', '', '', '', '', O.n], ['', '', 'Producteurs nécessaires pour la demande identifiée', '', '', '', '', '', O.besoin], ['', '', 'Maïs productible déclaré (t)', '', '', '', '', '', Math.round(O.off * 10) / 10], ['', '', 'Couverture de la demande par l’offre (%)', '', '', '', '', '', O.couv == null ? '' : Math.round(O.couv * 1000) / 10], ['', '', 'Producteurs à mobiliser en plus', '', '', '', '', '', O.manque]].concat([[], ['', 'LOCALITÉ', 'Localité', 'Éleveurs', 'Demande (t/an)', 'Producteurs', 'Offre (t/an)', 'Solde (t)', 'Producteurs à mobiliser']]).concat(maisLocData(F.L).map((g) => ['', '', g.lab, g.el, Math.round(g.dem * 10) / 10, g.pr, Math.round(g.off * 10) / 10, Math.round(g.solde * 10) / 10, g.manque, '', '', '', '', '', '', '', g.solde < 0 ? recruMsg(g) : ''])).concat([[], ['', 'DÉPÔT', 'Dépôt SOLEVO', 'Éleveurs', 'Demande (t/an)', 'Producteurs', 'Offre (t/an)', 'Solde (t)', 'Producteurs à mobiliser', 'Localités']]).concat(maisDepData(F.L).map((g) => ['', '', g.lab, g.el, Math.round(g.dem * 10) / 10, g.pr, Math.round(g.off * 10) / 10, Math.round(g.solde * 10) / 10, g.manque, g.locs.join(', ')])).concat([[], ['', 'RÉGION', 'Région', 'Éleveurs', 'Demande (t/an)', 'Producteurs', 'Offre (t/an)', 'Solde (t)', 'Producteurs à mobiliser', 'Localités', 'Dépôt de collecte']]).concat(maisRegData(F.L).map((g) => ['', '', g.lab, g.el, Math.round(g.dem * 10) / 10, g.pr, Math.round(g.off * 10) / 10, Math.round(g.solde * 10) / 10, g.manque, g.locs.join(', '), g.dep.join(', ')])).concat((() => { const R = recruStats(F.L); return R.length ? [[], ['', 'RECRUTEMENT', 'Zone', 'Messages envoyés', '1er message', 'Dernier message', 'Nouveaux producteurs depuis', 'dont inscrits au projet', 'Relances individuelles', 'dont inscrits']].concat(R.map((x) => ['', '', x.lab, x.n, x.first, x.last, x.nouv, x.nouvIns, x.ind, x.indIns])) : []; })()); })()).concat((() => { const by = {}; R.forEach((x) => { const d = String(x.r.at).slice(0, 10); by[d] = (by[d] || 0) + x.r.maisDecl; }); let c = 0; return [[], ['', 'JOUR', 'Journée', '', '', '', '', 'Maïs déclaré ce jour (t)', 'Cumul (t)', 'Part de 2027 (%)']].concat(Object.keys(by).sort().map((d) => { c += by[d]; return ['', '', d.split('-').reverse().join('/'), '', '', '', '', Math.round(by[d] * 10) / 10, Math.round(c * 10) / 10, o ? Math.round(c / o * 1000) / 10 : '']; })); })()) : []; })()),
       widths: [6, 7, 24, 15, 16, 14, 26, 11, 12, 14, 9, 22, 11, 26, 8, 11, 60] });
     sheets.push({ name: 'Visiteurs', head: ['Date', 'Source', 'Profil', 'Nom', 'Téléphone', 'E-mail', 'Localité', 'Dépôt', 'Activité', 'Priorités', 'Lieu d’entretien', 'Agent', 'Entretien', 'Intérêt', 'Inscription', 'Action', 'ATE', 'Statut', 'Réponse', 'Note'], rows: vis, widths: [16, 14, 16, 24, 15, 24, 14, 14, 30, 28, 18, 24, 12, 9, 11, 14, 22, 12, 30, 30] });
     return SKG.xlsxBook(JSZip, sheets);
@@ -1839,7 +1920,8 @@
   /* ---- liste (éditeur) ---- */
   function prosBesoin(r) {
     const a = [];
-    if (prodWa(r)) a.push(`<a class="mctl wa" target="_blank" rel="noopener" href="${prodWa(r)}" title="Producteur d’une localité en déficit de maïs">📲 Relance producteur (zone en déficit)</a>`);
+    if (r.region) a.push(`<small>${esc(r.region)} • dépôt conseillé : ${esc(r.depotConseil)} (≈ ${r.depotKm} km)${r.depot && r.depot !== r.depotConseil && !/^Autre/.test(r.depot) ? ' • déclaré : ' + esc(r.depot) : ''}</small>`);
+    if (prodWa(r)) a.push(`<a class="mctl wa" target="_blank" rel="noopener" data-rprod="${r.id}" href="${prodWa(r)}" title="Producteur d’une localité en déficit de maïs">📲 Relance producteur (zone en déficit)</a>`);
     if (r.maisDecl) a.push(`Aliment déclaré : ${fr(r.alimQ, r.alimQ % 1 ? 2 : 0)} ${esc(r.alimU)} ${esc(r.alimP)} • <b>${fr(r.maisDecl, 1)} t maïs/an</b> (besoin réel) • classe ${r.maisClasse || maisClasse(r.maisDecl)}${maisWa(r) ? ` <a class="mctl wa" target="_blank" rel="noopener" href="${maisWa(r)}" title="Message de relance prêt à envoyer">📲 Relance maïs</a>` : ''}${r.maisCtrl === 'À vérifier' ? ` <span class="mctl ko">⚠ ${esc(maisCtrlTxt(r))}</span>` : r.maisCtrl === 'Cohérent' ? ' <span class="mctl ok">✓ cohérent avec l’effectif</span>' : ''}`);
     if (r.aliment) a.push(`${activite(r)} • ${r.sacs ? fr(r.sacs, 0) + ' sacs/an • ' : ''}${fr(r.mais || 0, 1)} t maïs • ${fr((r.eco || 0) / 1e6, 2)} M éco.`);
     if (r.surface) a.push(`${fr(r.surface, 1)} ha • ${fr(r.maisP || 0, 1)} t maïs • +${fr((r.gain || 0) / 1e6, 2)} M recettes`);
@@ -1868,6 +1950,7 @@
       <td class="acts"><button data-pe="${r.id}" title="Modifier">✎</button>${r.etat === 'Terminé' ? `<button data-pt="${r.id}" title="Remercier">✉</button>` : `<button data-pend="${r.id}" title="Terminer l’entretien">✓</button>`}<button data-pdel="${r.id}" title="Supprimer">✕</button></td></tr>`).join('')
       : '<tr><td colspan="9" class="muted">Aucun visiteur. Ouvrez le « Mode borne », ajoutez un visiteur ou importez une inscription WhatsApp.</td></tr>';
     $$('#prosTbl [data-pk]').forEach((i) => i.addEventListener('change', () => prosUpdate(i.dataset.pid, { [i.dataset.pk]: i.value })));
+    $$('#prosTbl [data-rprod]').forEach((a) => a.addEventListener('click', () => { const r = state.pros.find((x) => x.id === a.dataset.rprod); if (r) recruLog({ t: 'producteur', id: r.id, k: locKey(r.localite), lab: (r.localite || '').trim() }); }));
     $$('#prosTbl [data-pdel]').forEach((b) => b.addEventListener('click', () => prosDelete(b.dataset.pdel)));
     $$('#prosTbl [data-pe]').forEach((b) => b.addEventListener('click', () => editVisitor(b.dataset.pe)));
     $$('#prosTbl [data-pend]').forEach((b) => b.addEventListener('click', () => endInterview(b.dataset.pend)));
@@ -2528,7 +2611,7 @@
     $('#prosKiosk').addEventListener('click', kioskOpen);
     $('#prosKioskWa').addEventListener('click', sendKioskLink);
     $('#prosAppel').addEventListener('click', appelOpen); $('#appelX').addEventListener('click', () => { $('#appel').hidden = true; if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); });
-    $('#prosBilan').addEventListener('click', bilanOpen); { const bp = $('#prosParams'); if (bp) bp.addEventListener('click', paramsOpen); }
+    $('#prosBilan').addEventListener('click', bilanOpen); { const bp = $('#prosParams'); if (bp) bp.addEventListener('click', paramsOpen); const br = $('#prosRecru'); if (br) br.addEventListener('click', recruOpen); }
     $('#prosReplies').addEventListener('click', () => checkReplies(true));
     $('#prosFinal').addEventListener('click', finalOpen);
     $('#prosAcces').addEventListener('click', accesOpen);
