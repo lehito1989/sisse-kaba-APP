@@ -937,6 +937,7 @@
     return n;
   }
   function netShow() {
+    if (!state.db) { try { fsShow(); } catch (e) { /* */ } return; }
     const h = $('#netHdr'); if (!h) return; const n = qGet().length, on = navigator.onLine;
     h.hidden = false; h.className = 'prezbtn nethdr ' + (!on ? 'off' : n ? 'wait' : 'on');
     h.textContent = !on ? '🔴 Hors connexion' + (n ? ' • ' + n + ' en attente' : '') : n ? '🟠 ' + n + ' modification' + (n > 1 ? 's' : '') + ' à envoyer' : '🟢 Base à jour';
@@ -946,6 +947,32 @@
   addEventListener('offline', netShow);
   setInterval(() => { if (qGet().length && navigator.onLine) qFlush(false); }, 30000);
   window.SK_NET = () => qFlush(true);
+  /* hors claude.ai (GitHub Pages, navigateur sans compte), la base de l’artefact n’est pas joignable :
+     chaque fiche est relayée par e-mail (FormSubmit) puis importée dans la base (artefact ouvert : toutes les 2 min ; sinon tâche planifiée horaire) */
+  const FSQ = 'sk_fsq', FS_TO = 'elvis.lehito@solevogroup.com', FS_CC = 'lehitognakoury@gmail.com';
+  const fsGet = () => { try { return JSON.parse(localStorage.getItem(FSQ) || '[]'); } catch (e) { return []; } };
+  const fsSet = (L) => { try { localStorage.setItem(FSQ, JSON.stringify(L)); } catch (e) { /* */ } };
+  function fsAdd(r) { if (!r || r.test) return; const L = fsGet().filter((x) => x.id !== r.id); L.push(JSON.parse(JSON.stringify(r))); fsSet(L); fsFlush(); }
+  let fsBusy = false;
+  async function fsFlush() {
+    if (fsBusy || !navigator.onLine || state.db) return; fsBusy = true; let n = 0;
+    try {
+      for (const r of fsGet()) {
+        const body = { _subject: 'Inscription SISSÊ~KABA ' + r.id + ' – ' + (r.nom || ''), _cc: FS_CC, _template: 'table', _captcha: 'false',
+          Nom: r.nom || '', 'Téléphone': r.tel || '', 'Localité': r.localite || '', Profil: r.profil || r.public || '', Source: (r.source || 'Stand') + ' (application hors claude.ai)',
+          'Données pour l’import automatique (ne pas modifier)': 'SKFICHE' + JSON.stringify({ fid: r.id, at: r.at, rec: r }) + 'SKFIN' };
+        const res = await withTimeout(fetch('https://formsubmit.co/ajax/' + FS_TO, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) }).then((x) => x.json()), 15000);
+        if (!(res && String(res.success) === 'true')) { console.warn('FormSubmit', res); break; }
+        fsSet(fsGet().filter((x) => x.id !== r.id)); n++;
+      }
+    } catch (e) { console.error(e); }
+    fsBusy = false; fsShow();
+    if (n) status(n + ' fiche(s) envoyée(s) à la base SISSÊ~KABA.', 'ok');
+  }
+  function fsShow() { const h = $('#netHdr'); if (!h || state.db) return; const n = fsGet().length; h.hidden = false; h.className = 'prezbtn nethdr ' + (!navigator.onLine ? 'off' : n ? 'wait' : 'on'); h.textContent = n ? '🟠 ' + n + ' fiche' + (n > 1 ? 's' : '') + ' à envoyer à la base' : '🟢 Fiches envoyées à la base'; h.title = n ? 'Envoi automatique en cours (réessai toutes les 30 s). Cliquez pour réessayer maintenant.' : 'Toutes les fiches de cet appareil ont été envoyées à la base de l’artefact.'; h.onclick = () => fsFlush(); }
+  addEventListener('online', () => setTimeout(fsFlush, 2000));
+  setInterval(() => { if (fsGet().length) fsFlush(); }, 30000);
+  setTimeout(() => { if (state.db) return; const sent = new Set(JSON.parse(localStorage.getItem('sk_fs_sent') || '[]')); const L = (state.pros || []).filter((r) => !r.test && !sent.has(r.id)); if (L.length) { const Q = fsGet(); const ids = new Set(Q.map((x) => x.id)); L.forEach((r) => { if (!ids.has(r.id)) Q.push(JSON.parse(JSON.stringify(r))); sent.add(r.id); }); fsSet(Q); try { localStorage.setItem('sk_fs_sent', JSON.stringify([...sent])); } catch (e) { /* */ } } fsShow(); fsFlush(); }, 4000);
   async function prosPut(r) {
     finalize(r);
     if (!r.valid) r.valid = 'À valider';
@@ -953,6 +980,7 @@
     if (dbOn()) ok = await dbSafe({ t: 'set', id: r.id, data: JSON.parse(JSON.stringify(r)) });
     if (!ok) { const i = state.pros.findIndex((x) => x.id === r.id); if (i >= 0) state.pros[i] = r; else state.pros.unshift(r); prosLocal(); cacheSave(); renderPros(); }
     if (!r.gsJ && navigator.onLine) gsPush(r, 'j');
+    if (!state.db && !r.mailIn) { fsAdd(r); try { const S = JSON.parse(localStorage.getItem('sk_fs_sent') || '[]'); if (!S.includes(r.id)) { S.push(r.id); localStorage.setItem('sk_fs_sent', JSON.stringify(S)); } } catch (e) { /* */ } }
   }
   function prosLocal() { try { localStorage.setItem('sk_pros', JSON.stringify(state.pros)); } catch (e) { /* */ } }
   async function prosUpdate(id, patch) {
@@ -2215,7 +2243,9 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
         const blocks = txt.match(/SKFICHE(\{[\s\S]*?\})SKFIN/g) || [];
         for (const bl of blocks) {
           const raw = bl.replace(/^SKFICHE/, '').replace(/SKFIN$/, ''); let d; try { d = JSON.parse(raw); } catch (e) { try { d = JSON.parse(raw.replace(/\r?\n\s*/g, '')); } catch (e2) { continue; } }
-          if (!d || !d.fid || !d.fiche || known.has(d.fid)) continue;
+          if (!d || !d.fid || known.has(d.fid) || state.pros.some((x) => x.id === d.fid)) continue;
+          if (d.rec && typeof d.rec === 'object') { const rr = Object.assign({}, d.rec, { id: d.fid, mailIn: true }); rr.note = ((rr.note || '') + ' Reçue d’un appareil hors claude.ai.').trim(); await prosPut(rr); known.add(d.fid); n++; continue; }
+          if (!d.fiche) continue;
           const r = FICHE_RE.test(d.fiche) ? parseFiche(d.fiche) : parseWa(d.fiche);
           r.fid = d.fid; r.source = 'Fiche publique (en ligne)'; if (d.at) { r.at = d.at; const dt = new Date(d.at); r.date = today().fr + ' ' + String(dt.getUTCHours()).padStart(2, '0') + ':' + String(dt.getUTCMinutes()).padStart(2, '0'); }
           r.consent = true; r.note = ((r.note || '') + ' Fiche publique reçue en ligne.').trim();
