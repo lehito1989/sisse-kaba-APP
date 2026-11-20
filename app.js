@@ -779,8 +779,7 @@
   /* grand compte : gros cheptel, grande surface ou fabricant d’aliment */
   const bigFeed = (r) => (r.chair || 0) >= 20000 || (r.pondeuse || 0) >= 20000 || (r.porc || 0) >= 1000 || /Fabricant/.test(r.profil || '');
   const bigSeed = (r) => (r.surface || 0) >= 50 || !!(r.coop && (r.surface || 0) >= 20);
-  /* plus aucun envoi ni enregistrement par WhatsApp (décision du 20/11/2026) : les liens d’envoi passent par SMS */
-  const waLink = (tel, txt) => 'sms:+' + waNum(tel) + '?body=' + encodeURIComponent(txt);
+  const waLink = (tel, txt) => 'https://wa.me/' + waNum(tel) + '?text=' + encodeURIComponent(txt);
   const smsLink = (tel, txt) => 'sms:+' + waNum(tel) + '?body=' + encodeURIComponent(txt);
   /* ---- configuration partagée (tables, agents, messages) ---- */
   function cfgMigrate(c) {
@@ -949,7 +948,7 @@
   window.SK_NET = () => qFlush(true);
   /* hors claude.ai (GitHub Pages, navigateur sans compte), la base de l’artefact n’est pas joignable :
      chaque fiche est relayée par e-mail (FormSubmit) puis importée dans la base (artefact ouvert : toutes les 2 min ; sinon tâche planifiée horaire) */
-  const FSQ = 'sk_fsq', FS_TO = 'elvis.lehito@solevogroup.com', FS_CC = 'lehitognakoury@gmail.com';
+  const FSQ = 'sk_fsq', FS_TO = 'elvis.lehito@solevogroup.com', FS_CC = ''; // données SOLEVO : copie d’archive uniquement sur la boîte SOLEVO
   const fsGet = () => { try { return JSON.parse(localStorage.getItem(FSQ) || '[]'); } catch (e) { return []; } };
   const fsSet = (L) => { try { localStorage.setItem(FSQ, JSON.stringify(L)); } catch (e) { /* */ } };
   function fsAdd(r) { if (!r || r.test) return; const L = fsGet().filter((x) => x.id !== r.id); L.push(JSON.parse(JSON.stringify(r))); fsSet(L); fsFlush(); }
@@ -958,7 +957,7 @@
     if (fsBusy || !navigator.onLine || state.db) return; fsBusy = true; let n = 0;
     try {
       for (const r of fsGet()) {
-        const body = { _subject: 'Inscription SISSÊ~KABA ' + r.id + ' – ' + (r.nom || ''), _cc: FS_CC, _template: 'table', _captcha: 'false',
+        const body = { _subject: 'Inscription SISSÊ~KABA ' + r.id + ' – ' + (r.nom || ''), _template: 'table', _captcha: 'false',
           Nom: r.nom || '', 'Téléphone': r.tel || '', 'Localité': r.localite || '', Profil: r.profil || r.public || '', Source: (r.source || 'Stand') + ' (application hors claude.ai)',
           'Données pour l’import automatique (ne pas modifier)': 'SKFICHE' + JSON.stringify({ fid: r.id, at: r.at, rec: r }) + 'SKFIN' };
         const res = await withTimeout(fetch('https://formsubmit.co/ajax/' + FS_TO, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) }).then((x) => x.json()), 15000);
@@ -995,6 +994,7 @@
   }
   function startPros() {
     cfgStart();
+    devWatch();
     if (state.db) {
       try { state.db.collection('prospects').orderBy('at', 'desc').limit(2000).onSnapshot((snap) => { state.pros = qApply(snap.docs.map((d) => Object.assign({ id: d.id }, d.data()))); cacheSave(); renderPros(); netShow(); if (qGet().length && navigator.onLine) qFlush(false); renderAgents(); renderAppel(); }, (e) => { console.error(e); prosFallback(); }); return; } catch (e) { console.error(e); }
     }
@@ -1388,7 +1388,7 @@
   /* ---- borne d’inscription plein écran ---- */
   function kioskQrLink() {
     const c = state.standCfg;
-    if (c.qrMode === 'fiche' || c.qrMode === 'wa') return c.qrMode === 'wa' ? LINKS.fiche : LINKS.main + '#fiche';
+    if (c.qrMode === 'fiche') return LINKS.main + '#fiche';
     if (!c.qrMode || c.qrMode === 'nav') return LINKS.fiche;
     const u = (c.ficheUrl || '').trim();
     if (c.qrMode === 'url' && /^https?:\/\//.test(u)) return u;
@@ -1436,7 +1436,7 @@
     $('#borneB').innerHTML = `<div class="bk-done"><div class="bk-ok">✓</div><h2>Merci ${esc(prenom(r))} !</h2>
       <p class="bk-t">Rendez-vous ${/^Table/i.test(tLab(r.table)) ? 'à la' : /^Salle/i.test(tLab(r.table)) ? 'à la' : 'à'} <b>${esc(/^Table/i.test(tLab(r.table)) ? tLab(r.table).toUpperCase() : tLab(r.table))}</b></p><p class="bk-a">avec ${esc(r.agent || 'un technicien SOLEVO')}</p><p class="bk-rang">Vous êtes <b>${rangLab(r)}</b> dans la file d’attente</p><p id="bkAuto"></p>${r.promo ? `<div class="bk-promo"><span>🎁 Votre code promo SELAB SHOW</span><b>${esc(r.promo)}</b><small>Valable jusqu’au 30/11/2026 : Ponte −2 000 F, Porc −2 000 F, Chair −1 000 F par sac de MG2MIX. Il est aussi dans votre message WhatsApp ou SMS.</small></div>` : ''}
       <div class="bk-off"><h3>SOLEVO vous offre${nbP(r) > 1 ? ' (' + nbP(r) + ' personnes)' : ''}</h3><div class="bk-offb"><button type="button" data-acc="Eau" class="on">💧 ${nbP(r) > 1 ? nbP(r) + ' bouteilles' : '1 bouteille'} d’eau</button><button type="button" data-acc="Café" class="on">☕ ${nbP(r) > 1 ? nbP(r) + ' cafés' : '1 café'}</button><button type="button" data-acc="non">Non merci</button></div><p class="note">Servi à l’accueil pendant votre attente.</p></div>
-      <div class="mbar"><a class="bk-btn" href="${smsLink(r.tel, txt)}" data-sent="sms">Recevoir ce message par SMS</a></div>
+      <div class="mbar"><a class="bk-btn" href="${waLink(r.tel, txt)}" target="_blank" rel="noopener" data-sent="wa">Recevoir ce message sur WhatsApp</a><a class="bk-btn alt" href="${smsLink(r.tel, txt)}" data-sent="sms">par SMS</a></div>
       ${fiche ? '' : '<p class="note">Retour automatique à l’accueil dans 30 secondes.</p>'}<button type="button" class="bk-next">Nouvelle inscription</button></div>`;
     $$('#borneB [data-sent]').forEach((a) => a.addEventListener('click', () => prosUpdate(r.id, { msgTable: (a.dataset.sent === 'wa' ? 'WhatsApp ' : 'SMS ') + today().fr })));
     const accSave = () => { const a = $$('#borneB [data-acc].on').map((x) => x.dataset.acc).filter((x) => x !== 'non'); r.accueil = a; prosUpdate(r.id, { accueil: a }); };
@@ -1638,7 +1638,7 @@
     const txt = fillMsg(state.standCfg.msgMerci, r, { mail: r.email && /envoy/.test(mailRes) ? '\n\nLa présentation du projet vous a été envoyée par e-mail (' + r.email + ').' : '' });
     const b = modal('Remercier ' + r.nom, `${mailRes ? `<p class="${/(non envoy|impossible|Échec)/.test(mailRes) ? 'errm' : 'okm'}">${esc(mailRes)}</p>` : ''}
       <p>Envoyez le message de remerciement (préférence du visiteur : <b>${esc(r.contact)}</b>) :</p><pre class="msgp">${esc(txt)}</pre>
-      <div class="mbar"><a class="bk-btn" href="${smsLink(r.tel, txt)}" data-th="SMS">SMS</a>${r.email ? `<button type="button" id="thMail">${/envoy/.test(mailRes) ? 'Renvoyer l’e-mail' : 'Envoyer l’e-mail'}</button>` : ''}<button type="button" id="thClose">Fermer</button></div>`);
+      <div class="mbar"><a class="bk-btn" href="${waLink(r.tel, txt)}" target="_blank" rel="noopener" data-th="WhatsApp">WhatsApp</a><a class="bk-btn alt" href="${smsLink(r.tel, txt)}" data-th="SMS">SMS</a>${r.email ? `<button type="button" id="thMail">${/envoy/.test(mailRes) ? 'Renvoyer l’e-mail' : 'Envoyer l’e-mail'}</button>` : ''}<button type="button" id="thClose">Fermer</button></div>`);
     $$('[data-th]', b).forEach((a) => a.addEventListener('click', () => prosUpdate(r.id, { msgMerci: a.dataset.th + ' ' + today().fr })));
     if ($('#thMail', b)) $('#thMail', b).addEventListener('click', async () => { const m = await mailThanks(r); thanksPanel(r, m); });
     $('#thClose', b).addEventListener('click', () => { modalClose(); renderAgents(); });
@@ -1684,7 +1684,7 @@
     if (!P || !P.api || !(kind === 'table' ? c.autoTable : kind === 'rappel' ? c.rappelOn : kind === 'transfert' ? c.autoTransfert !== false : c.autoMerci)) return null;
     if (!state.mcp) return { ok: false, msg: 'envoi automatique indisponible hors de claude.ai' };
     const to = '+' + waNum(r.tel);
-    const order = ['sms']; // plus d’envoi WhatsApp
+    const order = r.contact === 'SMS' && P.sms ? ['sms', 'wa'] : ['wa', 'sms'];
     let last = '';
     for (const ch of order) {
       if (!P[ch]) continue;
@@ -1702,9 +1702,9 @@
     const c = state.standCfg; const P = AUTO_PROV[c.autoProv || 'off'];
     if (!P || !P.api || !state.mcp) return { ok: false, msg: 'envoi automatique non branché' };
     let last = '';
-    for (const ch of ['sms']) {
+    for (const ch of ['wa', 'sms']) {
       if (!P[ch]) continue;
-      try { await state.mcp.callTool('Zapier', 'execute_zapier_write_action', { selected_api: P.api, action: P[ch], params: P.p('+' + waNum(tel), txt) }); return { ok: true, ch: 'SMS' }; }
+      try { await state.mcp.callTool('Zapier', 'execute_zapier_write_action', { selected_api: P.api, action: P[ch], params: P.p('+' + waNum(tel), txt) }); return { ok: true, ch: ch === 'wa' ? 'WhatsApp' : 'SMS' }; }
       catch (e) { console.error(e); last = (e && (e.message || e.code)) || 'erreur'; }
     }
     return { ok: false, msg: String(last).slice(0, 80) };
@@ -1837,7 +1837,7 @@
     const c = state.standCfg; const P = AUTO_PROV[c.autoProv || 'off'];
     if (!P || c.autoProv !== 'smsmobileapi' || !state.mcp) { if (manual) status('Lecture des réponses : choisissez Smsmobileapi dans « ⚙ Tables, agents et messages » (claude.ai uniquement).', 'err'); return; }
     let n = 0, seen = 0, nf = 0;
-    for (const action of ['new_sms']) {
+    for (const action of ['new_whatsapp', 'new_sms']) {
       try {
         const res = await state.mcp.callTool('Zapier', 'execute_zapier_read_action', { selected_api: P.api, action, params: {} });
         const recs = flatRecords(res && (res.payload !== undefined ? res.payload : res));
@@ -2259,6 +2259,44 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
     if (manual || n) status(n ? n + ' fiche(s) publique(s) enregistrée(s) dans la base.' : 'Aucune nouvelle fiche publique.', n ? 'ok' : '');
     return n;
   }
+
+  /* ---- suivi des appareils : fiches en attente par appareil (objectif du soir : 0 en attente) ---- */
+  const DEV_ID = (() => { try { let d = localStorage.getItem('sk_dev'); if (!d) { d = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); localStorage.setItem('sk_dev', d); } return d; } catch (e) { return 'dx'; } })();
+  const devName = () => { try { return localStorage.getItem('sk_dev_nom') || ''; } catch (e) { return ''; } };
+  state.devs = [];
+  function devBeat() {
+    if (!dbOn() || !navigator.onLine) return;
+    const ua = navigator.userAgent; const kind = /iPad|Tablet|SM-T|Tab/i.test(ua) ? 'Tablette' : /Mobi|Android|iPhone/i.test(ua) ? 'Téléphone' : 'Ordinateur';
+    try { state.db.collection('config').doc('dev_' + DEV_ID).set({ type: 'appareil', id: DEV_ID, nom: devName() || kind + ' ' + DEV_ID.slice(-4), pending: qGet().length, lastSeen: new Date().toISOString() }); } catch (e) { /* */ }
+  }
+  function devWatch() {
+    if (!state.db) return;
+    try { state.db.collection('config').onSnapshot((snap) => { state.devs = snap.docs.map((d) => d.data()).filter((v) => v && v.type === 'appareil'); }, () => {}); } catch (e) { /* */ }
+    devBeat(); setInterval(devBeat, 60000); addEventListener('online', () => setTimeout(devBeat, 3000));
+  }
+  const devPending = () => { const lim = Date.now() - 24 * 3600e3; const D = state.devs.filter((d) => new Date(d.lastSeen).getTime() > lim); return { n: D.reduce((a, d) => a + (+d.pending || 0), 0), D, bad: D.filter((d) => +d.pending > 0) }; };
+  /* contrôle du soir : e-mails d'inscription du jour (fiches envoyées) comparés aux fiches du jour dans la base */
+  async function soirCheck() {
+    const d = new Date(), j = d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0');
+    const jj = today().fr; const base = state.pros.filter((r) => !r.test && String(r.date || '').slice(0, 10) === jj);
+    const viaMail = base.filter((r) => r.mailIn || /Fiche publique/.test(r.source || '')).length;
+    let mails = null;
+    if (state.mcp) { try { await mailImport(false); const res = deepParse(await state.mcp.callTool('Gmail', 'search_threads', { query: 'subject:(Inscription SISSÊ KABA) after:' + j, pageSize: 50, view: 'THREAD_VIEW_IDS_ONLY' })); mails = new Set(deepFind(res, (o) => typeof o.id === 'string' && !o.sender).map((o) => o.id)).size; } catch (e) { mails = null; } }
+    const P = devPending();
+    return { base: base.length, viaMail, mails, ecart: mails === null ? null : Math.max(0, mails - viaMail), dev: P };
+  }
+  async function soirOpen() {
+    const b = modal('🌙 Contrôle du soir', '<p>Vérification en cours…</p>');
+    const k = await soirCheck(); const ok = (k.ecart === 0 || k.ecart === null) && !k.dev.n;
+    $('.mbody', b) ? null : null;
+    b.querySelector('p').outerHTML = `
+      <div class="simk"><div><b>${k.base}</b><span>fiches du jour dans la base</span></div>
+      <div><b>${k.mails === null ? '–' : k.mails}</b><span>fiches reçues par e-mail aujourd’hui</span></div>
+      <div><b style="color:${k.ecart ? '#b42318' : '#2E7D1F'}">${k.ecart === null ? '–' : k.ecart}</b><span>reçues mais pas encore dans la base</span></div>
+      <div><b style="color:${k.dev.n ? '#b42318' : '#2E7D1F'}">${k.dev.n}</b><span>en attente sur ${k.dev.D.length} appareil(s) connecté(s) (objectif 0)</span></div></div>
+      ${k.dev.bad.length ? '<p><b>Appareils à faire synchroniser</b> (ouvrir l’application, attendre le bandeau 🟢) :</p><ul>' + k.dev.bad.map((d) => '<li>' + esc(d.nom) + ' : ' + d.pending + ' en attente (vu à ' + new Date(d.lastSeen).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + ')</li>').join('') + '</ul>' : ''}
+      <p class="note">${ok ? '✅ Objectif atteint : aucune fiche en attente.' : '⚠️ Objectif non atteint : rouvrez les appareils listés et relancez « ⇩ Importer les fiches publiques ».'} Les appareils hors claude.ai (version GitHub) ne sont pas comptés ici : regardez leur bandeau en haut de l’écran.${k.mails === null ? ' Comptage des e-mails possible seulement dans claude.ai avec Gmail connecté.' : ''}</p>`;
+  }
   async function importAll(manual) { const a = await mailImport(manual); const b = await gsImport(false); if (manual && !a && b) status(b + ' fiche(s) importée(s) depuis la feuille en ligne.', 'ok'); }
   setInterval(() => { if (state.mcp && navigator.onLine) mailImport(false).catch(() => {}); }, 120000);
   setTimeout(() => { if (state.mcp && navigator.onLine) mailImport(false).catch(() => {}); }, 20000);
@@ -2378,12 +2416,12 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
     const gs = c.gsOn && c.gsId;
     const VF = L0.filter(vxNeedR), VC = VF.filter((r) => !vxMiss(r).length), vPct = VF.length ? Math.round(VC.length * 100 / VF.length) : null, vOdd = L0.filter((r) => vxOdd(r).length).length;
     const b = modal('✔ Validation des inscriptions', `
-      <div class="simk"><div title="Éleveurs qui fabriquent leur aliment avec une veille des prix complète. Objectif : 100 %"><b style="color:${vPct === null ? 'inherit' : vPct >= 100 ? '#2E7D1F' : vPct >= 80 ? '#B26A00' : '#b42318'}">${vPct === null ? '–' : vPct + ' %'}</b><span>veille complète (${VC.length}/${VF.length} fabricants, objectif 100 %)</span></div><div><b style="color:${vOdd ? '#b42318' : 'inherit'}">${vOdd}</b><span>fiche(s) avec un prix à vérifier</span></div><div><b>${cnt['À valider']}</b><span>à valider</span></div><div><b>${cnt['À corriger']}</b><span>à corriger</span></div><div><b>${cnt['Validé']}</b><span>validées</span></div><div><b>${dbOn() ? '●' : '○'}</b><span>${dbOn() ? 'base de l’artefact connectée' : 'base locale (cet appareil)'}</span></div><div><b>${gs ? '●' : '○'}</b><span>${gs ? 'sauvegarde Google Sheets active' : 'sauvegarde en ligne inactive'}</span></div></div>
+      <div class="simk"><div title="Éleveurs qui fabriquent leur aliment avec une veille des prix complète. Objectif : 100 %"><b style="color:${vPct === null ? 'inherit' : vPct >= 100 ? '#2E7D1F' : vPct >= 80 ? '#B26A00' : '#b42318'}">${vPct === null ? '–' : vPct + ' %'}</b><span>veille complète (${VC.length}/${VF.length} fabricants, objectif 100 %)</span></div><div><b style="color:${vOdd ? '#b42318' : 'inherit'}">${vOdd}</b><span>fiche(s) avec un prix à vérifier</span></div><div><b style="color:${devPending().n ? '#b42318' : 'inherit'}">${devPending().n}</b><span>en attente sur les appareils (objectif 0)</span></div><div><b>${cnt['À valider']}</b><span>à valider</span></div><div><b>${cnt['À corriger']}</b><span>à corriger</span></div><div><b>${cnt['Validé']}</b><span>validées</span></div><div><b>${dbOn() ? '●' : '○'}</b><span>${dbOn() ? 'base de l’artefact connectée' : 'base locale (cet appareil)'}</span></div><div><b>${gs ? '●' : '○'}</b><span>${gs ? 'sauvegarde Google Sheets active' : 'sauvegarde en ligne inactive'}</span></div></div>
       <div class="mbar" style="flex-wrap:wrap;gap:8px">
         <button type="button" class="pri" id="vAll" ${ok.length ? '' : 'disabled'}>✔ Valider les ${ok.length} fiche(s) conforme(s)</button>
         <select id="vF">${['À traiter', 'À valider', 'À corriger', 'Validé', 'Toutes'].map((x) => `<option ${x === sel ? 'selected' : ''}>${x}</option>`).join('')}</select>
         <label style="display:flex;gap:6px;align-items:center">Validé par <input id="vBy" value="${esc(c.validBy || 'Elvis LEHITO')}" style="width:160px"></label>
-        <button type="button" id="vMail">⇩ Importer les fiches publiques</button><button type="button" id="vVer">🔎 Vérifier un enregistrement</button><button type="button" id="vRef">⬇ Base de référence (Excel)</button>
+        <button type="button" id="vMail">⇩ Importer les fiches publiques</button><button type="button" id="vSoir">🌙 Contrôle du soir</button><button type="button" id="vDev">🏷 Nommer cet appareil</button><button type="button" id="vVer">🔎 Vérifier un enregistrement</button><button type="button" id="vRef">⬇ Base de référence (Excel)</button>
         <button type="button" id="vGs">${gs ? '↻ Synchroniser Google Sheets' : '☁ Créer la base en ligne (Google Sheets)'}</button>
         ${gs ? `<a href="https://docs.google.com/spreadsheets/d/${esc(c.gsId)}" target="_blank" rel="noopener">Ouvrir la feuille en ligne</a><button type="button" id="vLists">☰ Listes déroulantes (tables R_)</button><button type="button" id="vImp">⇩ Importer les fiches publiques en ligne</button><button type="button" id="vHook">🔗 Brancher la fiche publique sur la feuille</button>` : ''}</div>
       <div class="mbar" style="flex-wrap:wrap;gap:8px"><label class="consent" style="margin:0"><input type="checkbox" id="vRefAuto" ${c.refAuto !== false ? 'checked' : ''}> Envoyer chaque soir la base de référence à <input id="vRefTo" value="${esc(c.refTo || 'elvis.lehito@solevogroup.com')}" style="width:230px"> à <input id="vRefH" type="time" value="${esc(c.refHour || '20:00')}" style="width:auto"></label><button type="button" id="vRefNow">✉ Envoyer maintenant</button><small class="muted">${c.refLast ? 'Dernier envoi : ' + esc(c.refLast) : 'Aucun envoi pour l’instant'} • envoi automatique si le simulateur est ouvert à l’heure choisie (borne ou écran d’appel)</small></div>
@@ -2403,6 +2441,8 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
     $('#vRef', b).addEventListener('click', refExport);
     $('#vVer', b).addEventListener('click', () => verOpen());
     $('#vMail', b).addEventListener('click', async () => { await importAll(true); valOpen(); });
+    $('#vSoir', b).addEventListener('click', () => soirOpen());
+    $('#vDev', b).addEventListener('click', () => { const n = prompt('Nom de cet appareil (ex. Tablette accueil 1) :', devName()); if (n === null) return; try { localStorage.setItem('sk_dev_nom', n.trim()); } catch (e) { /* */ } devBeat(); status('Appareil nommé : ' + (n.trim() || '(sans nom)'), 'ok'); });
     const refKeep = async () => { c.refAuto = $('#vRefAuto', b).checked; c.refTo = $('#vRefTo', b).value.trim() || 'elvis.lehito@solevogroup.com'; c.refHour = $('#vRefH', b).value || '20:00'; await cfgSave(); };
     ['#vRefAuto', '#vRefTo', '#vRefH'].forEach((k) => $(k, b).addEventListener('change', refKeep));
     $('#vRefNow', b).addEventListener('click', async () => { await refKeep(); await refMail(); valOpen(); });
@@ -2499,6 +2539,7 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
       <h4 style="margin:12px 0 4px">Aperçu du message d’un technicien</h4><pre class="bjout" style="white-space:pre-wrap;max-height:220px;overflow:auto;font-size:12px">${esc(accesText(accesPeople()[0]))}</pre>
       <fieldset class="autof"><legend>QR code de la borne (téléphone des visiteurs)</legend>
         <label class="consent"><input type="radio" name="qrm" value="nav" ${!c0.qrMode || c0.qrMode === 'nav' ? 'checked' : ''}> <b>Fiche d’inscription dans le navigateur du visiteur (recommandé)</b> : la même fiche que la borne, sans compte Claude ; envoyée par WhatsApp à SOLEVO puis intégrée à la liste</label>
+        <label class="consent"><input type="radio" name="qrm" value="wa" ${c0.qrMode === 'wa' ? 'checked' : ''}> Fiche d’inscription prête dans WhatsApp (fonctionne pour tous les visiteurs ; importée automatiquement dans la liste avec Smsmobileapi, sinon via « Importer »)</label>
         <label class="consent"><input type="radio" name="qrm" value="fiche" ${c0.qrMode === 'fiche' ? 'checked' : ''}> Fiche visiteur du simulateur (seulement pour les personnes qui ont accès au simulateur)</label></fieldset>
       <h4 style="margin:14px 0 6px">Envoyer les accès à l’équipe</h4>
       <div class="acc-p">${P.map((x) => `<div class="acc-r"><div><b>${esc(x.p.nom)}</b><br><small>${esc(x.p.role)} • ${esc(x.table)}</small></div><input data-em="${x.id}" type="email" value="" placeholder="${x.mail ? 'adresse enregistrée (masquée) : ' + esc(maskMail(x.mail)) : 'adresse e-mail'}"><div class="mbar"><button type="button" data-am="${x.id}">E-mail</button>${x.p.tel ? `<a class="bk-btn alt" target="_blank" rel="noopener" href="${waLink(x.p.tel, accesText(x))}">WhatsApp</a>` : ''}<button type="button" class="mini" data-at="${x.id}">Copier</button></div><span class="acc-s" data-as="${x.id}">${esc((state.standCfg.accesSent || {})[x.id] || '')}</span></div>`).join('')}</div>
@@ -3064,7 +3105,7 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
     renderTeam();
     $('#prosExport').addEventListener('click', prosExport); { const bx = $('#prosVer'); if (bx) bx.addEventListener('click', () => verOpen()); const bp = $('#prosPrix'); if (bp) bp.addEventListener('click', prixOpen); } { const bv = $('#prosVal'); if (bv) bv.addEventListener('click', valOpen); const br = $('#prosRef'); if (br) br.addEventListener('click', refExport); } $('#prosFilter').addEventListener('change', renderPros); { const bm = $('#prosMais'); if (bm) bm.addEventListener('click', () => { state.prosMaisSort = !state.prosMaisSort; renderPros(); }); }
     $('#prosAdd').addEventListener('click', () => editVisitor(null));
-    $('#prosImport').addEventListener('click', () => importAll(true));
+    $('#prosImport').addEventListener('click', importWa);
     $('#prosCfg').addEventListener('click', editCfg);
     $('#prosKiosk').addEventListener('click', kioskOpen);
     $('#prosKioskWa').addEventListener('click', sendKioskLink);
