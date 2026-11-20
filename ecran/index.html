@@ -497,6 +497,7 @@ body.show-ctrl .ctrl{opacity:1}
 <script>
 (function () {
   var stage = document.getElementById('stage'), S = [], i = 0, t0 = 0, dur = 10000, paused = false, raf = null, timer = null;
+  if (innerHeight > innerWidth * 1.6 && !/[?&]paysage/.test(location.search)) { location.replace('vertical.html' + location.search); return; }
   function fit() {
     var W = innerWidth, H = innerHeight, por = H > W * 1.1, k = Math.min(W / 1920, H / 1080);
     document.body.classList.toggle('portrait', por);
