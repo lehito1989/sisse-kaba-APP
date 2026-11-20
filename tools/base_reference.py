@@ -59,7 +59,7 @@ def checks(r, L):
     if not r.get('consent'): pb.append('Consentement non coché')
     return pb
 
-HEAD = ['ID', 'Date', 'Code profil', 'Profil', 'Nom', 'Téléphone', 'E-mail', 'Code localité', 'Localité', 'Région', 'Code dépôt conseillé', 'Dépôt conseillé', 'Distance dépôt (km)', 'Poulets de chair', 'Pondeuses', 'Porcs / an', 'Aliment / an (t)', 'Maïs déclaré / an (t)', 'Classe maïs', 'Surface maïs (ha)', 'Maïs produit / an (t)', 'Coopérative', 'ATE', 'Statut suivi', 'Inscrit au projet', 'Validation', 'Validé le', 'Validé par', 'Source', 'Consentement']
+HEAD = ['ID', 'Date', 'Code profil', 'Profil', 'Nom', 'Téléphone', 'E-mail', 'Code localité', 'Localité', 'Région', 'Code dépôt conseillé', 'Dépôt conseillé', 'Distance dépôt (km)', 'Poulets de chair', 'Pondeuses', 'Porcs / an', 'Aliment / an (t)', 'Maïs déclaré / an (t)', 'Classe maïs', 'Surface maïs (ha)', 'Maïs produit / an (t)', 'Coopérative', 'ATE', 'Statut suivi', 'Inscrit au projet', 'Validation', 'Validé le', 'Validé par', 'Source', 'Consentement', 'Code promo SELAB', 'Code valable jusqu’au']
 dep_code = lambda n: next(('DEP%02d' % (i + 1) for i, d in enumerate(DEP) if d[0] == n), '')
 
 def row(r):
@@ -69,7 +69,7 @@ def row(r):
     t = waNum(r.get('tel'))
     return [r.get('id'), r.get('date'), prof, r.get('public') or r.get('profil') or '', r.get('nom') or '', '+' + t if t else '', r.get('email') or '', code, g[1][0] if g else (r.get('localite') or ''), r.get('region') or (g[1][1] if g else ''),
             dep_code(r.get('depotConseil')), r.get('depotConseil') or '', r.get('depotKm', ''), num(r.get('chair')), num(r.get('pondeuse')), num(r.get('porc')), round(num(r.get('alimAn') or r.get('aliment')), 1), round(num(r.get('maisDecl') or r.get('mais')), 1),
-            r.get('maisClasse') or '', num(r.get('surface')), round(num(r.get('maisP')), 1), r.get('coop') or r.get('org') or '', r.get('ate') or '', r.get('statut') or '', r.get('inscription') or '', val_of(r), r.get('validLe') or '', r.get('validPar') or '', r.get('source') or '', 'Oui' if r.get('consent') else 'Non']
+            r.get('maisClasse') or '', num(r.get('surface')), round(num(r.get('maisP')), 1), r.get('coop') or r.get('org') or '', r.get('ate') or '', r.get('statut') or '', r.get('inscription') or '', val_of(r), r.get('validLe') or '', r.get('validPar') or '', r.get('source') or '', 'Oui' if r.get('consent') else 'Non', r.get('promo') or '', '30/11/2026' if r.get('promo') else '']
 
 def sheet(wb, name, head, rows, first=False):
     ws = wb.active if first else wb.create_sheet(name); ws.title = name

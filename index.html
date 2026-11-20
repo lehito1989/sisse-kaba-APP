@@ -464,6 +464,7 @@ details.veille{border:1px solid var(--line);border-radius:10px;padding:8px 10px;
 .visf .geo{display:block;margin-top:4px;font-size:12px;font-weight:400;color:#1E5E1A}
 .valhdr.hot{background:#F6C21A!important;color:#041633!important;font-weight:800;animation:vpulse 2s infinite}@keyframes vpulse{50%{transform:scale(1.04)}}
 .nethdr.off{background:#b42318!important;color:#fff!important}.nethdr.wait{background:#F2A900!important;color:#041633!important}.nethdr.on{background:#E6F6E3!important;color:#1E6B14!important}
+.bk-promo{margin:14px auto;max-width:620px;border:3px dashed #37A028;border-radius:18px;background:#EAF6E6;padding:14px 18px;text-align:center}.bk-promo span{display:block;font-weight:800;color:#1E6B14}.bk-promo b{display:block;font-size:40px;letter-spacing:.06em;color:#002060;margin:4px 0}.bk-promo small{display:block;color:#33405e}
 .vchip{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:10px;margin:1px 0;background:#FFF4D6;color:#8a5a00}.vchip.ok{background:#E6F6E3;color:#1E6B14}.vchip.ko{background:#FDE7E5;color:#b42318}
 </style>
 </head>
@@ -511,6 +512,7 @@ window.addEventListener('unhandledrejection',function(e){show((e.reason&&(e.reas
       <div class="cmd-card"><h2>2. Vos coordonnées</h2>
         <label class="cmd-f">Nom et prénom *<input name="nom" autocomplete="name" required></label>
         <label class="cmd-f">Téléphone WhatsApp *<input name="tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="07 00 00 00 00" required></label>
+        <label class="cmd-f">Code promo SELAB SHOW (reçu à l’inscription)<input name="promo" autocomplete="off" placeholder="SK26-0000-XXXX" style="text-transform:uppercase"></label><div id="cmdCode" class="cmd-note" hidden></div>
         <label class="cmd-f">E-mail (pour recevoir la copie de la commande)<input name="email" type="email" autocomplete="email"></label>
         <label class="cmd-f">Ferme ou structure<input name="ferme"></label>
         <label class="cmd-f">Zone *<select name="zone" id="cmdZone" required></select></label>
@@ -526,7 +528,7 @@ window.addEventListener('unhandledrejection',function(e){show((e.reason&&(e.reas
         <label class="cmd-f">Message pour l’agent<textarea name="message" placeholder="Effectif, formule utilisée, questions…"></textarea></label>
       </div>
       <div class="cmd-card"><h2>Récapitulatif estimé</h2><div class="cmd-tot" id="cmdTot"></div>
-        <p class="cmd-note">Prix par sac hors TVA ; TVA 9 % calculée sur le prix remisé. Remises porc et chair : 20, 21 et 22 novembre 2026 (SELAB SHOW) ; remise ponte : du 20 au 30 novembre 2026. Prix, disponibilité et livraison confirmés par l’agent SOLEVO avant toute facturation.</p></div>
+        <p class="cmd-note">Prix par sac hors TVA ; TVA 9 % calculée sur le prix remisé. Remises porc et chair : 20, 21 et 22 novembre 2026 (SELAB SHOW) ; remise ponte : du 20 au 30 novembre 2026. Avec le code promo reçu à l’inscription, les trois remises s’appliquent jusqu’au 30 novembre 2026. Prix, disponibilité et livraison confirmés par l’agent SOLEVO avant toute facturation.</p></div>
       <label class="cmd-chk"><input type="checkbox" name="consent" required><span>J’accepte que SOLEVO Côte d’Ivoire utilise ces informations pour traiter ma commande et me recontacter. *</span></label>
       <div class="cmd-err" id="cmdErr"></div>
       <button class="cmd-btn cmd-go" type="submit">Vérifier ma commande</button>
@@ -560,6 +562,11 @@ window.addEventListener('unhandledrejection',function(e){show((e.reason&&(e.reas
   var anyPromo = function () { return CFG.produits.some(promoP); };
   var cid = function (tel) { var d = String(tel || '').replace(/\D/g, ''); return d ? 'V' + d.slice(-10) : ''; };
   var pcode = function (p, id, oid) { return 'SLB-' + p.code + '-' + id + '-' + String(oid).slice(-4); };
+  /* code promo remis à l’inscription (stand, borne, fiche publique) : remises SELAB jusqu’au 30/11/2026 */
+  var PROMO_FIN = '2026-11-30';
+  function skPromo(tel) { var d = String(tel || '').replace(/\D/g, ''); if (d.indexOf('00') === 0) d = d.slice(2); if (d.length === 10) d = '225' + d; d = d.slice(-10); if (d.length < 10) return ''; var h = 2166136261, s = 'SELAB2026|' + d; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } var A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', c = ''; for (var k = 0; k < 4; k++) { c += A[h % 32]; h = Math.floor(h / 32); } return 'SK26-' + d.slice(-4) + '-' + c; }
+  var codeOk = function () { var f = $('cmdForm'); if (!f) return false; var c = String((f.elements.promo || {}).value || '').trim().toUpperCase(), tl = (f.elements.tel || {}).value; return !!c && c === skPromo(tl) && today() <= PROMO_FIN; };
+  var promoL = function (p) { return promoP(p) || (codeOk() && today() >= p.deb && today() <= PROMO_FIN); };
   var built = false, last = null;
   function build() {
     if (built) return; built = true;
@@ -578,7 +585,7 @@ window.addEventListener('unhandledrejection',function(e){show((e.reason&&(e.reas
   }
   function lignes(all) {
     var L = CFG.produits.map(function (p) {
-      var P = promoP(p), el = document.querySelector('[data-q="' + p.id + '"]'); var q = Math.max(0, Math.floor(+((el && el.value) || 0)));
+      var P = promoL(p), el = document.querySelector('[data-q="' + p.id + '"]'); var q = Math.max(0, Math.floor(+((el && el.value) || 0)));
       return { id: p.id, code: p.code, nom: p.nom, qte: q, pu_normal: p.ht, remise: P ? p.rem : 0, pu: P ? p.ht - p.rem : p.ht };
     });
     return all ? L : L.filter(function (l) { return l.qte > 0; });
@@ -586,6 +593,7 @@ window.addEventListener('unhandledrejection',function(e){show((e.reason&&(e.reas
   function calc(L) { var ht = L.reduce(function (a, l) { return a + l.qte * l.pu; }, 0), rem = L.reduce(function (a, l) { return a + l.qte * l.remise; }, 0), tva = ht * CFG.tva; return { sacs: L.reduce(function (a, l) { return a + l.qte; }, 0), ht: ht, remise: rem, tva: tva, ttc: ht + tva, eur: (ht + tva) / CFG.eur }; }
   function totals() {
     lignes(true).forEach(function (l) { var e = document.querySelector('[data-l="' + l.id + '"]'); if (!e) return; e.innerHTML = l.qte ? l.qte + ' sac' + (l.qte > 1 ? 's' : '') + ' : <b>' + fr(l.qte * l.pu) + ' FCFA HT</b>' + (l.remise ? ' au lieu de <s>' + fr(l.qte * l.pu_normal) + '</s> • <span class="cmd-eco">vous économisez ' + fr(l.qte * l.remise) + ' FCFA</span>' : '') : ''; });
+    { var cf = $('cmdForm'), cv = String((cf.elements.promo || {}).value || '').trim(), cc = $('cmdCode'); if (cc) { cc.hidden = !cv; cc.innerHTML = !cv ? '' : codeOk() ? '<b style="color:#2E7D1F">✓ Code valide : remises SELAB appliquées sur les 3 prémix jusqu’au 30/11/2026.</b>' : today() > PROMO_FIN ? 'Ce code a expiré le 30/11/2026.' : 'Code non reconnu pour ce numéro de téléphone : vérifiez le code et le numéro utilisés à l’inscription.'; } }
     var T = calc(lignes());
     $('cmdTot').innerHTML = '<span>Sacs</span><span>' + fr(T.sacs) + '</span>' + (T.remise ? '<span>Remise SELAB</span><span>−' + fr(T.remise) + ' FCFA</span>' : '') + '<span>Total HT</span><span>' + fr(T.ht) + ' FCFA</span><span>TVA 9 %</span><span>' + fr(T.tva) + ' FCFA</span><span class="g">Total TTC</span><span class="g">' + fr(T.ttc) + ' FCFA</span><span>Équivalent</span><span>≈ ' + T.eur.toFixed(2).replace('.', ',') + ' €</span>';
   }
@@ -607,7 +615,7 @@ window.addEventListener('unhandledrejection',function(e){show((e.reason&&(e.reas
     if (err.length) { $('cmdErr').textContent = 'Merci de compléter : ' + err.join(', ') + '.'; return; }
     $('cmdErr').textContent = '';
     var d = new Date(), id = 'CMD-' + today().replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
-    var idc = cid(v('tel')); L.forEach(function (l) { if (l.remise) l.codePromo = pcode(l, idc, id); });
+    var idc = cid(v('tel')); var vcode = codeOk() ? String(f.elements.promo.value).trim().toUpperCase() : ''; L.forEach(function (l) { if (l.remise) l.codePromo = vcode || pcode(l, idc, id); });
     last = { v: 2, id: id, idClient: idc, date: d.toISOString(), source: 'artefact SISSÊ~KABA', nom: v('nom'), tel: v('tel'), email: v('email'), ferme: v('ferme'), zone: v('zone'), ville: v('ville'), mode: v('mode'), dateSouhaitee: v('dateSouhaitee'), message: v('message'), promo: L.some(function (l) { return l.remise > 0; }), lignes: L, totaux: calc(L) };
     var t = texte(last);
     $('cmdId').textContent = id;

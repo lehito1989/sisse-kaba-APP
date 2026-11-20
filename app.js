@@ -723,6 +723,12 @@
   state.pros = []; state.standCfg = JSON.parse(JSON.stringify(CFG_DEFAULT));
   function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
   const dbOn = () => state.db && !state.prosLocal;
+  /* code promo SELAB SHOW 2026 : généré dès que la fiche du visiteur est enregistrée, lié à son téléphone, valable jusqu’au 30/11/2026 */
+  const PROMO_FIN = '2026-11-30';
+  function skPromo(tel) { var d = String(tel || '').replace(/\D/g, ''); if (d.indexOf('00') === 0) d = d.slice(2); if (d.length === 10) d = '225' + d; d = d.slice(-10); if (d.length < 10) return ''; var h = 2166136261, s = 'SELAB2026|' + d; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } var A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', c = ''; for (var k = 0; k < 4; k++) { c += A[h % 32]; h = Math.floor(h / 32); } return 'SK26-' + d.slice(-4) + '-' + c; }
+  const promoOk = (r) => !!(r && r.promo) && new Date().toISOString().slice(0, 10) <= PROMO_FIN;
+  const COMMANDE_URL = 'https://claude.ai/artifact/TUnnsq3KPaGHqWqgX2PpWF#commande';
+  const promoTxt = (r) => r.promo ? '🎁 Votre code promo SELAB SHOW 2026 : ' + r.promo + ' (valable jusqu’au 30/11/2026). Il vous donne droit aux remises du salon sur les prémix MG2MIX : Ponte −2 000 F, CMV Porc −2 000 F et Chair −1 000 F par sac. Commandez ici : ' + COMMANDE_URL + ' (saisissez votre code et votre numéro).' : '';
   function waNum(t) {
     let d = String(t || '').replace(/\D/g, '');
     if (d.startsWith('00')) d = d.slice(2);
@@ -739,6 +745,7 @@
     return a.join(' et ') || 'activité';
   }
   function fillMsg(tpl, r, extra) {
+    if (r && r.promo && promoOk(r)) tpl = /\{code\}/.test(String(tpl)) ? String(tpl).replace(/\{code\}/g, r.promo) : String(tpl) + '\n\n' + promoTxt(r); else tpl = String(tpl).replace(/\{code\}/g, '');
     const c = state.standCfg; const t = (c.tables || []).find((x) => String(x.n) === String(r.table)) || {};
     const lien = c.inscription ? ' ou inscrivez-vous ici : ' + c.inscription : '';
     return String(tpl).replace(/\{prenom\}/g, prenom(r)).replace(/\{nom\}/g, r.nom || '').replace(/\{table\}/g, tLab(r.table)).replace(/\{lieu\}/g, tA(r.table)).replace(/\{agent\}/g, r.agent || t.agent || 'un technicien SOLEVO')
@@ -855,6 +862,7 @@
       test: !!state.standCfg.testMode, msgTable: '', msgMerci: '', mailMerci: '', visite: 'Seul(e)', nb: 1, org: '', kam: '', accueil: [], servi: '', scenario: state.V.S.scenario };
   }
   function finalize(r) {
+    if (!r.promo && !r.test) { const pc = skPromo(r.tel); if (pc) { r.promo = pc; r.promoFin = PROMO_FIN; } }
     r.public = isElev(r) && isProd(r) ? 'Éleveur et producteur' : isProd(r) ? 'Producteur' : isElev(r) ? 'Éleveur' : (r.profil || 'Autre');
     if (!r.ate || r.ate === 'À attribuer') r.ate = isProd(r) && !isElev(r) ? TM.koffi.nom : (ATE_BY_DEP[r.depot] || 'À attribuer');
     const N = state.V.N;
@@ -1380,7 +1388,7 @@
     const txt = fillMsg(state.standCfg.msgTable, r);
     autoSend(r, txt, 'table').then((res) => { const el = $('#bkAuto'); if (el && res) { el.textContent = res.ok ? '✓ ' + res.msg.replace('Message envoyé automatiquement', 'Ce message vous a été envoyé') : ''; el.className = res.ok ? 'okm' : ''; } });
     $('#borneB').innerHTML = `<div class="bk-done"><div class="bk-ok">✓</div><h2>Merci ${esc(prenom(r))} !</h2>
-      <p class="bk-t">Rendez-vous ${/^Table/i.test(tLab(r.table)) ? 'à la' : /^Salle/i.test(tLab(r.table)) ? 'à la' : 'à'} <b>${esc(/^Table/i.test(tLab(r.table)) ? tLab(r.table).toUpperCase() : tLab(r.table))}</b></p><p class="bk-a">avec ${esc(r.agent || 'un technicien SOLEVO')}</p><p class="bk-rang">Vous êtes <b>${rangLab(r)}</b> dans la file d’attente</p><p id="bkAuto"></p>
+      <p class="bk-t">Rendez-vous ${/^Table/i.test(tLab(r.table)) ? 'à la' : /^Salle/i.test(tLab(r.table)) ? 'à la' : 'à'} <b>${esc(/^Table/i.test(tLab(r.table)) ? tLab(r.table).toUpperCase() : tLab(r.table))}</b></p><p class="bk-a">avec ${esc(r.agent || 'un technicien SOLEVO')}</p><p class="bk-rang">Vous êtes <b>${rangLab(r)}</b> dans la file d’attente</p><p id="bkAuto"></p>${r.promo ? `<div class="bk-promo"><span>🎁 Votre code promo SELAB SHOW</span><b>${esc(r.promo)}</b><small>Valable jusqu’au 30/11/2026 : Ponte −2 000 F, Porc −2 000 F, Chair −1 000 F par sac de MG2MIX. Il est aussi dans votre message WhatsApp ou SMS.</small></div>` : ''}
       <div class="bk-off"><h3>SOLEVO vous offre${nbP(r) > 1 ? ' (' + nbP(r) + ' personnes)' : ''}</h3><div class="bk-offb"><button type="button" data-acc="Eau" class="on">💧 ${nbP(r) > 1 ? nbP(r) + ' bouteilles' : '1 bouteille'} d’eau</button><button type="button" data-acc="Café" class="on">☕ ${nbP(r) > 1 ? nbP(r) + ' cafés' : '1 café'}</button><button type="button" data-acc="non">Non merci</button></div><p class="note">Servi à l’accueil pendant votre attente.</p></div>
       <div class="mbar"><a class="bk-btn" href="${waLink(r.tel, txt)}" target="_blank" rel="noopener" data-sent="wa">Recevoir ce message sur WhatsApp</a><a class="bk-btn alt" href="${smsLink(r.tel, txt)}" data-sent="sms">par SMS</a></div>
       ${fiche ? '' : '<p class="note">Retour automatique à l’accueil dans 30 secondes.</p>'}<button type="button" class="bk-next">Nouvelle inscription</button></div>`;
@@ -2006,7 +2014,7 @@
       return `<div class="pot" title="Besoin réel en maïs déclaré par les visiteurs (quantité d’aliment × ${fr(txMaisV() * 100)} % de maïs), converti en surface avec le rendement utile du scénario (${fr(N.tHa, 2)} t/ha)"><b>${fr(t, 1)} t/an</b>potentiel maïs déclaré (${D.length} visiteur${D.length > 1 ? 's' : ''}), ${N.mais27 ? fr(t / N.mais27 * 100, 1) + ' % des ' + fr(N.mais27) + ' t prévues en 2027, ' : ''}≈ ${fr(ha, 1)} ha${pr ? ' • ≈ ' + fr(Math.ceil(pr)) + ' producteur' + (Math.ceil(pr) > 1 ? 's' : '') : ''} à mobiliser • producteurs inscrits : ${O.n}/${O.besoin}${O.couv != null ? ' (offre ' + fr(O.couv * 100, 0) + ' % de la demande)' : ''}</div>`; })();
     const opts = ['', 'Validation : À valider', 'Validation : À corriger', 'Validation : Validé', 'Maïs à vérifier', 'En attente', 'En entretien', 'Terminé', 'Éleveur', 'Producteur', 'Éleveur et producteur', ...STATUTS, ...(state.standCfg.tables || []).map((t) => tLab(t.n))];
     if ($('#prosFilter').options.length !== opts.length) $('#prosFilter').innerHTML = opts.map((o) => `<option value="${o}" ${o === f ? 'selected' : ''}>${o || 'Tous les visiteurs'}</option>`).join('');
-    $('#prosTbl tbody').innerHTML = L.length ? L.map((r) => `<tr><td>${r.date}<br><small>${esc(r.source || '')}</small><br><span class="vchip ${valOf(r) === 'Validé' ? 'ok' : valOf(r) === 'À corriger' ? 'ko' : 'wa'}">${valOf(r)}</span></td><td>${esc(r.public)}</td><td><b>${esc(r.nom)}</b><br><a href="tel:+${waNum(r.tel)}">${esc(r.tel)}</a>${r.email ? '<br><small>' + esc(r.email) + '</small>' : ''}</td><td>${esc(r.localite)}<br><small>${esc(r.depot)}</small></td><td class="bes">${prosBesoin(r)}</td>
+    $('#prosTbl tbody').innerHTML = L.length ? L.map((r) => `<tr><td>${r.date}<br><small>${esc(r.source || '')}</small><br><span class="vchip ${valOf(r) === 'Validé' ? 'ok' : valOf(r) === 'À corriger' ? 'ko' : 'wa'}">${valOf(r)}</span></td><td>${esc(r.public)}</td><td><b>${esc(r.nom)}</b><br><a href="tel:+${waNum(r.tel)}">${esc(r.tel)}</a>${r.promo ? '<br><small title="Code promo SELAB SHOW, valable jusqu’au 30/11/2026">🎁 ' + esc(r.promo) + '</small>' : ''}${r.email ? '<br><small>' + esc(r.email) + '</small>' : ''}</td><td>${esc(r.localite)}<br><small>${esc(r.depot)}</small></td><td class="bes">${prosBesoin(r)}</td>
       <td>${r.table ? esc(tLab(r.table)) + '<br><small>' + esc(r.agent || '') + '</small>' : '—'}<br><span class="et et${ETATS.indexOf(r.etat)}">${esc(r.etat || '')}</span></td>
       <td><select data-pid="${r.id}" data-pk="ate">${ATES.map((a) => `<option ${a === r.ate ? 'selected' : ''}>${a}</option>`).join('')}</select><select data-pid="${r.id}" data-pk="statut">${STATUTS.map((a) => `<option ${a === r.statut ? 'selected' : ''}>${a}</option>`).join('')}</select></td>
       <td class="msgs"><small>Table : ${esc(r.msgTable || '—')}${r.rappel ? '<br>Rappel : ' + esc(r.rappel) : ''}<br>Merci : ${esc(r.msgMerci || '—')}<br>E-mail : ${esc(r.mailMerci || '—')}${r.reponse ? '<br><b>Réponse ' + esc(r.reponse) + '</b>' : ''}</small></td>
@@ -2055,11 +2063,11 @@
   const profCode = (r) => isElev(r) && isProd(r) ? 'EP' : isProd(r) ? 'PR' : isElev(r) ? 'EL' : 'AU';
   const telInt = (t) => { const d = waNum(t); return d ? '+' + d : ''; };
   const rd1 = (x) => Math.round((x || 0) * 10) / 10;
-  const REF_HEAD = ['ID', 'Date', 'Code profil', 'Profil', 'Nom', 'Téléphone', 'E-mail', 'Code localité', 'Localité', 'Région', 'Code dépôt conseillé', 'Dépôt conseillé', 'Distance dépôt (km)', 'Poulets de chair', 'Pondeuses', 'Porcs / an', 'Aliment / an (t)', 'Maïs déclaré / an (t)', 'Classe maïs', 'Surface maïs (ha)', 'Maïs produit / an (t)', 'Coopérative', 'ATE', 'Statut suivi', 'Inscrit au projet', 'Validation', 'Validé le', 'Validé par', 'Source', 'Consentement'];
+  const REF_HEAD = ['ID', 'Date', 'Code profil', 'Profil', 'Nom', 'Téléphone', 'E-mail', 'Code localité', 'Localité', 'Région', 'Code dépôt conseillé', 'Dépôt conseillé', 'Distance dépôt (km)', 'Poulets de chair', 'Pondeuses', 'Porcs / an', 'Aliment / an (t)', 'Maïs déclaré / an (t)', 'Classe maïs', 'Surface maïs (ha)', 'Maïs produit / an (t)', 'Coopérative', 'ATE', 'Statut suivi', 'Inscrit au projet', 'Validation', 'Validé le', 'Validé par', 'Source', 'Consentement', 'Code promo SELAB', 'Code valable jusqu’au'];
   function refRow(r) {
     const g = geoFind(r.localite) || {};
     return [r.id, r.date, profCode(r), r.public || r.profil || '', r.nom || '', telInt(r.tel), r.email || '', locCode(r.localite), g.ville || r.localite || '', g.region || '', depCode(g.depot), g.depot || '', g.km != null ? g.km : '',
-      r.chair || 0, r.pondeuse || 0, r.porc || 0, rd1(r.alimAn || r.aliment), rd1(r.maisDecl || r.mais), r.maisClasse || '', r.surface || 0, rd1(r.maisP), r.coop || r.org || '', r.ate || '', r.statut || '', r.inscription || '', valOf(r), r.validLe || '', r.validPar || '', r.source || '', r.consent ? 'Oui' : 'Non'];
+      r.chair || 0, r.pondeuse || 0, r.porc || 0, rd1(r.alimAn || r.aliment), rd1(r.maisDecl || r.mais), r.maisClasse || '', r.surface || 0, rd1(r.maisP), r.coop || r.org || '', r.ate || '', r.statut || '', r.inscription || '', valOf(r), r.validLe || '', r.validPar || '', r.source || '', r.consent ? 'Oui' : 'Non', r.promo || '', r.promo ? '30/11/2026' : ''];
   }
   async function refExport() {
     if (!state.pros.length) { status('Aucune inscription à exporter.', 'err'); return; }
@@ -2212,7 +2220,7 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
     const go = async () => {
       const q = $('#verQ', b).value.trim(); const out = $('#verOut', b); if (!q) { out.innerHTML = ''; return; }
       const qd = waNum(q), qk = geoKey(q);
-      const L = state.pros.filter((r) => (qd.length >= 8 && waNum(r.tel).endsWith(qd.slice(-8))) || r.id === q || r.fid === q || (qk.length >= 3 && geoKey(r.nom).indexOf(qk) >= 0)).slice(0, 20);
+      const L = state.pros.filter((r) => (qd.length >= 8 && waNum(r.tel).endsWith(qd.slice(-8))) || r.id === q || r.fid === q || String(r.promo || '').toUpperCase() === q.toUpperCase() || (qk.length >= 3 && geoKey(r.nom).indexOf(qk) >= 0)).slice(0, 20);
       if (!L.length) { out.innerHTML = '<p class="err">Aucune fiche trouvée pour « ' + esc(q) + ' ». Si le visiteur vient de remplir la fiche publique, attendez 3 minutes (import automatique) ou utilisez « Importer une inscription WhatsApp ».</p>'; return; }
       out.innerHTML = '<p class="note">Relecture dans la base…</p>';
       const rows = [];
@@ -2221,7 +2229,7 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
         if (dbOn()) { try { const d = await state.db.collection('prospects').doc(r.id).get(); inDb = !!(d && d.exists !== false && (d.data ? d.data() : d)); if (inDb && d.data) { const x = d.data(); upd = x.validLe || x.date || ''; } } catch (e) { inDb = false; } }
         const ok = (t, v, n) => `<span class="vchip ${v === true ? 'ok' : v === false ? 'ko' : 'wa'}">${v === true ? '✓' : v === false ? '✗' : '○'} ${t}${n ? ' • ' + esc(n) : ''}</span>`;
         const sav = c.refLast && String(r.at || '').slice(0, 10) <= c.refLast;
-        rows.push(`<tr><td><b>${esc(r.nom || '—')}</b><br><small>${esc(r.public || r.profil || '')} • ${esc(r.localite || '')} • ${esc(r.tel || '')}</small><br><small>Fiche n° <code>${esc(r.id)}</code>${r.fid ? ' • fiche publique <code>' + esc(r.fid) + '</code>' : ''}</small></td>
+        rows.push(`<tr><td><b>${esc(r.nom || '—')}</b><br><small>${esc(r.public || r.profil || '')} • ${esc(r.localite || '')} • ${esc(r.tel || '')}</small>${r.promo ? '<br><span class="vchip ok">🎁 ' + esc(r.promo) + ' • jusqu’au 30/11/2026</span>' : ''}<br><small>Fiche n° <code>${esc(r.id)}</code>${r.fid ? ' • fiche publique <code>' + esc(r.fid) + '</code>' : ''}</small></td>
           <td>${esc(r.date || '')}<br><small>${esc(r.source || '')}</small></td>
           <td>${ok('Base de l’artefact', dbOn() ? inDb : null, dbOn() ? (inDb ? 'relue' : 'introuvable') : 'appareil seul')}<br>${ok('Feuille en ligne', c.gsOn && c.gsId ? !!r.gsJ : null, r.gsJ ? (r.gsJ === 'fiche publique' ? 'Fiche_publique' : r.gsJ) : '')}<br>${ok('Inscrits validés en ligne', valOf(r) === 'Validé' && c.gsOn ? !!r.gsV : null, r.gsV || '')}<br>${ok('Sauvegarde Excel du soir', c.refLast ? sav : null, sav ? c.refLast : 'prochain envoi')}</td>
           <td><span class="vchip ${valOf(r) === 'Validé' ? 'ok' : valOf(r) === 'À corriger' ? 'ko' : 'wa'}">${valOf(r)}</span>${r.validLe ? '<br><small>' + esc(r.validLe) + '</small>' : ''}<br><button type="button" data-vere="${r.id}">✎ Ouvrir</button></td></tr>`);
