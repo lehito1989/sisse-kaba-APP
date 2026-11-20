@@ -1,8 +1,8 @@
 /* SISSÊ~KABA — simulateur de scénarios : interface. */
 (function () {
   'use strict';
-  /* rendement retenu pour la fiche d’inscription visiteur (stand, borne et fiche publique) : 5 t de maïs par hectare */
-  const FICHE_THA = 5;
+  /* rendement moyen affiché sur la fiche d’inscription visiteur : rendement brut du scénario (5 t/ha par défaut) */
+  const ficheTha = () => (state.V && state.V.N && state.V.N.rdt) || 5;
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
   const fr = SKV.fr;
@@ -47,8 +47,8 @@
     { g: 'Acteurs', k: 'GB3', lab: 'Prix bord champ de référence P (illustratif)', unit: 'FCFA/kg', min: 25, max: 300, step: 5, apply: 'gains' },
   ];
   const PRESETS = {
-    s2: { label: 'Scénario 2 : 500 t, croissance 10 %/an', set: {} },
-    s1: { label: 'Scénario 1 : 300 t, 450 t, 600 t (dossier du 12/11)', set: { 'Hypotheses!B5': 300, 'Hypotheses!C52': 0.5, 'Hypotheses!D52': 1 / 3 } },
+    s2: { label: 'Scénario 2 : 500 t, croissance 10 %/an, rendement 5 t/ha', set: { 'Hypotheses!B12': 5, 'Hypotheses!C12': 5, 'Hypotheses!D12': 5 } },
+    s1: { label: 'Scénario 1 : 300 t, 450 t, 600 t (dossier du 12/11)', set: { 'Hypotheses!B5': 300, 'Hypotheses!C52': 0.5, 'Hypotheses!D52': 1 / 3, 'Hypotheses!B12': 5, 'Hypotheses!C12': 5, 'Hypotheses!D12': 5 } },
     stress: { label: 'Test de stress : 500 t, +5 %/an, rendement 3,5 t/ha, couverture 60 %, pertes 3 %', set: { 'Hypotheses!C52': 0.05, 'Hypotheses!D52': 0.05, 'Hypotheses!B12': 3.5, 'Hypotheses!C12': 3.5, 'Hypotheses!D12': 3.5, 'Hypotheses!B16': 0.6, 'Hypotheses!C16': 0.6, 'Hypotheses!D16': 0.6, 'Hypotheses!B30': 0.03, 'Hypotheses!C30': 0.03, 'Hypotheses!D30': 0.03 } },
   };
 
@@ -660,9 +660,9 @@
         cells = [[fr(a, 1) + ' t', 'd’aliment par an'], [fr(sacs, 0), 'sacs de prémix par an (' + fr(sacs / 12, 1) + ' par mois)'], [fr(mais, 1) + ' t', 'de maïs par an'], [fr(eco / 1e6, 2) + ' M', 'FCFA d’économies attendues par an']];
       } else {
         c.ha = parseFloat($('#pcHa').value) || 0;
-        const t = c.ha * FICHE_THA, av = t * 1000 * N.prixProdAv, ap = t * 1000 * N.prixProdAp;
+        const t = c.ha * ficheTha(), av = t * 1000 * N.prixProdAv, ap = t * 1000 * N.prixProdAp;
         c.res = { type: 'Maïs', q: c.ha, u: 'ha', mais: t, av, ap, gain: ap - av, panier: c.ha * N.panier27 };
-        cells = [[fr(t, 1) + ' t', 'de maïs livré au programme'], [fr(av / 1e6, 2) + ' → ' + fr(ap / 1e6, 2) + ' M', 'FCFA de recettes par an'], ['+' + fr((ap - av) / 1e6, 2) + ' M', 'FCFA en plus par an'], [fr(c.ha * N.panier27 / 1e6, 2) + ' M', 'FCFA de panier d’intrants']];
+        cells = [[fr(t, 1) + ' t', 'de récolte estimée (rendement moyen ' + fr(ficheTha(), 1) + ' t/ha avec semences et intrants SOLEVO, non garanti)'], [fr(av / 1e6, 2) + ' → ' + fr(ap / 1e6, 2) + ' M', 'FCFA de recettes par an'], ['+' + fr((ap - av) / 1e6, 2) + ' M', 'FCFA en plus par an'], [fr(c.ha * N.panier27 / 1e6, 2) + ' M', 'FCFA de panier d’intrants']];
       }
       $('#pcOut').innerHTML = cells.map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('');
     };
@@ -876,7 +876,7 @@
     if (ad) { r.maisEcart = r.maisEst ? (ad.mais - r.maisEst) / r.maisEst : null; r.maisCtrl = r.maisEst ? (Math.abs(r.maisEcart) > MAIS_SEUIL_ECART ? 'À vérifier' : 'Cohérent') : 'Effectif non renseigné'; r.maisClasse = maisClasse(ad.mais); }
     else { delete r.maisEcart; delete r.maisCtrl; delete r.maisClasse; }
     if (ad) { r.alimAn = ad.an; r.maisDecl = ad.mais; r.aliment = ad.an; r.mais = ad.mais; r.eco = r.mais * 1000 * (N.prixAchAv - N.prixAchAp); if (!al) r.sacs = 0; } else { delete r.alimAn; delete r.maisDecl; }
-    if (r.surface) { const t = r.surface * FICHE_THA; r.maisP = t; r.gain = t * 1000 * (N.prixProdAp - N.prixProdAv); r.panier = r.surface * N.panier27; }
+    if (r.surface) { const t = r.surface * ficheTha(); r.maisP = t; r.gain = t * 1000 * (N.prixProdAp - N.prixProdAv); r.panier = r.surface * N.panier27; }
     return r;
   }
 
@@ -1127,7 +1127,7 @@
   /* paramètres de la fiche publique (params.json du dépôt GitHub de la fiche) tirés du scénario */
   function ficheParams() {
     const N = state.V.N;
-    return { maj: today().iso, scenario: state.V.S.scenario, P: +N.P.toFixed(2), tHa: FICHE_THA, plus: +((N.prixProdAp - N.prixProdAv) / N.P).toFixed(4), panier: Math.round(N.panier27), txMais: +N.txMais.toFixed(4),
+    return { maj: today().iso, scenario: state.V.S.scenario, P: +N.P.toFixed(2), tHa: +ficheTha().toFixed(2), plus: +((N.prixProdAp - N.prixProdAv) / N.P).toFixed(4), panier: Math.round(N.panier27), txMais: +N.txMais.toFixed(4),
       kgPoulet: N.kgPoulet, cycles: N.cycles, pondKgJour: N.pondJour, kgPorc: N.kgPorc, ecartMax: MAIS_SEUIL_ECART, gsHook: state.standCfg.gsHook || '' };
   }
   async function paramsOpen() {
@@ -1160,7 +1160,7 @@
           <div class="alo" hidden></div></div>
         <div class="chips"><b>Votre aliment :</b>${['Je le fabrique', 'Je l’achète complet', 'Les deux'].map((v) => rad('fabrique', v, r.fabrique)).join('')}</div>
         <label class="w">Prémix ou aliment utilisé aujourd’hui (marque)<input name="fournisseur" value="${esc(r.fournisseur)}"></label></fieldset>
-      <fieldset class="fx-pr"><legend>Votre production de maïs</legend><div class="vg"><label>Surface en maïs (ha)<input name="surface" type="number" inputmode="decimal" min="0" step="0.5" value="${r.surface || ''}"></label><label>Coopérative (si membre)<input name="coop" value="${esc(r.coop)}"></label></div>
+      <fieldset class="fx-pr"><legend>Votre production de maïs</legend><div class="vg"><label>Surface en maïs (ha)<input name="surface" type="number" inputmode="decimal" min="0" step="0.5" value="${r.surface || ''}"><small class="muted">Calcul sur un rendement moyen de ${fr(ficheTha(), 1)} t/ha avec semences et intrants SOLEVO (estimation, pas une garantie).</small></label><label>Coopérative (si membre)<input name="coop" value="${esc(r.coop)}"></label></div>
         <div class="chips"><b>Achetez-vous semences et engrais ?</b>${['Oui', 'Non', 'Parfois'].map((v) => rad('intrants', v, r.intrants)).join('')}</div></fieldset>
       <details class="veille" ${(r.veille && Object.keys(r.veille).length) || /fabrique|deux/i.test(r.fabrique || '') ? 'open' : ''}><summary>Veille des prix : prix d’achat et de vente actuels du visiteur <span>(obligatoire si l’éleveur fabrique son aliment : maïs, soja, son et prix de vente)</span></summary><div class="vg">${VEILLE.map(([k, l, u]) => `<label>${l} <small>(${u})</small><input name="vx_${k}" type="number" inputmode="decimal" min="0" step="any" value="${esc((r.veille || {})[k] || '')}"></label>${/^px/.test(k) ? `<div class="sacs"><b>Sac de ${l.toLowerCase()} :</b><div class="chips">${SACS.map((z) => rad('sac_' + k, z + ' kg', (r.veille || {})[k + 'Kg'] ? (r.veille || {})[k + 'Kg'] + ' kg' : '')).join('')}</div></div>` : ''}`).join('')}</div></details>
       <fieldset><legend>Vos priorités</legend><div class="chips">${PRIOS.map((v) => chk('prios', v, r.prios)).join('')}</div></fieldset>
