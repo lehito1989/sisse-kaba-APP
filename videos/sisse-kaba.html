@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SISSÊ~KABA • Vidéo producteurs de maïs et éleveurs</title>
+<meta property="og:title" content="SISSÊ~KABA : le juste prix, du champ à la mangeoire">
+<meta property="og:description" content="Vidéo de 6 minutes pour les producteurs de maïs et les éleveurs • SOLEVO Côte d’Ivoire">
+<meta property="og:image" content="https://lehito1989.github.io/sisse-kaba-APP/videos/web/producteurs_eleveurs_poster.jpg">
+<style>body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#00143D;color:#fff}
+header{display:flex;align-items:center;gap:10px;padding:10px 14px}
+header img{height:30px;background:#fff;border-radius:8px;padding:4px 8px}
+header b{font-size:15px}header span{display:block;font-size:11px;opacity:.8}
+.v{max-width:1100px;margin:0 auto}
+video{width:100%;aspect-ratio:16/9;background:#000;display:block}
+.act{max-width:1100px;margin:0 auto;padding:14px;display:flex;flex-wrap:wrap;gap:10px}
+.act a{flex:1 1 220px;text-align:center;padding:14px;border-radius:12px;font-weight:800;text-decoration:none;color:#fff}
+.ins{background:#37A028}.wa{background:#25D366}.dl{background:#0B5FA1}
+.n{max-width:1100px;margin:0 auto;padding:0 14px 20px;font-size:13px;opacity:.85}
+.tap{display:none;text-align:center;padding:8px;font-size:13px;background:#F6C21A;color:#00143D;font-weight:700}</style></head>
+<body>
+<header><img src="../assets/solevo_small.png" alt="SOLEVO"><div><b>SISSÊ~KABA • producteurs de maïs et éleveurs</b><span>Le juste prix, du champ à la mangeoire • 5 min 56</span></div></header>
+<div class="tap" id="tap">▶ Touchez la vidéo pour lancer le son</div>
+<div class="v"><video id="v" controls playsinline autoplay muted preload="auto" poster="web/producteurs_eleveurs_poster.jpg" src="web/producteurs_eleveurs.mp4"></video></div>
+<div class="act">
+  <a class="ins" href="https://lehito1989.github.io/sisse-kaba-inscription-Public/">✍ Je m’inscris à SISSÊ~KABA</a>
+  <a class="wa" href="https://wa.me/2250710471402?text=Bonjour%20SOLEVO%2C%20j%E2%80%99ai%20vu%20la%20vid%C3%A9o%20SISS%C3%8A~KABA%20et%20je%20souhaite%20en%20savoir%20plus.">💬 WhatsApp SOLEVO</a>
+  <a class="dl" href="sisse/SISSE-KABA_Producteurs-Eleveurs_Telephone_1080x1920_6min_2026-11-19.mp4" download>⬇ Télécharger (format téléphone)</a>
+</div>
+<p class="n">Les montants cités dans la vidéo sont des exemples pour un prix bord champ de 100 FCFA/kg ; les montants réels suivent le prix du marché. Autres vidéos : <a href="./" style="color:#B5E07A">page des vidéos SOLEVO</a>.</p>
+<script>
+(function () {
+  var v = document.getElementById('v'), t = document.getElementById('tap');
+  var p = v.play(); if (p && p.then) p.then(function () { t.style.display = 'block'; }).catch(function () { t.textContent = '▶ Touchez la vidéo pour la lancer'; t.style.display = 'block'; });
+  v.addEventListener('volumechange', function () { if (!v.muted) t.style.display = 'none'; });
+  v.addEventListener('click', function () { if (v.muted) { v.muted = false; t.style.display = 'none'; } }, true);
+})();
+</script>
+</body></html>

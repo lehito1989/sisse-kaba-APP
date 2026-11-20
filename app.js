@@ -547,7 +547,7 @@
   }
   function qrRefresh() {
     try { const c = qrCanvas(state.qrLink, 700); imgs.qr = c.toDataURL('image/png'); } catch (e) { imgs.qr = null; }
-    try { imgs.qrVideo = qrCanvas('https://lehito1989.github.io/sisse-kaba-APP/videos/', 500).toDataURL('image/png'); } catch (e) { imgs.qrVideo = null; }
+    try { imgs.qrVideo = qrCanvas('https://lehito1989.github.io/sisse-kaba-APP/videos/sisse-kaba.html', 500).toDataURL('image/png'); } catch (e) { imgs.qrVideo = null; }
     try { const q = qrcode(0, 'M'); q.addData(state.qrLink); q.make(); const n = q.getModuleCount(); imgs.qrMatrix = Array.from({ length: n }, (_, r) => Array.from({ length: n }, (_, k) => (q.isDark(r, k) ? '1' : '0')).join('')); } catch (e) { imgs.qrMatrix = null; }
   }
   async function qrPngBytes() {
