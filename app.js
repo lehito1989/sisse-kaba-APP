@@ -1,6 +1,8 @@
 /* SISSÊ~KABA — simulateur de scénarios : interface. */
 (function () {
   'use strict';
+  /* rendement retenu pour la fiche d’inscription visiteur (stand, borne et fiche publique) : 5 t de maïs par hectare */
+  const FICHE_THA = 5;
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
   const fr = SKV.fr;
@@ -658,7 +660,7 @@
         cells = [[fr(a, 1) + ' t', 'd’aliment par an'], [fr(sacs, 0), 'sacs de prémix par an (' + fr(sacs / 12, 1) + ' par mois)'], [fr(mais, 1) + ' t', 'de maïs par an'], [fr(eco / 1e6, 2) + ' M', 'FCFA d’économies attendues par an']];
       } else {
         c.ha = parseFloat($('#pcHa').value) || 0;
-        const t = c.ha * N.tHa, av = t * 1000 * N.prixProdAv, ap = t * 1000 * N.prixProdAp;
+        const t = c.ha * FICHE_THA, av = t * 1000 * N.prixProdAv, ap = t * 1000 * N.prixProdAp;
         c.res = { type: 'Maïs', q: c.ha, u: 'ha', mais: t, av, ap, gain: ap - av, panier: c.ha * N.panier27 };
         cells = [[fr(t, 1) + ' t', 'de maïs livré au programme'], [fr(av / 1e6, 2) + ' → ' + fr(ap / 1e6, 2) + ' M', 'FCFA de recettes par an'], ['+' + fr((ap - av) / 1e6, 2) + ' M', 'FCFA en plus par an'], [fr(c.ha * N.panier27 / 1e6, 2) + ' M', 'FCFA de panier d’intrants']];
       }
@@ -874,7 +876,7 @@
     if (ad) { r.maisEcart = r.maisEst ? (ad.mais - r.maisEst) / r.maisEst : null; r.maisCtrl = r.maisEst ? (Math.abs(r.maisEcart) > MAIS_SEUIL_ECART ? 'À vérifier' : 'Cohérent') : 'Effectif non renseigné'; r.maisClasse = maisClasse(ad.mais); }
     else { delete r.maisEcart; delete r.maisCtrl; delete r.maisClasse; }
     if (ad) { r.alimAn = ad.an; r.maisDecl = ad.mais; r.aliment = ad.an; r.mais = ad.mais; r.eco = r.mais * 1000 * (N.prixAchAv - N.prixAchAp); if (!al) r.sacs = 0; } else { delete r.alimAn; delete r.maisDecl; }
-    if (r.surface) { const t = r.surface * N.tHa; r.maisP = t; r.gain = t * 1000 * (N.prixProdAp - N.prixProdAv); r.panier = r.surface * N.panier27; }
+    if (r.surface) { const t = r.surface * FICHE_THA; r.maisP = t; r.gain = t * 1000 * (N.prixProdAp - N.prixProdAv); r.panier = r.surface * N.panier27; }
     return r;
   }
 
@@ -1125,7 +1127,7 @@
   /* paramètres de la fiche publique (params.json du dépôt GitHub de la fiche) tirés du scénario */
   function ficheParams() {
     const N = state.V.N;
-    return { maj: today().iso, scenario: state.V.S.scenario, P: +N.P.toFixed(2), tHa: +N.tHa.toFixed(4), plus: +((N.prixProdAp - N.prixProdAv) / N.P).toFixed(4), panier: Math.round(N.panier27), txMais: +N.txMais.toFixed(4),
+    return { maj: today().iso, scenario: state.V.S.scenario, P: +N.P.toFixed(2), tHa: FICHE_THA, plus: +((N.prixProdAp - N.prixProdAv) / N.P).toFixed(4), panier: Math.round(N.panier27), txMais: +N.txMais.toFixed(4),
       kgPoulet: N.kgPoulet, cycles: N.cycles, pondKgJour: N.pondJour, kgPorc: N.kgPorc, ecartMax: MAIS_SEUIL_ECART, gsHook: state.standCfg.gsHook || '' };
   }
   async function paramsOpen() {
