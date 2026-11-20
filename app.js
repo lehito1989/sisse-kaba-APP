@@ -853,7 +853,7 @@
   /* ---- enregistrement ---- */
   /* veille des prix obligatoire pour les éleveurs qui fabriquent leur aliment */
   function vxMiss(r) {
-    if (!(isElev(r) && /fabrique|deux/i.test(r.fabrique || ''))) return [];
+    if (!(isElev(r) && (/fabrique|deux/i.test(r.fabrique || '') || /Fabricant/.test(r.profil || '')))) return [];
     const k = ['mais', 'soja', 'son']; if (+r.chair > 0) k.push('poulet'); if (+r.pondeuse > 0) k.push('plaq'); if (+r.porc > 0) k.push('porcVif');
     return k.filter((x) => !(+((r.veille || {})[x]) > 0));
   }
