@@ -841,6 +841,12 @@
     if (best) { r.table = best.n; r.agent = best.agent; }
   }
   /* ---- enregistrement ---- */
+  /* veille des prix obligatoire pour les éleveurs qui fabriquent leur aliment */
+  function vxMiss(r) {
+    if (!(isElev(r) && /fabrique|deux/i.test(r.fabrique || ''))) return [];
+    const k = ['mais', 'soja', 'son']; if (+r.chair > 0) k.push('poulet'); if (+r.pondeuse > 0) k.push('plaq'); if (+r.porc > 0) k.push('porcVif');
+    return k.filter((x) => !(+((r.veille || {})[x]) > 0));
+  }
   function newRec(src) {
     const now = new Date();
     return { id: 'p' + now.getTime().toString(36) + Math.random().toString(36).slice(2, 6), at: now.toISOString(), date: today().fr + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'),
@@ -1060,7 +1066,7 @@
   function ficheParams() {
     const N = state.V.N;
     return { maj: today().iso, scenario: state.V.S.scenario, P: +N.P.toFixed(2), tHa: +N.tHa.toFixed(4), plus: +((N.prixProdAp - N.prixProdAv) / N.P).toFixed(4), panier: Math.round(N.panier27), txMais: +N.txMais.toFixed(4),
-      kgPoulet: N.kgPoulet, cycles: N.cycles, pondKgJour: N.pondJour, kgPorc: N.kgPorc, ecartMax: MAIS_SEUIL_ECART };
+      kgPoulet: N.kgPoulet, cycles: N.cycles, pondKgJour: N.pondJour, kgPorc: N.kgPorc, ecartMax: MAIS_SEUIL_ECART, gsHook: state.standCfg.gsHook || '' };
   }
   async function paramsOpen() {
     const P = ficheParams(), lab = { P: 'Prix bord champ P (FCFA/kg)', tHa: 'Rendement utile (t/ha)', plus: 'Hausse du prix producteur', panier: 'Intrants par hectare (FCFA)', txMais: 'Maïs dans l’aliment fini', kgPoulet: 'Aliment par poulet (kg)', cycles: 'Bandes par an', pondKgJour: 'Aliment par pondeuse (kg/jour)', kgPorc: 'Aliment par porc (kg)', ecartMax: 'Écart toléré déclaré / effectif' };
@@ -1094,7 +1100,7 @@
         <label class="w">Prémix ou aliment utilisé aujourd’hui (marque)<input name="fournisseur" value="${esc(r.fournisseur)}"></label></fieldset>
       <fieldset class="fx-pr"><legend>Votre production de maïs</legend><div class="vg"><label>Surface en maïs (ha)<input name="surface" type="number" inputmode="decimal" min="0" step="0.5" value="${r.surface || ''}"></label><label>Coopérative (si membre)<input name="coop" value="${esc(r.coop)}"></label></div>
         <div class="chips"><b>Achetez-vous semences et engrais ?</b>${['Oui', 'Non', 'Parfois'].map((v) => rad('intrants', v, r.intrants)).join('')}</div></fieldset>
-      <details class="veille" ${r.veille && Object.keys(r.veille).length ? 'open' : ''}><summary>Veille des prix : prix d’achat et de vente actuels du visiteur <span>(facultatif)</span></summary><div class="vg">${VEILLE.map(([k, l, u]) => `<label>${l} <small>(${u})</small><input name="vx_${k}" type="number" inputmode="decimal" min="0" step="any" value="${esc((r.veille || {})[k] || '')}"></label>${/^px/.test(k) ? `<div class="sacs"><b>Sac de ${l.toLowerCase()} :</b><div class="chips">${SACS.map((z) => rad('sac_' + k, z + ' kg', (r.veille || {})[k + 'Kg'] ? (r.veille || {})[k + 'Kg'] + ' kg' : '')).join('')}</div></div>` : ''}`).join('')}</div></details>
+      <details class="veille" ${(r.veille && Object.keys(r.veille).length) || /fabrique|deux/i.test(r.fabrique || '') ? 'open' : ''}><summary>Veille des prix : prix d’achat et de vente actuels du visiteur <span>(obligatoire si l’éleveur fabrique son aliment : maïs, soja, son et prix de vente)</span></summary><div class="vg">${VEILLE.map(([k, l, u]) => `<label>${l} <small>(${u})</small><input name="vx_${k}" type="number" inputmode="decimal" min="0" step="any" value="${esc((r.veille || {})[k] || '')}"></label>${/^px/.test(k) ? `<div class="sacs"><b>Sac de ${l.toLowerCase()} :</b><div class="chips">${SACS.map((z) => rad('sac_' + k, z + ' kg', (r.veille || {})[k + 'Kg'] ? (r.veille || {})[k + 'Kg'] + ' kg' : '')).join('')}</div></div>` : ''}`).join('')}</div></details>
       <fieldset><legend>Vos priorités</legend><div class="chips">${PRIOS.map((v) => chk('prios', v, r.prios)).join('')}</div></fieldset>
       <div class="vg"><label>Dépôt SOLEVO le plus proche<select name="depot">${DEPOTS_S.map((d) => `<option ${d === r.depot ? 'selected' : ''}>${d}</option>`).join('')}</select></label>
         <div class="chips"><b>Être contacté par :</b>${CONTACTS.map((v) => rad('contact', v, r.contact)).join('')}</div></div>
@@ -1146,6 +1152,7 @@
       const miss = [];
       if (!r.profil) miss.push('votre profil'); if (!r.nom) miss.push('le nom'); if (waNum(r.tel).length < 11) miss.push('un téléphone valide'); if (!r.localite) miss.push('la localité');
       if (!r.consent) miss.push('votre accord');
+      { const vm = vxMiss(r); if (vm.length) miss.push('la veille des prix (obligatoire quand l’éleveur fabrique son aliment) : ' + vm.map((k) => (VEILLE.find((v) => v[0] === k) || [k, k])[1]).join(', ')); }
       if (isDeleg(r) && !r.org) miss.push('le nom de la coopérative ou de l’association');
       if (isDeleg(r) && !r.kam) miss.push('le Key Account Manager souhaité');
       if (miss.length) { err.hidden = false; err.textContent = 'Merci d’indiquer ' + miss.join(', ') + '.'; return; }
@@ -1982,6 +1989,7 @@
     if (isElev(r) && !(r.chair || r.pondeuse || r.porc || r.alimQ || r.maisMois)) pb.push('Éleveur sans effectif ni aliment');
     if (isProd(r) && !(r.surface > 0)) pb.push('Producteur sans surface');
     if (r.maisCtrl === 'À vérifier') pb.push('Besoin maïs incohérent');
+    if (vxMiss(r).length) pb.push('Veille des prix incomplète (fabrique son aliment)');
     const t = waNum(r.tel); if (t && state.pros.some((x) => x.id !== r.id && waNum(x.tel) === t)) pb.push('Doublon possible (même téléphone)');
     if (!r.consent) pb.push('Consentement non coché');
     if (r.test) pb.push('Fiche de test');
@@ -2002,6 +2010,9 @@
   }
   async function refExport() {
     if (!state.pros.length) { status('Aucune inscription à exporter.', 'err'); return; }
+    const x = await refBook(); await save(x.name, x.bytes);
+  }
+  async function refBook() {
     const L = state.pros.filter((r) => !r.test), V = L.filter((r) => valOf(r) === 'Validé'), P = L.filter((r) => valOf(r) !== 'Validé');
     const W = [14, 16, 8, 20, 26, 16, 24, 10, 18, 26, 10, 16, 10, 10, 10, 10, 10, 10, 8, 10, 10, 20, 22, 14, 10, 12, 16, 16, 16, 10];
     const used = new Set(L.map((r) => locCode(r.localite)).filter(Boolean));
@@ -2024,7 +2035,7 @@
       { name: 'R_Classes_mais', head: ['Classe', 'Maïs déclaré / an', 'Traitement'], widths: [8, 22, 40], rows: [['A', '≥ 100 t', 'Prioritaire P1, suivi KAM'], ['B', '25 à 100 t', 'Suivi ATE'], ['C', '< 25 t', 'Suivi groupé (coopérative)']] },
       { name: 'R_Statuts', head: ['Liste', 'Valeur'], widths: [16, 22], rows: VALS.map((v) => ['Validation', v]).concat(STATUTS.map((v) => ['Statut suivi', v]), ETATS.map((v) => ['Entretien', v])) },
       { name: 'R_ATE', head: ['ATE / agent'], widths: [30], rows: ATES.filter((a) => a !== 'À attribuer' && a !== 'Autre').map((a) => [a]) }];
-    await save('SISSE_KABA_Base_reference_inscriptions_' + today().iso + '.xlsx', await SKG.xlsxBook(JSZip, sheets));
+    return { name: 'SISSE_KABA_Base_reference_inscriptions_' + today().iso + '.xlsx', bytes: await SKG.xlsxBook(JSZip, sheets), n: L.length, v: V.length, p: P.length };
   }
   /* --- sauvegarde en ligne : Google Sheets par Zapier (compte Google connecté à Zapier) --- */
   const GS_API = 'GoogleSheetsV2CLIAPI';
@@ -2037,7 +2048,7 @@
   function findKey(x, k) { if (!x) return null; if (typeof x === 'string') { const m = x.match(new RegExp('"' + k + '"\\s*:\\s*"([^"]+)"')); return m ? m[1] : null; } if (Array.isArray(x)) { for (const y of x) { const v = findKey(y, k); if (v) return v; } return null; } if (typeof x === 'object') { if (typeof x[k] === 'string') return x[k]; for (const v of Object.values(x)) { const f = findKey(v, k); if (f) return f; } } return null; }
   async function gsCreate() {
     const t = 'SISSÊ~KABA • Base des inscriptions (' + today().fr + ')';
-    const res = await gsReq('POST', 'https://sheets.googleapis.com/v4/spreadsheets', { properties: { title: t, locale: 'fr_FR' }, sheets: [GS_TABS.j, GS_TABS.v, 'R_Localites', 'R_Depots'].map((s) => ({ properties: { title: s, gridProperties: { frozenRowCount: 1 } } })) });
+    const res = await gsReq('POST', 'https://sheets.googleapis.com/v4/spreadsheets', { properties: { title: t, locale: 'fr_FR' }, sheets: [GS_TABS.j, GS_TABS.v, 'R_Localites', 'R_Depots', 'R_Listes'].map((s) => ({ properties: { title: s, gridProperties: { frozenRowCount: 1 } } })) });
     const id = findKey(res, 'spreadsheetId'); if (!id) throw new Error('identifiant de la feuille introuvable dans la réponse');
     const base = 'https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values:batchUpdate';
     await gsReq('POST', base, { valueInputOption: 'RAW', data: [
@@ -2045,6 +2056,7 @@
       { range: 'R_Localites!A1', values: [['Code localité', 'Localité', 'Région ou district', 'Latitude', 'Longitude', 'Code dépôt conseillé', 'Dépôt conseillé', 'Distance (km)']].concat(GEO_CI.map((x, i) => { const g = geoFind(x[0]) || {}; return ['LOC' + String(i + 1).padStart(3, '0'), x[0], x[1], x[2], x[3], depCode(g.depot), g.depot || '', g.km != null ? g.km : '']; })) },
       { range: 'R_Depots!A1', values: [['Code dépôt', 'Dépôt FEED', 'Statut']].concat(DEPOTS_GEO.map((d, i) => ['DEP' + String(i + 1).padStart(2, '0'), d[0], d[3] ? 'Actif' : 'En installation'])) }] });
     state.standCfg.gsId = id; state.standCfg.gsOn = true; await cfgSave();
+    try { await gsLists(); } catch (e) { console.error(e); }
     return id;
   }
   async function gsAppend(tab, rows) {
@@ -2062,6 +2074,80 @@
     let n = 0; for (const r of state.pros) { if (r.test) continue; if (!r.gsJ && await gsPush(r, 'j')) n++; if (valOf(r) === 'Validé' && !r.gsV && await gsPush(r, 'v')) n++; }
     return n;
   }
+
+  /* listes déroulantes de la feuille en ligne, alimentées par les tables R_ */
+  const R_LISTES = () => { const A = [['EL', 'PR', 'EP', 'AU'], ['A', 'B', 'C'], VALS, STATUTS, ['Oui', 'Non', 'À voir'], ATES.filter((a) => a !== 'À attribuer' && a !== 'Autre')]; const n = Math.max(...A.map((x) => x.length)); return [['Code profil', 'Classe maïs', 'Validation', 'Statut suivi', 'Inscrit au projet', 'ATE']].concat(Array.from({ length: n }, (_, i) => A.map((c) => c[i] || ''))); };
+  async function gsGet(url) {
+    if (!state.mcp) throw new Error('disponible uniquement dans claude.ai');
+    return state.mcp.callTool('Zapier', 'execute_zapier_read_action', { selected_api: GS_API, action: '_zap_raw_request', params: { url, fail_on_errors: 'true' } });
+  }
+  function deepParse(x) { if (typeof x === 'string') { try { return deepParse(JSON.parse(x)); } catch (e) { return x; } } if (Array.isArray(x)) return x.map(deepParse); if (x && typeof x === 'object') { const o = {}; for (const [k, v] of Object.entries(x)) o[k] = deepParse(v); return o; } return x; }
+  function deepFind(x, test, out) { out = out || []; if (Array.isArray(x)) x.forEach((y) => deepFind(y, test, out)); else if (x && typeof x === 'object') { if (test(x)) out.push(x); Object.values(x).forEach((v) => deepFind(v, test, out)); } return out; }
+  async function gsSheetIds() {
+    const id = state.standCfg.gsId; const res = deepParse(await gsGet('https://sheets.googleapis.com/v4/spreadsheets/' + id + '?fields=sheets.properties(sheetId,title)'));
+    const m = {}; deepFind(res, (o) => o.sheetId != null && typeof o.title === 'string').forEach((o) => { m[o.title] = +o.sheetId; });
+    if (!Object.keys(m).length) { const t = JSON.stringify(res); const re = /"sheetId"\s*:\s*(\d+)\s*,\s*"title"\s*:\s*"([^"]+)"/g; let x; while ((x = re.exec(t))) m[x[2]] = +x[1]; }
+    return m;
+  }
+  async function gsLists() {
+    const id = state.standCfg.gsId; if (!id) throw new Error('créez d’abord la base en ligne');
+    let ids = await gsSheetIds();
+    if (ids.R_Listes == null) { await gsReq('POST', 'https://sheets.googleapis.com/v4/spreadsheets/' + id + ':batchUpdate', { requests: [{ addSheet: { properties: { title: 'R_Listes', gridProperties: { frozenRowCount: 1 } } } }] }); ids = await gsSheetIds(); }
+    await gsReq('POST', 'https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values:batchUpdate', { valueInputOption: 'RAW', data: [{ range: 'R_Listes!A1', values: R_LISTES() }] });
+    const RNG = { 'Code profil': 'R_Listes!$A$2:$A', 'Classe maïs': 'R_Listes!$B$2:$B', 'Validation': 'R_Listes!$C$2:$C', 'Statut suivi': 'R_Listes!$D$2:$D', 'Inscrit au projet': 'R_Listes!$E$2:$E', 'ATE': 'R_Listes!$F$2:$F', 'Code localité': 'R_Localites!$A$2:$A', 'Code dépôt conseillé': 'R_Depots!$A$2:$A' };
+    const req = [];
+    [GS_TABS.j, GS_TABS.v].forEach((tab) => { if (ids[tab] == null) return; Object.entries(RNG).forEach(([col, rg]) => { const c = 1 + REF_HEAD.indexOf(col); if (c < 1) return;
+      req.push({ setDataValidation: { range: { sheetId: ids[tab], startRowIndex: 1, endRowIndex: 5000, startColumnIndex: c, endColumnIndex: c + 1 }, rule: { condition: { type: 'ONE_OF_RANGE', values: [{ userEnteredValue: '=' + rg }] }, showCustomUi: true, strict: false } } }); }); });
+    if (req.length) await gsReq('POST', 'https://sheets.googleapis.com/v4/spreadsheets/' + id + ':batchUpdate', { requests: req });
+    state.standCfg.gsLists = today().fr; await cfgSave();
+    return req.length;
+  }
+  /* fiche publique : enregistrement direct dans la feuille (Apps Script), puis import automatique dans la base de l’artefact */
+  function gsScript(id) {
+    return `// SISSÊ~KABA – point d’enregistrement de la fiche publique (Google Apps Script)
+const SHEET_ID = '${id || 'COLLER_ICI_L_ID_DE_LA_FEUILLE'}';
+function doPost(e) {
+  const d = JSON.parse(e.postData.contents || '{}');
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  let sh = ss.getSheetByName('Fiche_publique');
+  if (!sh) { sh = ss.insertSheet('Fiche_publique'); sh.appendRow(['Reçu le', 'ID fiche', 'Profil', 'Nom', 'Téléphone', 'Localité', 'E-mail', 'Fiche complète']); sh.setFrozenRows(1); }
+  sh.appendRow([new Date(), d.fid || '', d.profil || '', d.nom || '', "'" + (d.tel || ''), d.localite || '', d.email || '', d.fiche || '']);
+  return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+}
+function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d’enregistrement actif'); }`;
+  }
+  async function gsImport(manual) {
+    const c = state.standCfg; if (!c.gsId || !state.mcp) { if (manual) status('Import des fiches en ligne : créez d’abord la base en ligne (claude.ai).', 'err'); return 0; }
+    let res; try { res = deepParse(await gsGet('https://sheets.googleapis.com/v4/spreadsheets/' + c.gsId + '/values/' + encodeURIComponent('Fiche_publique!A2:H'))); } catch (e) { if (manual) status('Aucune fiche publique en ligne pour l’instant.', 'err'); return 0; }
+    const vals = (deepFind(res, (o) => Array.isArray(o.values))[0] || {}).values || [];
+    const known = new Set(state.pros.map((r) => r.fid).filter(Boolean)); let n = 0;
+    for (const row of vals) {
+      const fid = row[1], txt = row[7]; if (!fid || !txt || known.has(fid)) continue;
+      const r = FICHE_RE.test(txt) ? parseFiche(txt) : parseWa(txt); r.fid = fid; r.source = 'Fiche publique (en ligne)'; r.note = ((r.note || '') + ' Reçue en ligne le ' + (row[0] || '') + '.').trim(); r.gsJ = 'fiche publique';
+      await prosPut(r); known.add(fid); n++;
+    }
+    if (manual || n) status(n ? n + ' fiche(s) publique(s) importée(s) dans la base.' : 'Aucune nouvelle fiche publique.', n ? 'ok' : '');
+    return n;
+  }
+  setInterval(() => { const c = state.standCfg; if (c && c.gsOn && c.gsId && state.mcp && c.gsImportAuto !== false) gsImport(false).catch(() => {}); }, 180000);
+  /* sauvegarde du soir : base de référence Excel envoyée par e-mail */
+  async function refMail() {
+    const c = state.standCfg; const to = String(c.refTo || 'elvis.lehito@solevogroup.com').split(/[,;\s]+/).filter((x) => /@/.test(x));
+    if (!state.mcp) { status('Envoi par e-mail disponible seulement dans claude.ai avec Gmail connecté.', 'err'); return false; }
+    try {
+      const x = await refBook();
+      await state.mcp.callTool('Gmail', 'send_message', { to, subject: 'SISSÊ~KABA – Sauvegarde de la base des inscriptions du ' + today().fr,
+        htmlBody: `<div style="font-family:Arial,sans-serif;font-size:14px"><p>Sauvegarde automatique de la base des inscriptions SISSÊ~KABA du ${today().fr}.</p><ul><li><b>${x.n}</b> fiche(s) au total</li><li><b>${x.v}</b> validée(s)</li><li><b>${x.p}</b> à valider ou à corriger</li></ul><p>Fichier joint : tables T_ (inscrits validés, éleveurs, producteurs), A_valider et tables de référence R_.${c.gsId ? ' Feuille en ligne : https://docs.google.com/spreadsheets/d/' + c.gsId : ''}</p><p style="color:#5b6476;font-size:12px">Données personnelles à usage interne SOLEVO Côte d’Ivoire.</p></div>`,
+        attachments: [{ filename: x.name, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', content: b64(x.bytes) }] });
+      c.refLast = new Date().toISOString().slice(0, 10); await cfgSave(); status('Base de référence envoyée à ' + to.join(', ') + '.', 'ok'); return true;
+    } catch (e) { console.error(e); status('Sauvegarde par e-mail non envoyée : ' + mailErr(e), 'err'); return false; }
+  }
+  setInterval(() => {
+    const c = state.standCfg; if (!c || c.refAuto === false || !state.mcp || !state.pros.length) return;
+    const now = new Date(), day = now.toISOString().slice(0, 10); const [h, m] = String(c.refHour || '20:00').split(':').map(Number);
+    if (c.refLast === day || now.getHours() * 60 + now.getMinutes() < h * 60 + m) return;
+    c.refLast = day; refMail();
+  }, 60000);
   /* --- validation --- */
   async function valSet(r, v, extra) {
     const patch = Object.assign({ valid: v, validLe: v === 'Validé' ? today().fr + ' ' + new Date().toTimeString().slice(0, 5) : '', validPar: state.standCfg.validBy || 'Elvis LEHITO' }, extra || {});
@@ -2083,7 +2169,8 @@
         <label style="display:flex;gap:6px;align-items:center">Validé par <input id="vBy" value="${esc(c.validBy || 'Elvis LEHITO')}" style="width:160px"></label>
         <button type="button" id="vRef">⬇ Base de référence (Excel)</button>
         <button type="button" id="vGs">${gs ? '↻ Synchroniser Google Sheets' : '☁ Créer la base en ligne (Google Sheets)'}</button>
-        ${gs ? `<a href="https://docs.google.com/spreadsheets/d/${esc(c.gsId)}" target="_blank" rel="noopener">Ouvrir la feuille en ligne</a>` : ''}</div>
+        ${gs ? `<a href="https://docs.google.com/spreadsheets/d/${esc(c.gsId)}" target="_blank" rel="noopener">Ouvrir la feuille en ligne</a><button type="button" id="vLists">☰ Listes déroulantes (tables R_)</button><button type="button" id="vImp">⇩ Importer les fiches publiques en ligne</button><button type="button" id="vHook">🔗 Brancher la fiche publique sur la feuille</button>` : ''}</div>
+      <div class="mbar" style="flex-wrap:wrap;gap:8px"><label class="consent" style="margin:0"><input type="checkbox" id="vRefAuto" ${c.refAuto !== false ? 'checked' : ''}> Envoyer chaque soir la base de référence à <input id="vRefTo" value="${esc(c.refTo || 'elvis.lehito@solevogroup.com')}" style="width:230px"> à <input id="vRefH" type="time" value="${esc(c.refHour || '20:00')}" style="width:auto"></label><button type="button" id="vRefNow">✉ Envoyer maintenant</button><small class="muted">${c.refLast ? 'Dernier envoi : ' + esc(c.refLast) : 'Aucun envoi pour l’instant'} • envoi automatique si le simulateur est ouvert à l’heure choisie (borne ou écran d’appel)</small></div>
       <p class="note">Une fiche est <b>conforme</b> si le profil, le nom, le téléphone (+225, 10 chiffres) et la localité sont renseignés, sans doublon. Les autres alertes (localité hors référentiel, besoin maïs incohérent, consentement) n’empêchent pas la validation : vérifiez-les d’un coup d’œil. ${c.gsErr ? '<br><b style="color:#b42318">Dernière erreur de sauvegarde en ligne : ' + esc(c.gsErr) + '</b>' : ''}</p>
       <div class="tw"><table class="sim"><thead><tr><th>Fiche</th><th>Contrôles</th><th>Validation</th><th></th></tr></thead><tbody>${L.length ? L.map((r) => { const pb = valChecks(r); const v = valOf(r);
         return `<tr><td><b>${esc(r.nom || '—')}</b><br><small>${esc(r.public || r.profil || '')} • ${esc(r.localite || '')} • ${esc(r.tel || '')}<br>${esc(r.date || '')} • ${esc(r.source || '')}</small></td>
@@ -2098,6 +2185,20 @@
     $$('[data-vko]', b).forEach((x) => x.addEventListener('click', async () => { by(); const r = state.pros.find((y) => y.id === x.dataset.vko); if (!r) return; const m = prompt('Motif (ce qu’il faut corriger) :', valChecks(r).join(', ')); if (m === null) return; await valSet(r, 'À corriger', { validMotif: m }); valOpen(); renderPros(); }));
     $$('[data-ved]', b).forEach((x) => x.addEventListener('click', () => { modalClose(); editVisitor(x.dataset.ved); }));
     $('#vRef', b).addEventListener('click', refExport);
+    const refKeep = async () => { c.refAuto = $('#vRefAuto', b).checked; c.refTo = $('#vRefTo', b).value.trim() || 'elvis.lehito@solevogroup.com'; c.refHour = $('#vRefH', b).value || '20:00'; await cfgSave(); };
+    ['#vRefAuto', '#vRefTo', '#vRefH'].forEach((k) => $(k, b).addEventListener('change', refKeep));
+    $('#vRefNow', b).addEventListener('click', async () => { await refKeep(); await refMail(); valOpen(); });
+    if ($('#vLists', b)) $('#vLists', b).addEventListener('click', async () => { try { const n = await gsLists(); status('Listes déroulantes ajoutées (' + n + ' colonnes).', 'ok'); } catch (e) { status('Listes déroulantes impossibles : ' + String((e && e.message) || e).slice(0, 100), 'err'); } });
+    if ($('#vImp', b)) $('#vImp', b).addEventListener('click', async () => { await gsImport(true); valOpen(); });
+    if ($('#vHook', b)) $('#vHook', b).addEventListener('click', () => {
+      const bb = modal('Brancher la fiche publique sur la feuille en ligne', `<ol class="note" style="font-size:14px;line-height:1.6"><li>Ouvrez la <a href="https://docs.google.com/spreadsheets/d/${esc(c.gsId)}" target="_blank" rel="noopener">feuille en ligne</a>, menu <b>Extensions › Apps Script</b>.</li><li>Effacez le contenu, collez le script ci-dessous, enregistrez.</li><li><b>Déployer › Nouveau déploiement</b> › type <b>Application Web</b> › exécuter en tant que <b>moi</b> › accès <b>Tout le monde</b> › Déployer, puis autorisez.</li><li>Copiez l’URL de l’application Web (elle finit par <code>/exec</code>) et collez-la ci-dessous.</li><li>Cliquez sur « Paramètres de la fiche publique » pour publier le lien : la fiche écrit alors directement dans la feuille, sans passer par WhatsApp, et les fiches arrivent seules dans cette base toutes les 3 minutes.</li></ol>
+        <textarea id="gsScr" rows="14" style="width:100%;font-family:monospace;font-size:12px" readonly>${esc(gsScript(c.gsId))}</textarea>
+        <div class="mbar"><button type="button" id="gsCp">Copier le script</button></div>
+        <label class="w">URL de l’application Web (…/exec)<input id="gsHk" value="${esc(c.gsHook || '')}" placeholder="https://script.google.com/macros/s/…/exec"></label>
+        <div class="mbar"><button type="button" class="pri" id="gsHkOk">Enregistrer le lien</button></div>`, true);
+      $('#gsCp', bb).addEventListener('click', () => { try { navigator.clipboard.writeText($('#gsScr', bb).value); status('Script copié.', 'ok'); } catch (e) { $('#gsScr', bb).select(); } });
+      $('#gsHkOk', bb).addEventListener('click', async () => { const u = $('#gsHk', bb).value.trim(); if (u && !/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u)) { status('Lien invalide : il doit commencer par https://script.google.com/macros/s/ et finir par /exec.', 'err'); return; } c.gsHook = u; await cfgSave(); status(u ? 'Lien enregistré : publiez-le avec « Paramètres de la fiche publique ».' : 'Lien retiré.', 'ok'); modalClose(); });
+    });
     $('#vGs', b).addEventListener('click', async () => {
       const bt = $('#vGs', b); bt.disabled = true;
       try {
