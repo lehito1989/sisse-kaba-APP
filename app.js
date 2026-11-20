@@ -857,6 +857,21 @@
     const k = ['mais', 'soja', 'son']; if (+r.chair > 0) k.push('poulet'); if (+r.pondeuse > 0) k.push('plaq'); if (+r.porc > 0) k.push('porcVif');
     return k.filter((x) => !(+((r.veille || {})[x]) > 0));
   }
+  /* contrôle des prix : un prix très éloigné des autres saisies (médiane du jour, sinon de toutes les fiches) est signalé comme faute de frappe possible */
+  const vxNeedR = (r) => isElev(r) && (/fabrique|deux/i.test(r.fabrique || '') || /Fabricant/.test(r.profil || ''));
+  function vxOdd(r) {
+    const out = []; if (!r.veille) return out;
+    const jour = String(r.date || '').slice(0, 10);
+    for (const [k, l, u] of VEILLE) {
+      if (/^px/.test(k)) continue; // prémix : tailles de sac différentes, pas comparables
+      const v = +r.veille[k]; if (!(v > 0)) continue;
+      const vals = (w) => state.pros.filter((x) => x.id !== r.id && !x.test && x.veille && +x.veille[k] > 0 && (!w || String(x.date || '').slice(0, 10) === jour)).map((x) => +x.veille[k]).sort((a, b) => a - b);
+      let ref = vals(true), q = 'du jour'; if (ref.length < 3) { ref = vals(false); q = 'des fiches'; } if (ref.length < 3) continue;
+      const med = ref.length % 2 ? ref[(ref.length - 1) / 2] : (ref[ref.length / 2 - 1] + ref[ref.length / 2]) / 2;
+      if (v < med / 2 || v > med * 2) out.push(l + ' ' + v.toLocaleString('fr-FR') + ' ' + u + ' (médiane ' + q + ' ' + Math.round(med).toLocaleString('fr-FR') + ')');
+    }
+    return out;
+  }
   function newRec(src) {
     const now = new Date();
     return { id: 'p' + now.getTime().toString(36) + Math.random().toString(36).slice(2, 6), at: now.toISOString(), date: today().fr + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'),
@@ -2054,13 +2069,14 @@
     if (isProd(r) && !(r.surface > 0)) pb.push('Producteur sans surface');
     if (r.maisCtrl === 'À vérifier') pb.push('Besoin maïs incohérent');
     if (vxMiss(r).length) pb.push('Veille des prix incomplète (fabrique son aliment)');
+    { const od = vxOdd(r); if (od.length) pb.push('Prix à vérifier (faute de frappe ?) : ' + od.join(' ; ')); }
     const t = waNum(r.tel); if (t && state.pros.some((x) => x.id !== r.id && waNum(x.tel) === t)) pb.push('Doublon possible (même téléphone)');
     if (!r.consent) pb.push('Consentement non coché');
     if (r.test) pb.push('Fiche de test');
     return pb;
   }
   const BLOQUANT = /Profil|Nom|Téléphone|Localité manquante|Doublon|test/;
-  const conforme = (r) => !valChecks(r).some((p) => BLOQUANT.test(p));
+  const conforme = (r) => !valChecks(r).some((p) => BLOQUANT.test(p) || /^Veille des prix|^Prix à vérifier/.test(p)); // validation groupée : veille incomplète ou prix suspect = contrôle à la main
   const locCode = (loc) => { const g = geoFind(loc); if (!g) return ''; const i = GEO_CI.findIndex((x) => x[0] === g.ville); return i >= 0 ? 'LOC' + String(i + 1).padStart(3, '0') : ''; };
   const depCode = (nom) => { const i = DEPOTS_GEO.findIndex((d) => d[0] === nom); return i >= 0 ? 'DEP' + String(i + 1).padStart(2, '0') : ''; };
   const profCode = (r) => isElev(r) && isProd(r) ? 'EP' : isProd(r) ? 'PR' : isElev(r) ? 'EL' : 'AU';
@@ -2330,8 +2346,9 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
     const L = L0.filter((r) => sel === 'Toutes' ? true : sel === 'À traiter' ? valOf(r) !== 'Validé' : valOf(r) === sel);
     const ok = L0.filter((r) => valOf(r) === 'À valider' && conforme(r));
     const gs = c.gsOn && c.gsId;
+    const VF = L0.filter(vxNeedR), VC = VF.filter((r) => !vxMiss(r).length), vPct = VF.length ? Math.round(VC.length * 100 / VF.length) : null, vOdd = L0.filter((r) => vxOdd(r).length).length;
     const b = modal('✔ Validation des inscriptions', `
-      <div class="simk"><div><b>${cnt['À valider']}</b><span>à valider</span></div><div><b>${cnt['À corriger']}</b><span>à corriger</span></div><div><b>${cnt['Validé']}</b><span>validées</span></div><div><b>${dbOn() ? '●' : '○'}</b><span>${dbOn() ? 'base de l’artefact connectée' : 'base locale (cet appareil)'}</span></div><div><b>${gs ? '●' : '○'}</b><span>${gs ? 'sauvegarde Google Sheets active' : 'sauvegarde en ligne inactive'}</span></div></div>
+      <div class="simk"><div title="Éleveurs qui fabriquent leur aliment avec une veille des prix complète. Objectif : 100 %"><b style="color:${vPct === null ? 'inherit' : vPct >= 100 ? '#2E7D1F' : vPct >= 80 ? '#B26A00' : '#b42318'}">${vPct === null ? '–' : vPct + ' %'}</b><span>veille complète (${VC.length}/${VF.length} fabricants, objectif 100 %)</span></div><div><b style="color:${vOdd ? '#b42318' : 'inherit'}">${vOdd}</b><span>fiche(s) avec un prix à vérifier</span></div><div><b>${cnt['À valider']}</b><span>à valider</span></div><div><b>${cnt['À corriger']}</b><span>à corriger</span></div><div><b>${cnt['Validé']}</b><span>validées</span></div><div><b>${dbOn() ? '●' : '○'}</b><span>${dbOn() ? 'base de l’artefact connectée' : 'base locale (cet appareil)'}</span></div><div><b>${gs ? '●' : '○'}</b><span>${gs ? 'sauvegarde Google Sheets active' : 'sauvegarde en ligne inactive'}</span></div></div>
       <div class="mbar" style="flex-wrap:wrap;gap:8px">
         <button type="button" class="pri" id="vAll" ${ok.length ? '' : 'disabled'}>✔ Valider les ${ok.length} fiche(s) conforme(s)</button>
         <select id="vF">${['À traiter', 'À valider', 'À corriger', 'Validé', 'Toutes'].map((x) => `<option ${x === sel ? 'selected' : ''}>${x}</option>`).join('')}</select>
@@ -2396,7 +2413,7 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
   /* chaque outil : version navigateur sans compte Claude (nav) et version plateforme Claude (h) */
   const ACCES = [
     { k: 'borne', t: 'Borne digitale', who: 'Tablette ou écran d’accueil du stand', h: '#borne', tip: 'onglet Stand, bouton « ▣ Mode borne » : fiche sur l’écran et QR code à côté ; les inscriptions arrivent directement dans la liste',
-      nav: () => LINKS.fiche + '#borne', navTip: 'touchez « Mode borne » en haut à droite ; chaque fiche est envoyée par WhatsApp à SOLEVO puis intégrée à la liste' },
+      nav: () => LINKS.fiche + '#borne', navTip: 'touchez « Mode borne » en haut à droite ; chaque fiche est envoyée directement à SOLEVO puis intégrée à la base' },
     { k: 'entretien', t: 'Interface d’entretien', who: 'Agents techniques et Key Account Managers', h: '#entretien', tip: 'onglet Stand, bouton « ☷ Interface d’entretien », puis choisir sa table : file d’attente partagée en temps réel, alerte sonore',
       nav: (x) => LINKS.entretien + (x && /^Table \d/.test(x.table) ? '#table=' + encodeURIComponent(x.table) : ''), navTip: 'choisissez votre table ; collez la fiche WhatsApp du visiteur ou ajoutez-le ; envoyez chaque compte rendu à SOLEVO (WhatsApp ou e-mail) : il est intégré à la liste' },
     { k: 'fiche', t: 'Fiche d’inscription visiteur', who: 'Accueil, hôtesses, inscription sur téléphone', h: '#fiche', tip: 'onglet Stand, bouton « 📝 Fiche visiteur » : inscription directe dans la liste',
@@ -3301,6 +3318,7 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Catalogue_WhatsApp_MG2MIX_Chair_2026-11-15_v2.png', 'png', 'Catalogue WhatsApp Business : MG2MIX Chair', true);
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Catalogue_WhatsApp_MG2MIX_Ponte_2026-11-15_v2.png', 'png', 'Catalogue WhatsApp Business : MG2MIX Ponte', true);
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Catalogue_WhatsApp_MG2MIX_Porc_2026-11-15_v2.png', 'png', 'Catalogue WhatsApp Business : CMV Porc MG2MIX', true);
+    stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Promo_SELAB_SHOW_2026_QR_2026-11-20.pdf', 'pdf', 'Fiche promo SELAB SHOW 2026 (A4) : remises MG2MIX et QR codes inscription + commande', true);
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Carte_WhatsApp_Promo_SELAB_2026-11-15.png', 'png', 'Carte WhatsApp : promo SELAB SHOW (ponte −2 000, porc −2 000, chair −1 000 FCFA par sac)', true);
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_Story_WhatsApp_Promo_SELAB_2026-11-15.png', 'png', 'Story WhatsApp (1080×1920) : promo SELAB SHOW', true);
     stat('mg2mix', '09_Visuels_et_outils_MG2MIX', 'SOLEVO_QR_Commande_MG2MIX_2026-11-15.png', 'png', 'QR code : commande en ligne MG2MIX (ouvre le formulaire de commande)', true);
