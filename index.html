@@ -462,6 +462,8 @@ details.veille{border:1px solid var(--line);border-radius:10px;padding:8px 10px;
 .mctl{display:inline-block;font-size:12px;padding:1px 6px;border-radius:8px;margin-left:4px}.mctl.ko{background:#FDECEA;color:#B3261E}.mctl.ok{background:#EAF6E6;color:#1E5E1A}.mctl.wa{background:#25D366;color:#fff;text-decoration:none}#prosMais.on{background:#37A028;color:#fff}
 .apmais{background:#FFF4E0;flex-wrap:wrap}.apmais .apg i{background:linear-gradient(90deg,#EE9B1D,#F6C21A)}.apmais em{color:#B35C00;font-style:normal;font-weight:700}
 .visf .geo{display:block;margin-top:4px;font-size:12px;font-weight:400;color:#1E5E1A}
+.valhdr.hot{background:#F6C21A!important;color:#041633!important;font-weight:800;animation:vpulse 2s infinite}@keyframes vpulse{50%{transform:scale(1.04)}}
+.nethdr.off{background:#b42318!important;color:#fff!important}.nethdr.wait{background:#F2A900!important;color:#041633!important}.nethdr.on{background:#E6F6E3!important;color:#1E6B14!important}
 .vchip{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:10px;margin:1px 0;background:#FFF4D6;color:#8a5a00}.vchip.ok{background:#E6F6E3;color:#1E6B14}.vchip.ko{background:#FDE7E5;color:#b42318}
 </style>
 </head>
@@ -636,7 +638,7 @@ function route(){if(/^#ecran/i.test(location.hash))open(false);}route();window.a
     <button data-view="auto" title="Selon la taille de l’écran">Auto</button>
   </div>
   <button class="prezbtn" type="button" title="Vidéos SELAB SHOW 2026 : lecture et téléchargement" onclick="window.SK_TAB&&SK_TAB('videos')">🎬 Vidéos</button>
-  <button class="prezbtn" id="prezBtn" title="Plein écran avec gros chiffres, pour le stand SELAB SHOW">▶ Présentation</button>
+  <button class="prezbtn nethdr" id="netHdr" type="button" hidden onclick="window.SK_NET&&SK_NET()">🟢 Base à jour</button><button class="prezbtn valhdr" id="valHdr" type="button" hidden title="Fiches visiteurs à valider : ouvrir la file de validation" onclick="window.SK_VAL&&SK_VAL()">📋 Fiches à valider</button><button class="prezbtn" type="button" title="Vérifier qu’une fiche visiteur est bien dans la base" onclick="window.SK_VER&&SK_VER()">🔎 Vérifier</button><button class="prezbtn" id="prezBtn" title="Plein écran avec gros chiffres, pour le stand SELAB SHOW">▶ Présentation</button>
   <div class="zoombar" role="group" aria-label="Zoom">
     <button data-zoom="-" title="Dézoomer (Ctrl + molette ou −)">−</button>
     <span id="zoomVal">100 %</span>
@@ -921,7 +923,7 @@ body.m-mobile header .prezbtn[onclick]{display:none}
     </div>
     <div class="simk" id="prosK"></div>
     <div class="prosbar"><select id="prosFilter"><option value="">Tous les visiteurs</option></select><button type="button" id="prosMais" title="Classer les visiteurs par maïs déclaré (t/an) pour prioriser les relances">🌽 Classer par maïs déclaré</button>
-      <button id="prosVal" type="button" class="pri">✔ Validation</button><button id="prosExport" type="button">⬇ Exporter la liste (Excel)</button><button id="prosRef" type="button">⬇ Base de référence (Excel)</button></div>
+      <button id="prosVal" type="button" class="pri">✔ Validation</button><button id="prosExport" type="button">⬇ Exporter la liste (Excel)</button><button id="prosRef" type="button">⬇ Base de référence (Excel)</button><button id="prosVer" type="button">🔎 Vérifier un enregistrement</button><button id="prosPrix" type="button">📈 Veille des prix (éleveurs fabricants)</button></div>
     <div class="tw"><table class="sim" id="prosTbl"><thead><tr><th>Date</th><th>Profil</th><th>Visiteur</th><th>Localité / dépôt</th><th>Activité et besoin calculé</th><th>Table / entretien</th><th>Suivi ATE</th><th>Messages</th><th></th></tr></thead><tbody></tbody></table></div>
   </div>
   <div class="panel" id="secVid" style="margin-top:16px">

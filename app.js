@@ -869,32 +869,84 @@
     if (r.surface) { const t = r.surface * N.tHa; r.maisP = t; r.gain = t * 1000 * (N.prixProdAp - N.prixProdAv); r.panier = r.surface * N.panier27; }
     return r;
   }
+
+  /* ===== mode hors connexion : file d’attente locale, mise à jour de la base dès le retour d’Internet ===== */
+  const QK = 'sk_queue';
+  const qGet = () => { try { return JSON.parse(localStorage.getItem(QK) || '[]'); } catch (e) { return []; } };
+  const qSet = (Q) => { try { localStorage.setItem(QK, JSON.stringify(Q)); } catch (e) { /* */ } netShow(); };
+  function qAdd(op) { const Q = qGet(); if (op.t === 'set') { for (let i = Q.length - 1; i >= 0; i--) if (Q[i].id === op.id && Q[i].t !== 'delete') Q.splice(i, 1); } Q.push(Object.assign({ at: Date.now() }, op)); qSet(Q); }
+  const withTimeout = (p, ms) => Promise.race([p, new Promise((_, ko) => setTimeout(() => ko(new Error('délai dépassé')), ms))]);
+  async function dbRun(op) {
+    const col = state.db.collection('prospects');
+    if (op.t === 'set') return col.doc(op.id).set(op.data);
+    if (op.t === 'update') return col.doc(op.id).update(op.data);
+    if (op.t === 'delete') return col.doc(op.id).delete();
+  }
+  async function dbSafe(op) {
+    if (!navigator.onLine || qGet().length) { qAdd(op); if (navigator.onLine) setTimeout(() => qFlush(false), 600); return false; }
+    try { await withTimeout(dbRun(op), 9000); return true; } catch (e) { console.error(e); qAdd(op); return false; }
+  }
+  function cacheSave() { try { localStorage.setItem('sk_pros_cache', JSON.stringify(state.pros)); } catch (e) { /* */ } }
+  function qApply(L) {
+    const Q = qGet(); if (!Q.length) return L;
+    const M = new Map(L.map((r) => [r.id, r]));
+    Q.forEach((op) => { if (op.t === 'set') M.set(op.id, Object.assign({}, op.data)); else if (op.t === 'update') { const r = M.get(op.id); if (r) Object.assign(r, op.data); } else if (op.t === 'delete') M.delete(op.id); });
+    return Array.from(M.values()).sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  }
+  let flushing = false;
+  async function qFlush(manual) {
+    if (flushing || !state.db || !navigator.onLine) { if (manual && !navigator.onLine) status('Toujours hors connexion : les modifications restent en attente sur cet appareil.', 'err'); return 0; }
+    flushing = true; let n = 0;
+    try {
+      let Q = qGet();
+      while (Q.length) {
+        const op = Q[0];
+        if (op.t === 'update') { try { await withTimeout(dbRun(op), 9000); } catch (e) { const r = state.pros.find((x) => x.id === op.id); if (r) { try { await withTimeout(dbRun({ t: 'set', id: op.id, data: JSON.parse(JSON.stringify(r)) }), 9000); } catch (e2) { throw e2; } } else throw e; } }
+        else await withTimeout(dbRun(op), 9000);
+        Q.shift(); qSet(Q); n++; Q = qGet();
+      }
+    } catch (e) { console.error(e); if (manual) status('Mise à jour interrompue (' + String((e && e.message) || e).slice(0, 60) + ') : nouvel essai automatique dans 30 s.', 'err'); }
+    flushing = false; netShow();
+    if (n) { status('Connexion rétablie : base mise à jour (' + n + ' modification' + (n > 1 ? 's' : '') + ').', 'ok'); try { if (state.standCfg.gsOn && state.standCfg.gsId) await gsSyncAll(); } catch (e) { /* */ } }
+    return n;
+  }
+  function netShow() {
+    const h = $('#netHdr'); if (!h) return; const n = qGet().length, on = navigator.onLine;
+    h.hidden = false; h.className = 'prezbtn nethdr ' + (!on ? 'off' : n ? 'wait' : 'on');
+    h.textContent = !on ? '🔴 Hors connexion' + (n ? ' • ' + n + ' en attente' : '') : n ? '🟠 ' + n + ' modification' + (n > 1 ? 's' : '') + ' à envoyer' : '🟢 Base à jour';
+    h.title = !on ? 'Vous pouvez continuer à enregistrer et valider : tout est gardé sur cet appareil et envoyé dès le retour d’Internet.' : n ? 'Cliquez pour envoyer maintenant les modifications en attente.' : 'Toutes les fiches sont enregistrées dans la base de l’artefact.';
+  }
+  addEventListener('online', () => { netShow(); setTimeout(() => qFlush(false), 1500); });
+  addEventListener('offline', netShow);
+  setInterval(() => { if (qGet().length && navigator.onLine) qFlush(false); }, 30000);
+  window.SK_NET = () => qFlush(true);
   async function prosPut(r) {
     finalize(r);
     if (!r.valid) r.valid = 'À valider';
-    if (dbOn()) await state.db.collection('prospects').doc(r.id).set(JSON.parse(JSON.stringify(r)));
-    else { const i = state.pros.findIndex((x) => x.id === r.id); if (i >= 0) state.pros[i] = r; else state.pros.unshift(r); prosLocal(); renderPros(); }
-    if (!r.gsJ) gsPush(r, 'j');
+    let ok = false;
+    if (dbOn()) ok = await dbSafe({ t: 'set', id: r.id, data: JSON.parse(JSON.stringify(r)) });
+    if (!ok) { const i = state.pros.findIndex((x) => x.id === r.id); if (i >= 0) state.pros[i] = r; else state.pros.unshift(r); prosLocal(); cacheSave(); renderPros(); }
+    if (!r.gsJ && navigator.onLine) gsPush(r, 'j');
   }
   function prosLocal() { try { localStorage.setItem('sk_pros', JSON.stringify(state.pros)); } catch (e) { /* */ } }
   async function prosUpdate(id, patch) {
     const r = state.pros.find((x) => x.id === id); if (r) Object.assign(r, patch);
-    if (dbOn()) { try { await state.db.collection('prospects').doc(id).update(patch); return; } catch (e) { console.error(e); } }
+    if (dbOn()) { if (await dbSafe({ t: 'update', id, data: patch })) return; cacheSave(); renderPros(); return; }
     prosLocal(); renderPros();
   }
   async function prosDelete(id) {
     if (!confirm('Supprimer ce visiteur de la liste ?')) return;
-    if (dbOn()) { try { await state.db.collection('prospects').doc(id).delete(); return; } catch (e) { console.error(e); } }
+    if (dbOn()) { if (await dbSafe({ t: 'delete', id })) return; state.pros = state.pros.filter((x) => x.id !== id); cacheSave(); renderPros(); return; }
     state.pros = state.pros.filter((x) => x.id !== id); prosLocal(); renderPros();
   }
   function startPros() {
     cfgStart();
     if (state.db) {
-      try { state.db.collection('prospects').orderBy('at', 'desc').limit(2000).onSnapshot((snap) => { state.pros = snap.docs.map((d) => Object.assign({ id: d.id }, d.data())); renderPros(); renderAgents(); renderAppel(); }, (e) => { console.error(e); prosFallback(); }); return; } catch (e) { console.error(e); }
+      try { state.db.collection('prospects').orderBy('at', 'desc').limit(2000).onSnapshot((snap) => { state.pros = qApply(snap.docs.map((d) => Object.assign({ id: d.id }, d.data()))); cacheSave(); renderPros(); netShow(); if (qGet().length && navigator.onLine) qFlush(false); renderAgents(); renderAppel(); }, (e) => { console.error(e); prosFallback(); }); return; } catch (e) { console.error(e); }
     }
     prosFallback();
   }
-  function prosFallback() { state.prosLocal = true; try { state.pros = JSON.parse(localStorage.getItem('sk_pros') || '[]'); } catch (e) { state.pros = []; } renderPros(); }
+  function prosFallback() { if (state.db && !navigator.onLine) { try { state.pros = qApply(JSON.parse(localStorage.getItem('sk_pros_cache') || '[]')); } catch (e) { state.pros = []; } renderPros(); netShow(); return; } state.prosLocal = true; try { state.pros = JSON.parse(localStorage.getItem('sk_pros') || '[]'); } catch (e) { state.pros = []; } renderPros(); }
   /* ---- formulaire (borne et éditeur) ---- */
   /* principales localités de Côte d’Ivoire : [nom, région ou district, latitude, longitude] (coordonnées approchées) */
   var GEO_CI = [
@@ -1945,6 +1997,7 @@
     { const bt = $('#prosMais'); if (bt) bt.classList.toggle('on', !!state.prosMaisSort); }
     const cnt = (k, v) => state.pros.filter((r) => r[k] === v).length;
     { const nv = state.pros.filter((r) => !r.test && valOf(r) !== 'Validé').length; const bv = $('#prosVal'); if (bv) { bv.textContent = '✔ Validation (' + nv + ' à traiter)'; bv.classList.toggle('warn', !!nv); } }
+    { const nv = state.pros.filter((r) => !r.test && valOf(r) !== 'Validé').length; const h = $('#valHdr'); if (h) { h.hidden = false; h.textContent = nv ? '📋 ' + nv + ' fiche' + (nv > 1 ? 's' : '') + ' à valider' : '📋 Aucune fiche à valider'; h.classList.toggle('hot', !!nv); } }
     { const nd = dupGroups().length; const bt = $('#prosDup'); if (bt) { bt.textContent = nd ? '⚠ Fusionner les doublons (' + nd + ')' : 'Doublons : aucun'; bt.classList.toggle('warn', !!nd); } }
     $('#prosK').innerHTML = [[state.pros.length, 'visiteurs enregistrés'], [cnt('etat', 'En attente'), 'en attente d’entretien'], [cnt('etat', 'En entretien'), 'en entretien'], [cnt('etat', 'Terminé'), 'entretiens terminés'], [cnt('inscription', 'Oui'), 'inscrits au projet'], [cnt('statut', 'À rappeler'), 'à rappeler']].map(([v, l]) => `<div><b>${v}</b>${l}</div>`).join('') + (() => {
       const D = state.pros.filter((r) => r.maisDecl > 0); if (!D.length) return '';
@@ -2148,11 +2201,80 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
     if (c.refLast === day || now.getHours() * 60 + now.getMinutes() < h * 60 + m) return;
     c.refLast = day; refMail();
   }, 60000);
+
+  /* --- vérification : retrouver une fiche et prouver qu’elle est bien dans la base --- */
+  function verOpen(q0) {
+    const c = state.standCfg;
+    const b = modal('🔎 Vérifier un enregistrement', `<p class="note">Cherchez par téléphone, nom ou numéro de fiche : la fiche est relue directement dans la base de l’artefact, puis comparée à la feuille en ligne et à la sauvegarde du soir.</p>
+      <div class="mbar" style="gap:8px"><input id="verQ" value="${esc(q0 || '')}" placeholder="07 10 47 14 02, KOUASSI, p…" style="flex:1;min-width:220px;font-size:16px"><button type="button" class="pri" id="verGo">Vérifier</button></div>
+      <div class="simk"><div><b>${state.pros.filter((r) => !r.test).length}</b><span>fiches dans la base</span></div><div><b>${dbOn() ? '●' : '○'}</b><span>${dbOn() ? 'base partagée de l’artefact' : 'base locale de cet appareil'}</span></div><div><b>${c.gsOn && c.gsId ? '●' : '○'}</b><span>${c.gsOn && c.gsId ? 'feuille en ligne active' : 'feuille en ligne inactive'}</span></div><div><b>${esc(c.refLast || '—')}</b><span>dernière sauvegarde Excel envoyée</span></div></div>
+      <div id="verOut"></div>`, true);
+    const go = async () => {
+      const q = $('#verQ', b).value.trim(); const out = $('#verOut', b); if (!q) { out.innerHTML = ''; return; }
+      const qd = waNum(q), qk = geoKey(q);
+      const L = state.pros.filter((r) => (qd.length >= 8 && waNum(r.tel).endsWith(qd.slice(-8))) || r.id === q || r.fid === q || (qk.length >= 3 && geoKey(r.nom).indexOf(qk) >= 0)).slice(0, 20);
+      if (!L.length) { out.innerHTML = '<p class="err">Aucune fiche trouvée pour « ' + esc(q) + ' ». Si le visiteur vient de remplir la fiche publique, attendez 3 minutes (import automatique) ou utilisez « Importer une inscription WhatsApp ».</p>'; return; }
+      out.innerHTML = '<p class="note">Relecture dans la base…</p>';
+      const rows = [];
+      for (const r of L) {
+        let inDb = null, upd = '';
+        if (dbOn()) { try { const d = await state.db.collection('prospects').doc(r.id).get(); inDb = !!(d && d.exists !== false && (d.data ? d.data() : d)); if (inDb && d.data) { const x = d.data(); upd = x.validLe || x.date || ''; } } catch (e) { inDb = false; } }
+        const ok = (t, v, n) => `<span class="vchip ${v === true ? 'ok' : v === false ? 'ko' : 'wa'}">${v === true ? '✓' : v === false ? '✗' : '○'} ${t}${n ? ' • ' + esc(n) : ''}</span>`;
+        const sav = c.refLast && String(r.at || '').slice(0, 10) <= c.refLast;
+        rows.push(`<tr><td><b>${esc(r.nom || '—')}</b><br><small>${esc(r.public || r.profil || '')} • ${esc(r.localite || '')} • ${esc(r.tel || '')}</small><br><small>Fiche n° <code>${esc(r.id)}</code>${r.fid ? ' • fiche publique <code>' + esc(r.fid) + '</code>' : ''}</small></td>
+          <td>${esc(r.date || '')}<br><small>${esc(r.source || '')}</small></td>
+          <td>${ok('Base de l’artefact', dbOn() ? inDb : null, dbOn() ? (inDb ? 'relue' : 'introuvable') : 'appareil seul')}<br>${ok('Feuille en ligne', c.gsOn && c.gsId ? !!r.gsJ : null, r.gsJ ? (r.gsJ === 'fiche publique' ? 'Fiche_publique' : r.gsJ) : '')}<br>${ok('Inscrits validés en ligne', valOf(r) === 'Validé' && c.gsOn ? !!r.gsV : null, r.gsV || '')}<br>${ok('Sauvegarde Excel du soir', c.refLast ? sav : null, sav ? c.refLast : 'prochain envoi')}</td>
+          <td><span class="vchip ${valOf(r) === 'Validé' ? 'ok' : valOf(r) === 'À corriger' ? 'ko' : 'wa'}">${valOf(r)}</span>${r.validLe ? '<br><small>' + esc(r.validLe) + '</small>' : ''}<br><button type="button" data-vere="${r.id}">✎ Ouvrir</button></td></tr>`);
+      }
+      out.innerHTML = `<div class="tw"><table class="sim"><thead><tr><th>Visiteur</th><th>Enregistré le</th><th>Où se trouve la fiche</th><th>Validation</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>
+        <p class="note">✓ confirmé • ✗ absent (à resynchroniser depuis « ✔ Validation ») • ○ sans objet ou pas encore activé.</p>`;
+      $$('[data-vere]', out).forEach((x) => x.addEventListener('click', () => { modalClose(); editVisitor(x.dataset.vere); }));
+    };
+    $('#verGo', b).addEventListener('click', go); $('#verQ', b).addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+    if (q0) go(); setTimeout(() => { try { $('#verQ', b).focus(); } catch (e) { /* */ } }, 50);
+  }
+  window.SK_VAL = () => { try { if (window.SK_TAB) SK_TAB('stand'); } catch (e) { /* */ } valOpen(); };
+  window.SK_VER = () => verOpen();
+  /* récapitulatif des prix déclarés par les éleveurs qui fabriquent leur aliment (moyenne par localité) */
+  function prixRecap(jours) {
+    const lim = Date.now() - (jours || 7) * 864e5;
+    const L = state.pros.filter((r) => !r.test && isElev(r) && /fabrique|deux/i.test(r.fabrique || '') && r.veille && Object.keys(r.veille).some((k) => +r.veille[k] > 0) && (!jours || new Date(r.at).getTime() >= lim));
+    const loc = {}; L.forEach((r) => { const k = (geoFind(r.localite) || {}).ville || (r.localite || '—'); (loc[k] = loc[k] || []).push(r); });
+    const avg = (A, k) => { const v = A.map((r) => +((r.veille || {})[k] || 0)).filter((x) => x > 0); return v.length ? { m: v.reduce((a, b) => a + b, 0) / v.length, n: v.length, mn: Math.min(...v), mx: Math.max(...v) } : null; };
+    return { L, loc: Object.entries(loc).sort((a, b) => b[1].length - a[1].length), avg };
+  }
+  function prixHtml(jours) {
+    const R = prixRecap(jours), K = VEILLE.filter(([k]) => R.L.some((r) => +((r.veille || {})[k]) > 0));
+    if (!R.L.length) return '<p>Aucune veille des prix déclarée par des éleveurs fabricants sur la période.</p>';
+    const cell = (a) => a ? fr(Math.round(a.m)) + (a.n > 1 ? ' <small style="color:#5b6476">(' + a.n + ')</small>' : '') : '—';
+    return `<div style="font-family:Arial,sans-serif;font-size:13px"><p><b>${R.L.length}</b> éleveur(s) qui fabriquent leur aliment ont déclaré leurs prix${jours ? ' sur les ' + jours + ' derniers jours' : ''}, dans <b>${R.loc.length}</b> localité(s). Moyennes en FCFA (nombre de réponses).</p>
+      <table cellpadding="6" border="1" style="border-collapse:collapse"><tr style="background:#37A028;color:#fff"><th>Localité</th><th>Éleveurs</th>${K.map(([, l, u]) => '<th>' + esc(l) + '<br><small>' + esc(u) + '</small></th>').join('')}</tr>
+      ${R.loc.map(([n, A]) => `<tr><td><b>${esc(n)}</b></td><td>${A.length}</td>${K.map(([k]) => '<td>' + cell(R.avg(A, k)) + '</td>').join('')}</tr>`).join('')}
+      <tr style="background:#E6F6E3;font-weight:bold"><td>Ensemble</td><td>${R.L.length}</td>${K.map(([k]) => { const a = R.avg(R.L, k); return '<td>' + (a ? fr(Math.round(a.m)) + '<br><small>min ' + fr(a.mn) + ' • max ' + fr(a.mx) + '</small>' : '—') + '</td>'; }).join('')}</tr></table>
+      <p style="color:#5b6476;font-size:12px">Prix déclarés par les visiteurs (non vérifiés). Données internes SOLEVO Côte d’Ivoire.</p></div>`;
+  }
+  async function prixMail(jours) {
+    const c = state.standCfg; const to = String(c.prixTo || PRIX_TO).split(/[,;\s]+/).filter((x) => /@/.test(x));
+    if (!state.mcp) { status('Envoi disponible seulement dans claude.ai avec Gmail connecté.', 'err'); return; }
+    try { await state.mcp.callTool('Gmail', 'send_message', { to, subject: 'SISSÊ~KABA – Veille des prix des éleveurs fabricants (' + (jours ? jours + ' derniers jours' : 'cumul') + ') – ' + today().fr, htmlBody: prixHtml(jours) }); status('Récapitulatif des prix envoyé à ' + to.join(', ') + '.', 'ok'); }
+    catch (e) { console.error(e); status('Récapitulatif non envoyé : ' + mailErr(e), 'err'); }
+  }
+  const PRIX_TO = 'elvis.lehito@solevogroup.com, ibrahim.ouattara@solevogroup.com, francois.kouadio@solevogroup.com';
+  function prixOpen() {
+    const c = state.standCfg;
+    const b = modal('📈 Veille des prix des éleveurs fabricants', `<div class="mbar" style="gap:8px;flex-wrap:wrap"><select id="pxJ"><option value="7">7 derniers jours</option><option value="30">30 derniers jours</option><option value="0">Depuis le début</option></select>
+      <label style="display:flex;gap:6px;align-items:center">Destinataires <input id="pxTo" value="${esc(c.prixTo || PRIX_TO)}" style="width:420px"></label><button type="button" class="pri" id="pxSend">✉ Envoyer aux ATE et au KAM FEED</button></div>
+      <p class="note">Envoi automatique chaque lundi matin par une tâche planifiée (même sans appareil ouvert).</p><div id="pxOut"></div>`, true);
+    const show = () => { $('#pxOut', b).innerHTML = prixHtml(+$('#pxJ', b).value); };
+    $('#pxJ', b).addEventListener('change', show); show();
+    $('#pxTo', b).addEventListener('change', async () => { c.prixTo = $('#pxTo', b).value; await cfgSave(); });
+    $('#pxSend', b).addEventListener('click', () => prixMail(+$('#pxJ', b).value));
+  }
   /* --- validation --- */
   async function valSet(r, v, extra) {
     const patch = Object.assign({ valid: v, validLe: v === 'Validé' ? today().fr + ' ' + new Date().toTimeString().slice(0, 5) : '', validPar: state.standCfg.validBy || 'Elvis LEHITO' }, extra || {});
     await prosUpdate(r.id, patch); Object.assign(r, patch);
-    if (v === 'Validé') gsPush(r, 'v');
+    if (v === 'Validé' && navigator.onLine) gsPush(r, 'v');
   }
   function valOpen() {
     const c = state.standCfg; const sel = c.valFilt || 'À traiter';
@@ -2167,7 +2289,7 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
         <button type="button" class="pri" id="vAll" ${ok.length ? '' : 'disabled'}>✔ Valider les ${ok.length} fiche(s) conforme(s)</button>
         <select id="vF">${['À traiter', 'À valider', 'À corriger', 'Validé', 'Toutes'].map((x) => `<option ${x === sel ? 'selected' : ''}>${x}</option>`).join('')}</select>
         <label style="display:flex;gap:6px;align-items:center">Validé par <input id="vBy" value="${esc(c.validBy || 'Elvis LEHITO')}" style="width:160px"></label>
-        <button type="button" id="vRef">⬇ Base de référence (Excel)</button>
+        <button type="button" id="vVer">🔎 Vérifier un enregistrement</button><button type="button" id="vRef">⬇ Base de référence (Excel)</button>
         <button type="button" id="vGs">${gs ? '↻ Synchroniser Google Sheets' : '☁ Créer la base en ligne (Google Sheets)'}</button>
         ${gs ? `<a href="https://docs.google.com/spreadsheets/d/${esc(c.gsId)}" target="_blank" rel="noopener">Ouvrir la feuille en ligne</a><button type="button" id="vLists">☰ Listes déroulantes (tables R_)</button><button type="button" id="vImp">⇩ Importer les fiches publiques en ligne</button><button type="button" id="vHook">🔗 Brancher la fiche publique sur la feuille</button>` : ''}</div>
       <div class="mbar" style="flex-wrap:wrap;gap:8px"><label class="consent" style="margin:0"><input type="checkbox" id="vRefAuto" ${c.refAuto !== false ? 'checked' : ''}> Envoyer chaque soir la base de référence à <input id="vRefTo" value="${esc(c.refTo || 'elvis.lehito@solevogroup.com')}" style="width:230px"> à <input id="vRefH" type="time" value="${esc(c.refHour || '20:00')}" style="width:auto"></label><button type="button" id="vRefNow">✉ Envoyer maintenant</button><small class="muted">${c.refLast ? 'Dernier envoi : ' + esc(c.refLast) : 'Aucun envoi pour l’instant'} • envoi automatique si le simulateur est ouvert à l’heure choisie (borne ou écran d’appel)</small></div>
@@ -2185,6 +2307,7 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
     $$('[data-vko]', b).forEach((x) => x.addEventListener('click', async () => { by(); const r = state.pros.find((y) => y.id === x.dataset.vko); if (!r) return; const m = prompt('Motif (ce qu’il faut corriger) :', valChecks(r).join(', ')); if (m === null) return; await valSet(r, 'À corriger', { validMotif: m }); valOpen(); renderPros(); }));
     $$('[data-ved]', b).forEach((x) => x.addEventListener('click', () => { modalClose(); editVisitor(x.dataset.ved); }));
     $('#vRef', b).addEventListener('click', refExport);
+    $('#vVer', b).addEventListener('click', () => verOpen());
     const refKeep = async () => { c.refAuto = $('#vRefAuto', b).checked; c.refTo = $('#vRefTo', b).value.trim() || 'elvis.lehito@solevogroup.com'; c.refHour = $('#vRefH', b).value || '20:00'; await cfgSave(); };
     ['#vRefAuto', '#vRefTo', '#vRefH'].forEach((k) => $(k, b).addEventListener('change', refKeep));
     $('#vRefNow', b).addEventListener('click', async () => { await refKeep(); await refMail(); valOpen(); });
@@ -2845,7 +2968,7 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
   }
   function initStand() {
     renderTeam();
-    $('#prosExport').addEventListener('click', prosExport); { const bv = $('#prosVal'); if (bv) bv.addEventListener('click', valOpen); const br = $('#prosRef'); if (br) br.addEventListener('click', refExport); } $('#prosFilter').addEventListener('change', renderPros); { const bm = $('#prosMais'); if (bm) bm.addEventListener('click', () => { state.prosMaisSort = !state.prosMaisSort; renderPros(); }); }
+    $('#prosExport').addEventListener('click', prosExport); { const bx = $('#prosVer'); if (bx) bx.addEventListener('click', () => verOpen()); const bp = $('#prosPrix'); if (bp) bp.addEventListener('click', prixOpen); } { const bv = $('#prosVal'); if (bv) bv.addEventListener('click', valOpen); const br = $('#prosRef'); if (br) br.addEventListener('click', refExport); } $('#prosFilter').addEventListener('change', renderPros); { const bm = $('#prosMais'); if (bm) bm.addEventListener('click', () => { state.prosMaisSort = !state.prosMaisSort; renderPros(); }); }
     $('#prosAdd').addEventListener('click', () => editVisitor(null));
     $('#prosImport').addEventListener('click', importWa);
     $('#prosCfg').addEventListener('click', editCfg);
@@ -3675,7 +3798,7 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
     try { state.mcp = window.claude && window.claude.use ? await window.claude.use('mcp') : null; } catch (e) { state.mcp = null; }
     if (!state.mcp) { $('#mailNote').textContent = 'Envoi par e-mail disponible uniquement dans claude.ai, avec le connecteur Gmail.'; }
     try { state.db = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { state.db = null; }
-    startLog(); startLists(); startPros(); initStand();
+    startLog(); startLists(); startPros(); initStand(); try { netShow(); } catch (e) { /* */ }
   }
   window.__skS = () => state.V && state.V.S;
   document.addEventListener('DOMContentLoaded', init);
