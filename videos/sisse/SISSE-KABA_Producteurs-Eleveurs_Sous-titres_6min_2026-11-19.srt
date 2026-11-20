@@ -1,0 +1,368 @@
+1
+00:00:07,000 --> 00:00:10,960
+Bonjour à vous, producteurs de maïs, et à vous, éleveurs.
+
+2
+00:00:10,880 --> 00:00:15,835
+Cette vidéo vous présente SISSÊ~KABA, le programme de SOLEVO Côte d'Ivoire qui relie
+
+3
+00:00:15,835 --> 00:00:21,320
+directement ceux qui produisent le maïs à ceux qui en ont besoin pour nourrir leurs animaux.
+
+4
+00:00:21,160 --> 00:00:25,559
+Aujourd'hui, entre le champ et la ferme, il y a trop d'intermédiaires.
+
+5
+00:00:25,440 --> 00:00:30,679
+Le producteur vend souvent son maïs à bas prix, et l'éleveur le rachète beaucoup plus cher.
+
+6
+00:00:30,640 --> 00:00:35,640
+Entre les deux, environ quarante pour cent du prix bord champ partent en majoration.
+
+7
+00:00:35,520 --> 00:00:36,472
+Résultat :
+
+8
+00:00:36,326 --> 00:00:40,375
+le producteur gagne peu, l'éleveur dépense trop pour l'aliment,
+
+9
+00:00:40,375 --> 00:00:43,140
+et chacun a du mal à financer sa campagne.
+
+10
+00:00:43,060 --> 00:00:45,140
+SISSÊ~KABA veut changer cela.
+
+11
+00:00:51,439 --> 00:00:55,610
+SISSÊ~KABA est une plateforme qui met en relation les producteurs de maïs,
+
+12
+00:00:55,610 --> 00:00:59,500
+les éleveurs et les fabricants d'aliments, partout en Côte d'Ivoire.
+
+13
+00:00:59,579 --> 00:01:01,100
+Chacun a son rôle.
+
+14
+00:01:01,100 --> 00:01:04,659
+Le producteur cultive et livre un maïs de bonne qualité.
+
+15
+00:01:04,700 --> 00:01:07,260
+L'éleveur commande et paie son maïs.
+
+16
+00:01:07,340 --> 00:01:12,620
+SOLEVO fournit les semences, les intrants et le prémix, et coordonne le programme.
+
+17
+00:01:12,700 --> 00:01:18,140
+ADVANS, notre partenaire financier, finance les intrants des producteurs et sécurise les
+
+18
+00:01:18,140 --> 00:01:18,819
+paiements.
+
+19
+00:01:18,700 --> 00:01:23,780
+Les entrepôts et les transporteurs reçoivent, contrôlent et livrent le maïs.
+
+20
+00:01:23,900 --> 00:01:27,379
+Le programme démarre avec la campagne 2027.
+
+21
+00:01:27,219 --> 00:01:32,724
+Dès la première année, il vise près de neuf cents producteurs, plus de quatre mille hectares,
+
+22
+00:01:32,724 --> 00:01:35,859
+et quinze mille tonnes de maïs livrées aux éleveurs.
+
+23
+00:01:35,739 --> 00:01:36,760
+Important :
+
+24
+00:01:36,599 --> 00:01:39,400
+SOLEVO n'achète pas votre maïs pour le revendre.
+
+25
+00:01:39,400 --> 00:01:43,519
+Le maïs passe directement du producteur à l'éleveur, au juste prix.
+
+26
+00:01:49,819 --> 00:01:51,480
+Vous êtes producteur de maïs ?
+
+27
+00:01:51,319 --> 00:01:52,879
+Voici votre parcours.
+
+28
+00:01:52,920 --> 00:01:57,359
+D'abord, vous vous inscrivez et vous déclarez vos surfaces et vos besoins.
+
+29
+00:01:57,319 --> 00:02:02,000
+SOLEVO prépare votre offre de semences et d'intrants, adaptée à vos surfaces.
+
+30
+00:02:01,959 --> 00:02:04,159
+ADVANS étudie votre dossier.
+
+31
+00:02:04,079 --> 00:02:07,760
+Après accord, le financement paie directement vos intrants.
+
+32
+00:02:07,599 --> 00:02:12,002
+Tout au long de la campagne, nos techniciens vous conseillent sur les variétés,
+
+33
+00:02:12,002 --> 00:02:14,649
+la fertilisation et la protection des cultures,
+
+34
+00:02:14,649 --> 00:02:17,520
+pour obtenir un bon rendement et un maïs conforme.
+
+35
+00:02:17,360 --> 00:02:23,360
+À la récolte, vous livrez votre maïs à l'entrepôt, où il est pesé, identifié et contrôlé.
+
+36
+00:02:23,199 --> 00:02:26,700
+Quand un éleveur achète votre lot et que son argent est confirmé,
+
+37
+00:02:26,700 --> 00:02:31,439
+vous êtes payé cent quinze pour cent du prix bord champ, soit quinze pour cent de plus.
+
+38
+00:02:31,319 --> 00:02:36,080
+Votre crédit d'intrants est retenu sur cette vente, avec votre autorisation écrite.
+
+39
+00:02:35,919 --> 00:02:39,120
+Par exemple, pour un prix bord champ de cent francs le kilo,
+
+40
+00:02:39,120 --> 00:02:41,840
+vous gagnez quinze mille francs de plus par tonne.
+
+41
+00:02:41,719 --> 00:02:45,866
+Pour environ dix-sept tonnes livrées, cela fait près de deux cent cinquante-six mille
+
+42
+00:02:45,866 --> 00:02:47,280
+francs de plus dans l'année.
+
+43
+00:02:53,580 --> 00:02:55,887
+Vous êtes éleveur ou fabricant d'aliments ?
+
+44
+00:02:55,819 --> 00:02:58,290
+Vous commandez votre maïs sur la plateforme,
+
+45
+00:02:58,290 --> 00:03:01,379
+parmi des lots déjà contrôlés et acceptés en entrepôt.
+
+46
+00:03:01,300 --> 00:03:03,219
+Vous savez ce que vous achetez.
+
+47
+00:03:03,099 --> 00:03:07,939
+Vous payez par le circuit ADVANS avant la livraison, puis le lot vous est livré.
+
+48
+00:03:07,780 --> 00:03:12,342
+Au lieu de cent soixante pour cent du prix bord champ, vous payez cent trente-cinq pour cent,
+
+49
+00:03:12,342 --> 00:03:14,500
+soit quinze virgule six pour cent de moins.
+
+50
+00:03:14,379 --> 00:03:19,139
+Pour un prix bord champ de cent francs, vous économisez vingt-cinq mille francs par tonne.
+
+51
+00:03:19,020 --> 00:03:23,640
+Une ferme qui utilise environ soixante-douze tonnes de maïs par an économise près d'un
+
+52
+00:03:23,640 --> 00:03:25,360
+million huit cent mille francs.
+
+53
+00:03:25,199 --> 00:03:30,698
+Et avec ce maïs et le prémix MG2MIX de SOLEVO, vous pouvez fabriquer votre aliment à la ferme,
+
+54
+00:03:30,698 --> 00:03:36,080
+et réduire de trente à quarante pour cent le coût par rapport à l'aliment fini du commerce.
+
+55
+00:03:35,960 --> 00:03:37,013
+Une condition :
+
+56
+00:03:36,866 --> 00:03:41,449
+pour accéder au programme, l'éleveur doit respecter au moins quatre-vingts pour cent de
+
+57
+00:03:41,449 --> 00:03:44,240
+ses engagements FEED arrivés à échéance avec SOLEVO.
+
+58
+00:03:50,539 --> 00:03:53,699
+Une vente SISSÊ~KABA se fait en six étapes.
+
+59
+00:03:53,580 --> 00:03:54,106
+Un :
+
+60
+00:03:53,932 --> 00:03:56,960
+l'éleveur commande, et le lot est vérifié.
+
+61
+00:03:56,800 --> 00:03:57,366
+Deux :
+
+62
+00:03:57,193 --> 00:03:59,900
+l'éleveur paie par le circuit ADVANS.
+
+63
+00:03:59,780 --> 00:04:00,400
+Trois :
+
+64
+00:04:00,240 --> 00:04:02,120
+les fonds sont confirmés.
+
+65
+00:04:01,960 --> 00:04:02,699
+Quatre :
+
+66
+00:04:02,539 --> 00:04:05,860
+le producteur est payé, après retenue de son crédit.
+
+67
+00:04:05,699 --> 00:04:06,520
+Cinq :
+
+68
+00:04:06,360 --> 00:04:08,639
+le lot est livré chez l'éleveur.
+
+69
+00:04:08,599 --> 00:04:09,206
+Six :
+
+70
+00:04:09,032 --> 00:04:12,620
+le transport et l'entrepôt sont réglés sur justificatifs.
+
+71
+00:04:12,552 --> 00:04:15,635
+Ainsi, personne ne livre sans être sûr d'être payé,
+
+72
+00:04:15,635 --> 00:04:18,779
+et personne ne paie sans recevoir un maïs contrôlé.
+
+73
+00:04:25,079 --> 00:04:28,079
+La confiance repose sur des règles claires.
+
+74
+00:04:28,120 --> 00:04:30,560
+Tout le maïs passe par un entrepôt.
+
+75
+00:04:30,439 --> 00:04:33,430
+Seuls les lots acceptés sont proposés aux éleveurs,
+
+76
+00:04:33,430 --> 00:04:36,480
+et un lot réservé ne peut pas être vendu deux fois.
+
+77
+00:04:36,399 --> 00:04:39,526
+Le simple dépôt à l'entrepôt ne déclenche pas le paiement :
+
+78
+00:04:39,353 --> 00:04:42,860
+le producteur est payé quand l'argent de l'éleveur est confirmé.
+
+79
+00:04:42,899 --> 00:04:44,500
+Le prix est transparent :
+
+80
+00:04:44,339 --> 00:04:48,839
+la majoration disparaît, et aucune commission n'est conservée sur le maïs.
+
+81
+00:04:48,879 --> 00:04:53,880
+Des règles de qualité et de règlement des litiges sont fixées avec les entrepôts et les
+
+82
+00:04:53,880 --> 00:04:57,560
+transporteurs, et nos équipes vous accompagnent à chaque étape.
+
+83
+00:04:57,480 --> 00:05:00,920
+Enfin, le prix bord champ de cent francs est un exemple :
+
+84
+00:05:00,759 --> 00:05:04,480
+les montants réels suivent le prix du marché au moment de la vente.
+
+85
+00:05:10,779 --> 00:05:13,459
+Pour rejoindre SISSÊ~KABA, c'est simple.
+
+86
+00:05:13,339 --> 00:05:19,120
+Scannez le QR code pour vous inscrire, ou écrivez-nous sur WhatsApp au zéro sept, dix,
+
+87
+00:05:19,120 --> 00:05:21,540
+quarante-sept, quatorze, zéro deux.
+
+88
+00:05:21,420 --> 00:05:25,779
+Vous pouvez aussi passer dans un dépôt SOLEVO ou voir nos techniciens sur le terrain.
+
+89
+00:05:25,819 --> 00:05:29,220
+Producteurs, vous êtes financés et mieux payés.
+
+90
+00:05:29,060 --> 00:05:32,740
+Éleveurs, vous achetez un maïs contrôlé, moins cher.
+
+91
+00:05:32,620 --> 00:05:36,660
+SISSÊ~KABA, c'est le juste prix, du champ à la mangeoire.
+
+92
+00:05:36,540 --> 00:05:38,339
+Inscrivez-vous dès aujourd'hui !
+

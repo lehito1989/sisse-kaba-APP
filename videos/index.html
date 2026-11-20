@@ -12,7 +12,7 @@ footer{text-align:center;font-size:12px;color:#4a5a6a;padding:18px}</style></hea
 <body><header><img src="../assets/solevo_small.png" alt="SOLEVO"><div><b>Dépensez moins, gagnez plus !</b><span>SOLEVO Côte d’Ivoire • SELAB SHOW 2026 • 20–22 novembre • Parc des sports d’Abidjan</span></div></header>
 <div class="wrap">
   <div id="secVid">
-    <h2>Vidéos SELAB SHOW 2026</h2>
+    <h2>Vidéos SELAB SHOW 2026 et SISSÊ~KABA</h2>
     <p class="note">Présentation SOLEVO « Dépensez moins, gagnez plus » (9 min 54) et extraits pour les réseaux. Lecture en ligne ici ; téléchargement en qualité HD pour l’écran du stand, WhatsApp et les réseaux sociaux.</p>
     <style>
       .vd-main{background:#000;border-radius:14px;overflow:hidden;position:relative;aspect-ratio:16/9;max-width:1100px}
@@ -45,6 +45,9 @@ footer{text-align:center;font-size:12px;color:#4a5a6a;padding:18px}</style></hea
       <button type="button" id="vdFull">⛶ Plein écran</button>
       <span class="vd-st" id="vdSt">Partie 1/4</span>
     </div>
+    <h3 style="margin:22px 0 8px">SISSÊ~KABA • Producteurs de maïs et éleveurs • 5 min 56</h3>
+    <p class="note">Fonctionnement du programme, gains du producteur et de l’éleveur, vente en 6 étapes, règles de confiance et inscription. Pour les coopératives, les groupes d’éleveurs et l’écran du stand.</p>
+    <div class="vd-main"><video controls playsinline preload="metadata" poster="web/producteurs_eleveurs_poster.jpg" src="web/producteurs_eleveurs.mp4"></video></div>
     <h3 style="margin:18px 0 0">Extraits pour WhatsApp et réseaux sociaux (format vertical)</h3>
     <div class="vd-grid">
       <div class="vd-card"><video controls playsinline preload="metadata" src="selab/SOLEVO_SELAB_Teaser_60s_Reseaux_1080x1920_2026-11-16.mp4#t=2.5"></video><b>Extrait 60 s • tous publics</b><small>Statuts WhatsApp, Facebook, LinkedIn (J-1)</small></div>
@@ -56,8 +59,14 @@ footer{text-align:center;font-size:12px;color:#4a5a6a;padding:18px}</style></hea
     <div class="vd-tip"><b>Au stand :</b> copiez la version « TV sous-titrée » sur une clé USB et lancez-la en boucle sur l’écran (lecture fiable sans Internet, sous-titres lisibles malgré le bruit). Sur tablette ou ordinateur connecté, utilisez le lecteur ci-dessus avec « Mode stand ».</div>
     <script>
     (function () {
-      var BASE = 'https://lehito1989.github.io/sisse-kaba-APP/videos/selab/';
+      var BASE = 'https://lehito1989.github.io/sisse-kaba-APP/videos/';
       var DL = [
+        ['SISSE-KABA_Producteurs-Eleveurs_TV_sous-titree_1080p_6min_2026-11-19.mp4', 'SISSÊ~KABA producteurs et éleveurs • TV sous-titrée 1080p • 5 min 56', 'Écran du stand (clé USB), salle bruyante', 'sisse/'],
+        ['SISSE-KABA_Producteurs-Eleveurs_TV_1080p_6min_2026-11-19.mp4', 'SISSÊ~KABA producteurs et éleveurs • TV 1080p', 'Grand écran avec son', 'sisse/'],
+        ['SISSE-KABA_Producteurs-Eleveurs_Ordinateur_1080p_6min_2026-11-19.mp4', 'SISSÊ~KABA producteurs et éleveurs • ordinateur 1080p', 'YouTube, Facebook, projection en réunion', 'sisse/'],
+        ['SISSE-KABA_Producteurs-Eleveurs_Telephone_1080x1920_6min_2026-11-19.mp4', 'SISSÊ~KABA producteurs et éleveurs • téléphone 1080×1920', 'WhatsApp : coopératives, groupes d’éleveurs', 'sisse/'],
+        ['SISSE-KABA_Producteurs-Eleveurs_Sous-titres_6min_2026-11-19.srt', 'SISSÊ~KABA producteurs et éleveurs • sous-titres SRT', 'YouTube, Facebook', 'sisse/'],
+        ['SISSE-KABA_Producteurs-Eleveurs_Miniature_1280x720_2026-11-19.jpg', 'SISSÊ~KABA producteurs et éleveurs • miniature 1280×720', 'Image de couverture', 'sisse/'],
         ['SOLEVO_SELAB_Video_Presentation_TV_sous-titree_1080p_10min_2026-11-16.mp4', 'Présentation TV sous-titrée 1080p • 9 min 54', 'Écran du stand (clé USB), salle bruyante'],
         ['SOLEVO_SELAB_Video_Presentation_TV_1080p_10min_2026-11-16.mp4', 'Présentation TV 1080p • 9 min 54', 'Grand écran avec son'],
         ['SOLEVO_SELAB_Video_Presentation_Ordinateur_1080p_10min_2026-11-16.mp4', 'Présentation ordinateur 1080p', 'YouTube, LinkedIn, projection'],
@@ -70,7 +79,7 @@ footer{text-align:center;font-size:12px;color:#4a5a6a;padding:18px}</style></hea
         ['SOLEVO_SELAB_Miniature_LinkedIn_1920x1080_2026-11-16.jpg', 'Miniature LinkedIn 1920×1080', 'Image de couverture LinkedIn']
       ];
       var tb = document.getElementById('vdDl');
-      if (tb) tb.innerHTML = DL.map(function (d) { return '<tr><td><b>' + d[1] + '</b></td><td>' + d[2] + '</td><td><a href="' + BASE + d[0] + '" target="_blank" rel="noopener">⬇ Télécharger</a></td></tr>'; }).join('');
+      if (tb) tb.innerHTML = DL.map(function (d) { return '<tr><td><b>' + d[1] + '</b></td><td>' + d[2] + '</td><td><a href="' + BASE + (d[3] || 'selab/') + d[0] + '" target="_blank" rel="noopener">⬇ Télécharger</a></td></tr>'; }).join('');
       var P = [1, 2, 3, 4].map(function (i) { return 'web/presentation_p' + i + '.mp4'; });
       var A = document.getElementById('vdA'), B = document.getElementById('vdB'), st = document.getElementById('vdSt');
       if (!A || !B) return;
