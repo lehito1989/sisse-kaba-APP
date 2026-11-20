@@ -462,6 +462,7 @@ details.veille{border:1px solid var(--line);border-radius:10px;padding:8px 10px;
 .mctl{display:inline-block;font-size:12px;padding:1px 6px;border-radius:8px;margin-left:4px}.mctl.ko{background:#FDECEA;color:#B3261E}.mctl.ok{background:#EAF6E6;color:#1E5E1A}.mctl.wa{background:#25D366;color:#fff;text-decoration:none}#prosMais.on{background:#37A028;color:#fff}
 .apmais{background:#FFF4E0;flex-wrap:wrap}.apmais .apg i{background:linear-gradient(90deg,#EE9B1D,#F6C21A)}.apmais em{color:#B35C00;font-style:normal;font-weight:700}
 .visf .geo{display:block;margin-top:4px;font-size:12px;font-weight:400;color:#1E5E1A}
+.vchip{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:10px;margin:1px 0;background:#FFF4D6;color:#8a5a00}.vchip.ok{background:#E6F6E3;color:#1E6B14}.vchip.ko{background:#FDE7E5;color:#b42318}
 </style>
 </head>
 <body>
@@ -920,7 +921,7 @@ body.m-mobile header .prezbtn[onclick]{display:none}
     </div>
     <div class="simk" id="prosK"></div>
     <div class="prosbar"><select id="prosFilter"><option value="">Tous les visiteurs</option></select><button type="button" id="prosMais" title="Classer les visiteurs par maïs déclaré (t/an) pour prioriser les relances">🌽 Classer par maïs déclaré</button>
-      <button id="prosExport" type="button">⬇ Exporter la liste (Excel)</button></div>
+      <button id="prosVal" type="button" class="pri">✔ Validation</button><button id="prosExport" type="button">⬇ Exporter la liste (Excel)</button><button id="prosRef" type="button">⬇ Base de référence (Excel)</button></div>
     <div class="tw"><table class="sim" id="prosTbl"><thead><tr><th>Date</th><th>Profil</th><th>Visiteur</th><th>Localité / dépôt</th><th>Activité et besoin calculé</th><th>Table / entretien</th><th>Suivi ATE</th><th>Messages</th><th></th></tr></thead><tbody></tbody></table></div>
   </div>
   <div class="panel" id="secVid" style="margin-top:16px">
@@ -945,8 +946,8 @@ body.m-mobile header .prezbtn[onclick]{display:none}
     </style>
     <h3 style="margin:14px 0 8px">Présentation complète • 9 min 54 • sous-titrée</h3>
     <div class="vd-main" id="vdMain">
-      <video id="vdA" controls playsinline preload="metadata" poster="videos/selab/SOLEVO_SELAB_Miniature_YouTube_1280x720_2026-11-16.jpg"></video>
-      <video id="vdB" controls playsinline preload="auto" hidden></video>
+      <video data-gc="presentation" data-gct="Présentation SOLEVO 10 min" id="vdA" controls playsinline preload="metadata" poster="videos/selab/SOLEVO_SELAB_Miniature_YouTube_1280x720_2026-11-16.jpg"></video>
+      <video data-gc="presentation" data-gct="Présentation SOLEVO 10 min" id="vdB" controls playsinline preload="auto" hidden></video>
     </div>
     <div class="vd-ctl">
       <button type="button" data-vp="0" class="on">1 • SOLEVO et son histoire</button>
@@ -959,32 +960,63 @@ body.m-mobile header .prezbtn[onclick]{display:none}
     </div>
     <h3 style="margin:22px 0 8px">SISSÊ~KABA • Producteurs de maïs et éleveurs • 5 min 56</h3>
     <p class="note">Fonctionnement du programme, gains du producteur et de l’éleveur, vente en 6 étapes, règles de confiance et inscription. Pour les coopératives, les groupes d’éleveurs et l’écran du stand.</p>
-    <div class="vd-main"><video controls playsinline preload="metadata" poster="videos/web/producteurs_eleveurs_poster.jpg" src="videos/web/producteurs_eleveurs.mp4"></video></div>
+    <div class="vd-main"><video data-gc="producteurs-eleveurs" data-gct="SISSÊ~KABA producteurs et éleveurs" controls playsinline preload="metadata" poster="videos/web/producteurs_eleveurs_poster.jpg" src="videos/web/producteurs_eleveurs.mp4"></video></div>
     <h3 style="margin:22px 0 8px">Capsules SISSÊ~KABA • épisodes 2 et 3 • 2 min chacune</h3>
     <p class="note">Suite du sketch « Le choix » avec les mêmes personnages : le contrôle en entrepôt (éleveurs) et le financement des intrants par ADVANS (producteurs). Contenu conforme à la note « Stratégie ADVANS et répartition ». Épisode 3 à faire valider par ADVANS avant diffusion large.</p>
     <div class="vd-grid" style="grid-template-columns:1fr 1fr">
-      <div class="vd-card"><video controls playsinline preload="metadata" poster="videos/web/episode2_poster.jpg" src="videos/web/episode2.mp4"></video><b>Épisode 2 • Le contrôle en entrepôt</b><small>Éleveurs, fabricants d’aliments, coopératives</small></div>
-      <div class="vd-card"><video controls playsinline preload="metadata" poster="videos/web/episode3_poster.jpg" src="videos/web/episode3.mp4"></video><b>Épisode 3 • Le financement ADVANS expliqué</b><small>Producteurs de maïs, coopératives</small></div>
+      <div class="vd-card"><video data-gc="episode2" data-gct="Épisode 2 • contrôle en entrepôt" controls playsinline preload="metadata" poster="videos/web/episode2_poster.jpg" src="videos/web/episode2.mp4"></video><b>Épisode 2 • Le contrôle en entrepôt</b><small>Éleveurs, fabricants d’aliments, coopératives</small></div>
+      <div class="vd-card"><video data-gc="episode3" data-gct="Épisode 3 • financement ADVANS" controls playsinline preload="metadata" poster="videos/web/episode3_poster.jpg" src="videos/web/episode3.mp4"></video><b>Épisode 3 • Le financement ADVANS expliqué</b><small>Producteurs de maïs, coopératives</small></div>
     </div>
     <h3 style="margin:22px 0 8px">Écran LED vertical du stand • 1 m × 2 m (1080 × 2160)</h3>
     <p class="note">Contenus au format natif de l’écran : fonds sombres, gros textes, grands QR codes. Boucle stand de 2 min 46 (14 scènes) et versions verticales des 4 vidéos avec sous-titres géants et QR code permanent.</p>
     <div class="vd-grid" style="grid-template-columns:minmax(0,320px) 1fr;align-items:start">
-      <div class="vd-card"><video controls playsinline loop muted preload="metadata" poster="videos/web/boucle_led_poster.jpg" src="videos/web/boucle_led.mp4"></video><b>Aperçu de la boucle stand</b><small>2 min 46 • sans son sur l’aperçu</small></div>
-      <div class="vd-tip" style="margin-top:0"><b>Sur l’écran LED :</b><br>1. Le plus fiable : copiez les fichiers « Écran LED 1080×2160 » sur une clé USB et lancez-les en boucle sur le lecteur de l’écran, sans PC.<br>2. Avec un PC : ouvrez la <a href="https://lehito1989.github.io/sisse-kaba-APP/ecran/vertical.html" target="_blank" rel="noopener"><b>page verticale en direct</b></a> en plein écran (F11 ou <code>chrome --kiosk</code>), mise en veille désactivée. L’ancienne page de l’écran bascule seule en version verticale.<br>3. Luminosité 60 à 70 % en intérieur ; testez les QR codes à 2 m et 4 m.<br>4. Affluence : boucle stand. Présentations à heure fixe : vidéo 10 min puis SISSÊ~KABA 6 min. Temps calmes : épisodes 2 et 3.</div>
+      <div class="vd-card"><video data-gc="boucle-led" data-gct="Boucle stand écran LED" controls playsinline loop muted preload="metadata" poster="videos/web/boucle_led_poster.jpg" src="videos/web/boucle_led.mp4"></video><b>Aperçu de la boucle stand</b><small>2 min 46 • sans son sur l’aperçu</small></div>
+      <div class="vd-tip" style="margin-top:0"><b>Sur l’écran LED :</b><br>1. Le plus fiable : copiez les fichiers « Écran LED 1080×2160 » sur une clé USB et lancez-les en boucle sur le lecteur de l’écran, sans PC.<br>2. Une boucle par jour (20, 21 et 22 novembre) : thème du jour et compte à rebours de la promo Porc et Chair ; la page en direct choisit seule la boucle du jour.<br>3. Avec un PC : ouvrez la <a href="https://lehito1989.github.io/sisse-kaba-APP/ecran/vertical.html" target="_blank" rel="noopener"><b>page verticale en direct</b></a> en plein écran (F11 ou <code>chrome --kiosk</code>), mise en veille désactivée. L’ancienne page de l’écran bascule seule en version verticale.<br>4. Luminosité 60 à 70 % en intérieur ; testez les QR codes à 2 m et 4 m.<br>5. Affluence : boucle stand. Présentations à heure fixe : vidéo 10 min puis SISSÊ~KABA 6 min. Temps calmes : épisodes 2 et 3.</div>
     </div>
     <h3 style="margin:18px 0 0">Extraits pour WhatsApp et réseaux sociaux (format vertical)</h3>
     <div class="vd-grid">
-      <div class="vd-card"><video controls playsinline preload="metadata" src="videos/selab/SOLEVO_SELAB_Teaser_60s_Reseaux_1080x1920_2026-11-16.mp4#t=2.5"></video><b>Extrait 60 s • tous publics</b><small>Statuts WhatsApp, Facebook, LinkedIn (J-1)</small></div>
-      <div class="vd-card"><video controls playsinline preload="metadata" src="videos/selab/SOLEVO_SELAB_Extrait_55s_Eleveurs_MG2MIX_1080x1920_2026-11-16.mp4#t=2.5"></video><b>Extrait 55 s • éleveurs (MG2MIX)</b><small>Groupes d’éleveurs et de provendiers (J-3)</small></div>
-      <div class="vd-card"><video controls playsinline preload="metadata" src="videos/selab/SOLEVO_SELAB_Extrait_55s_Producteurs_SISSE-KABA_1080x1920_2026-11-16.mp4#t=2.5"></video><b>Extrait 55 s • producteurs (SISSÊ~KABA)</b><small>Coopératives de maïs, agents SEED (J-3)</small></div>
+      <div class="vd-card"><video data-gc="extrait-60s" data-gct="Extrait 60 s" controls playsinline preload="metadata" src="videos/selab/SOLEVO_SELAB_Teaser_60s_Reseaux_1080x1920_2026-11-16.mp4#t=2.5"></video><b>Extrait 60 s • tous publics</b><small>Statuts WhatsApp, Facebook, LinkedIn (J-1)</small></div>
+      <div class="vd-card"><video data-gc="extrait-eleveurs" data-gct="Extrait 55 s éleveurs" controls playsinline preload="metadata" src="videos/selab/SOLEVO_SELAB_Extrait_55s_Eleveurs_MG2MIX_1080x1920_2026-11-16.mp4#t=2.5"></video><b>Extrait 55 s • éleveurs (MG2MIX)</b><small>Groupes d’éleveurs et de provendiers (J-3)</small></div>
+      <div class="vd-card"><video data-gc="extrait-producteurs" data-gct="Extrait 55 s producteurs" controls playsinline preload="metadata" src="videos/selab/SOLEVO_SELAB_Extrait_55s_Producteurs_SISSE-KABA_1080x1920_2026-11-16.mp4#t=2.5"></video><b>Extrait 55 s • producteurs (SISSÊ~KABA)</b><small>Coopératives de maïs, agents SEED (J-3)</small></div>
     </div>
     <h3 style="margin:18px 0 0">Téléchargements HD</h3>
     <table class="vd-dl"><thead><tr><th>Fichier</th><th>Usage</th><th></th></tr></thead><tbody id="vdDl"></tbody></table>
     <div class="vd-tip"><b>Au stand :</b> copiez la version « TV sous-titrée » sur une clé USB et lancez-la en boucle sur l’écran (lecture fiable sans Internet, sous-titres lisibles malgré le bruit). Sur tablette ou ordinateur connecté, utilisez le lecteur ci-dessus avec « Mode stand ».</div>
+    <h3 style="margin:22px 0 8px">📊 Vues par vidéo (GoatCounter)</h3>
+    <table class="vd-dl"><thead><tr><th>Vidéo</th><th>Lectures</th><th>Téléchargements HD</th></tr></thead><tbody id="vdStats"></tbody></table>
+    <p class="note">Une lecture est comptée au premier « lecture » de chaque vidéo, un téléchargement à chaque clic sur « Télécharger ». Détail par jour et par heure : <a href="https://lehito.goatcounter.com" target="_blank" rel="noopener">tableau de bord GoatCounter</a>. Les chiffres s’affichent si l’option « compteurs de visites publics » est activée dans GoatCounter.</p>
+    <script>
+    (function () {
+      var GC = 'https://lehito.goatcounter.com', V = [["presentation", "Présentation SOLEVO 10 min"], ["producteurs-eleveurs", "SISSÊ~KABA producteurs et éleveurs"], ["episode2", "Épisode 2 • contrôle en entrepôt"], ["episode3", "Épisode 3 • financement ADVANS"], ["boucle-led", "Boucle stand écran LED"], ["extrait-60s", "Extrait 60 s"], ["extrait-eleveurs", "Extrait 55 s éleveurs"], ["extrait-producteurs", "Extrait 55 s producteurs"]];
+      function hit(p, t) { try { var i = new Image(); i.src = GC + '/count?p=' + encodeURIComponent(p) + '&t=' + encodeURIComponent(t || p) + '&rnd=' + Math.random().toString(36).slice(2); } catch (e) { /* */ } }
+      var seen = {};
+      [].forEach.call(document.querySelectorAll('video[data-gc]'), function (v) {
+        v.addEventListener('play', function () { var k = v.dataset.gc; if (seen[k]) return; seen[k] = 1; hit('/video/' + k, 'Vidéo : ' + v.dataset.gct); });
+      });
+      document.addEventListener('click', function (e) {
+        var a = e.target.closest && e.target.closest('.vd-dl a[href]'); if (!a || !/\.(mp4|srt|jpg)$/i.test(a.href)) return;
+        var f = a.href.split('/').pop(); hit('/telechargement/' + f, 'Téléchargement : ' + f);
+      }, true);
+      function cnt(p, el) {
+        fetch(GC + '/counter/' + encodeURIComponent(p) + '.json').then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (j) { el.textContent = j && j.count != null ? j.count : '0'; }).catch(function () { el.textContent = '—'; });
+      }
+      var tb = document.getElementById('vdStats'); if (!tb) return;
+      tb.innerHTML = V.map(function (x) { return '<tr><td><b>' + x[1] + '</b></td><td data-v="' + x[0] + '">…</td><td data-d="' + x[0] + '">' + (x[0] === 'presentation' || x[0] === 'producteurs-eleveurs' || x[0].indexOf('episode') === 0 || x[0] === 'boucle-led' ? '…' : '—') + '</td></tr>'; }).join('');
+      [].forEach.call(tb.querySelectorAll('[data-v]'), function (td) { cnt('/video/' + td.dataset.v, td); });
+      var DLK = { 'presentation': '/telechargement/SOLEVO_SELAB_Video_Presentation_TV_sous-titree_1080p_10min_2026-11-16.mp4', 'producteurs-eleveurs': '/telechargement/SISSE-KABA_Producteurs-Eleveurs_TV_sous-titree_1080p_6min_2026-11-19.mp4',
+        'episode2': '/telechargement/SISSE-KABA_Episode2_Controle-entrepot_Ordinateur_1080p_2min_2026-11-20.mp4', 'episode3': '/telechargement/SISSE-KABA_Episode3_Financement-ADVANS_Ordinateur_1080p_2min_2026-11-20.mp4',
+        'boucle-led': '/telechargement/SOLEVO_Boucle-Stand_Ecran-LED_1080x2160_2min46_2026-11-20.mp4' };
+      [].forEach.call(tb.querySelectorAll('[data-d]'), function (td) { if (DLK[td.dataset.d]) cnt(DLK[td.dataset.d], td); });
+    })();
+    </script>
     <script>
     (function () {
       var BASE = 'https://lehito1989.github.io/sisse-kaba-APP/videos/';
       var DL = [
+        ['SOLEVO_Boucle-Stand_Jour1_20-nov_Ecran-LED_1080x2160_2min57_2026-11-20.mp4', 'Écran LED • boucle du vendredi 20 novembre (lancement SISSÊ~KABA)', 'Clé USB du 20 novembre', 'led/'],
+        ['SOLEVO_Boucle-Stand_Jour2_21-nov_Ecran-LED_1080x2160_2min57_2026-11-20.mp4', 'Écran LED • boucle du samedi 21 novembre (rencontres producteurs et éleveurs)', 'Clé USB du 21 novembre', 'led/'],
+        ['SOLEVO_Boucle-Stand_Jour3_22-nov_Ecran-LED_1080x2160_2min57_2026-11-20.mp4', 'Écran LED • boucle du dimanche 22 novembre (dernier jour, rendez-vous)', 'Clé USB du 22 novembre', 'led/'],
         ['SOLEVO_Boucle-Stand_Ecran-LED_1080x2160_2min46_2026-11-20.mp4', 'Écran LED 1080×2160 • boucle stand 2 min 46', 'Écran LED vertical du stand (clé USB, lecture en boucle)', 'led/'],
         ['SOLEVO_Presentation_10min_Ecran-LED_1080x2160_2026-11-20.mp4', 'Écran LED 1080×2160 • présentation SOLEVO 9 min 54', 'Présentations à heure fixe sur l’écran LED', 'led/'],
         ['SISSE-KABA_Producteurs-Eleveurs_6min_Ecran-LED_1080x2160_2026-11-20.mp4', 'Écran LED 1080×2160 • SISSÊ~KABA producteurs et éleveurs 5 min 56', 'Écran LED, après la présentation', 'led/'],

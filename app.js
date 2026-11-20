@@ -865,8 +865,10 @@
   }
   async function prosPut(r) {
     finalize(r);
+    if (!r.valid) r.valid = 'À valider';
     if (dbOn()) await state.db.collection('prospects').doc(r.id).set(JSON.parse(JSON.stringify(r)));
     else { const i = state.pros.findIndex((x) => x.id === r.id); if (i >= 0) state.pros[i] = r; else state.pros.unshift(r); prosLocal(); renderPros(); }
+    if (!r.gsJ) gsPush(r, 'j');
   }
   function prosLocal() { try { localStorage.setItem('sk_pros', JSON.stringify(state.pros)); } catch (e) { /* */ } }
   async function prosUpdate(id, patch) {
@@ -1931,19 +1933,20 @@
     { const tb = $('#testBan'); if (tb) tb.hidden = !state.standCfg.testMode; }
     try { renderKitVal(); } catch (e) { /* */ }
     if (!$('#prosTbl')) return;
-    const f = $('#prosFilter').value; const L = state.pros.filter((r) => !f || r.statut === f || r.public === f || r.etat === f || tLab(r.table) === f || (f === 'Maïs à vérifier' && r.maisCtrl === 'À vérifier'));
+    const f = $('#prosFilter').value; const L = state.pros.filter((r) => !f || r.statut === f || r.public === f || r.etat === f || tLab(r.table) === f || (f === 'Maïs à vérifier' && r.maisCtrl === 'À vérifier') || ('Validation : ' + valOf(r)) === f);
     if (state.prosMaisSort) L.sort((a, b) => (b.maisDecl || 0) - (a.maisDecl || 0));
     { const bt = $('#prosMais'); if (bt) bt.classList.toggle('on', !!state.prosMaisSort); }
     const cnt = (k, v) => state.pros.filter((r) => r[k] === v).length;
+    { const nv = state.pros.filter((r) => !r.test && valOf(r) !== 'Validé').length; const bv = $('#prosVal'); if (bv) { bv.textContent = '✔ Validation (' + nv + ' à traiter)'; bv.classList.toggle('warn', !!nv); } }
     { const nd = dupGroups().length; const bt = $('#prosDup'); if (bt) { bt.textContent = nd ? '⚠ Fusionner les doublons (' + nd + ')' : 'Doublons : aucun'; bt.classList.toggle('warn', !!nd); } }
     $('#prosK').innerHTML = [[state.pros.length, 'visiteurs enregistrés'], [cnt('etat', 'En attente'), 'en attente d’entretien'], [cnt('etat', 'En entretien'), 'en entretien'], [cnt('etat', 'Terminé'), 'entretiens terminés'], [cnt('inscription', 'Oui'), 'inscrits au projet'], [cnt('statut', 'À rappeler'), 'à rappeler']].map(([v, l]) => `<div><b>${v}</b>${l}</div>`).join('') + (() => {
       const D = state.pros.filter((r) => r.maisDecl > 0); if (!D.length) return '';
       const N = state.V.N, t = D.reduce((a, r) => a + r.maisDecl, 0), ha = N.tHa ? t / N.tHa : 0, pr = N.surf ? ha / N.surf : 0;
       const O = maisOffreData(state.pros);
       return `<div class="pot" title="Besoin réel en maïs déclaré par les visiteurs (quantité d’aliment × ${fr(txMaisV() * 100)} % de maïs), converti en surface avec le rendement utile du scénario (${fr(N.tHa, 2)} t/ha)"><b>${fr(t, 1)} t/an</b>potentiel maïs déclaré (${D.length} visiteur${D.length > 1 ? 's' : ''}), ${N.mais27 ? fr(t / N.mais27 * 100, 1) + ' % des ' + fr(N.mais27) + ' t prévues en 2027, ' : ''}≈ ${fr(ha, 1)} ha${pr ? ' • ≈ ' + fr(Math.ceil(pr)) + ' producteur' + (Math.ceil(pr) > 1 ? 's' : '') : ''} à mobiliser • producteurs inscrits : ${O.n}/${O.besoin}${O.couv != null ? ' (offre ' + fr(O.couv * 100, 0) + ' % de la demande)' : ''}</div>`; })();
-    const opts = ['', 'Maïs à vérifier', 'En attente', 'En entretien', 'Terminé', 'Éleveur', 'Producteur', 'Éleveur et producteur', ...STATUTS, ...(state.standCfg.tables || []).map((t) => tLab(t.n))];
+    const opts = ['', 'Validation : À valider', 'Validation : À corriger', 'Validation : Validé', 'Maïs à vérifier', 'En attente', 'En entretien', 'Terminé', 'Éleveur', 'Producteur', 'Éleveur et producteur', ...STATUTS, ...(state.standCfg.tables || []).map((t) => tLab(t.n))];
     if ($('#prosFilter').options.length !== opts.length) $('#prosFilter').innerHTML = opts.map((o) => `<option value="${o}" ${o === f ? 'selected' : ''}>${o || 'Tous les visiteurs'}</option>`).join('');
-    $('#prosTbl tbody').innerHTML = L.length ? L.map((r) => `<tr><td>${r.date}<br><small>${esc(r.source || '')}</small></td><td>${esc(r.public)}</td><td><b>${esc(r.nom)}</b><br><a href="tel:+${waNum(r.tel)}">${esc(r.tel)}</a>${r.email ? '<br><small>' + esc(r.email) + '</small>' : ''}</td><td>${esc(r.localite)}<br><small>${esc(r.depot)}</small></td><td class="bes">${prosBesoin(r)}</td>
+    $('#prosTbl tbody').innerHTML = L.length ? L.map((r) => `<tr><td>${r.date}<br><small>${esc(r.source || '')}</small><br><span class="vchip ${valOf(r) === 'Validé' ? 'ok' : valOf(r) === 'À corriger' ? 'ko' : 'wa'}">${valOf(r)}</span></td><td>${esc(r.public)}</td><td><b>${esc(r.nom)}</b><br><a href="tel:+${waNum(r.tel)}">${esc(r.tel)}</a>${r.email ? '<br><small>' + esc(r.email) + '</small>' : ''}</td><td>${esc(r.localite)}<br><small>${esc(r.depot)}</small></td><td class="bes">${prosBesoin(r)}</td>
       <td>${r.table ? esc(tLab(r.table)) + '<br><small>' + esc(r.agent || '') + '</small>' : '—'}<br><span class="et et${ETATS.indexOf(r.etat)}">${esc(r.etat || '')}</span></td>
       <td><select data-pid="${r.id}" data-pk="ate">${ATES.map((a) => `<option ${a === r.ate ? 'selected' : ''}>${a}</option>`).join('')}</select><select data-pid="${r.id}" data-pk="statut">${STATUTS.map((a) => `<option ${a === r.statut ? 'selected' : ''}>${a}</option>`).join('')}</select></td>
       <td class="msgs"><small>Table : ${esc(r.msgTable || '—')}${r.rappel ? '<br>Rappel : ' + esc(r.rappel) : ''}<br>Merci : ${esc(r.msgMerci || '—')}<br>E-mail : ${esc(r.mailMerci || '—')}${r.reponse ? '<br><b>Réponse ' + esc(r.reponse) + '</b>' : ''}</small></td>
@@ -1966,6 +1969,143 @@
       r.alimQ ? r.alimQ + ' ' + r.alimU + ' ' + r.alimP : '', rd(r.alimAn, 1), rd(r.maisDecl, 1), r.maisClasse || '', maisCtrlTxt(r), rd(r.aliment, 1), rd(r.sacs), rd((r.mais || 0) + (r.maisP || 0), 1), rd(r.eco), rd(r.gain), r.visite || 'Seul(e)', nbP(r), r.org || '', r.kam || '', ...VEILLE.map(([k]) => (r.veille || {})[k] || ''), (r.veille || {}).pxChairKg || '', (r.veille || {}).pxPonteKg || '', r.simu ? (r.simu.sp === 'chair' ? 'Chair ' : 'Ponte ') + fr(r.simu.effectif) + ' sujets • ' + r.simu.formule + ' • coût ' + fr(r.simu.cout) + ' F' : '', r.simu ? Math.round(r.simu.margeAn) : '', r.simu ? Math.round(r.simu.premixKg) : '', accLab(r) + (r.servi ? ' (servi)' : ''), r.transfert ? r.transfert.de + ' → ' + r.transfert.vers + ' (' + r.transfert.motif + ')' : '', tLab(r.table), r.agent, r.etat, r.interet, r.inscription, r.action, r.ate, r.statut, r.msgTable, r.msgMerci, r.mailMerci, r.note, r.consent ? 'Oui' : 'Non']);
     const b = await SKG.xlsxTable(JSZip, 'Visiteurs stand', head, rows, [16, 14, 18, 24, 15, 24, 15, 15, 10, 10, 10, 16, 10, 18, 10, 16, 10, 30, 12, 26, 12, 14, 8, 36, 10, 10, 10, 14, 14, 18, 9, 22, 24, ...VEILLE.map(() => 12), 10, 10, 24, 30, 7, 22, 12, 9, 12, 14, 22, 13, 18, 18, 16, 30, 10]);
     await save('SISSE_KABA_Visiteurs_Stand_SELAB_suivi_ATE_' + today().iso + '.xlsx', b);
+  }
+  /* ===== validation des inscriptions, base de référence Excel et sauvegarde en ligne (Google Sheets via Zapier) ===== */
+  const VALS = ['À valider', 'Validé', 'À corriger'];
+  const valOf = (r) => r.valid || 'À valider';
+  function valChecks(r) {
+    const pb = [];
+    if (!r.profil && !r.public) pb.push('Profil manquant');
+    if (String(r.nom || '').trim().length < 3) pb.push('Nom incomplet');
+    if (!/^225\d{10}$/.test(waNum(r.tel))) pb.push('Téléphone à vérifier');
+    if (!r.localite) pb.push('Localité manquante'); else if (!geoFind(r.localite)) pb.push('Localité hors référentiel');
+    if (isElev(r) && !(r.chair || r.pondeuse || r.porc || r.alimQ || r.maisMois)) pb.push('Éleveur sans effectif ni aliment');
+    if (isProd(r) && !(r.surface > 0)) pb.push('Producteur sans surface');
+    if (r.maisCtrl === 'À vérifier') pb.push('Besoin maïs incohérent');
+    const t = waNum(r.tel); if (t && state.pros.some((x) => x.id !== r.id && waNum(x.tel) === t)) pb.push('Doublon possible (même téléphone)');
+    if (!r.consent) pb.push('Consentement non coché');
+    if (r.test) pb.push('Fiche de test');
+    return pb;
+  }
+  const BLOQUANT = /Profil|Nom|Téléphone|Localité manquante|Doublon|test/;
+  const conforme = (r) => !valChecks(r).some((p) => BLOQUANT.test(p));
+  const locCode = (loc) => { const g = geoFind(loc); if (!g) return ''; const i = GEO_CI.findIndex((x) => x[0] === g.ville); return i >= 0 ? 'LOC' + String(i + 1).padStart(3, '0') : ''; };
+  const depCode = (nom) => { const i = DEPOTS_GEO.findIndex((d) => d[0] === nom); return i >= 0 ? 'DEP' + String(i + 1).padStart(2, '0') : ''; };
+  const profCode = (r) => isElev(r) && isProd(r) ? 'EP' : isProd(r) ? 'PR' : isElev(r) ? 'EL' : 'AU';
+  const telInt = (t) => { const d = waNum(t); return d ? '+' + d : ''; };
+  const rd1 = (x) => Math.round((x || 0) * 10) / 10;
+  const REF_HEAD = ['ID', 'Date', 'Code profil', 'Profil', 'Nom', 'Téléphone', 'E-mail', 'Code localité', 'Localité', 'Région', 'Code dépôt conseillé', 'Dépôt conseillé', 'Distance dépôt (km)', 'Poulets de chair', 'Pondeuses', 'Porcs / an', 'Aliment / an (t)', 'Maïs déclaré / an (t)', 'Classe maïs', 'Surface maïs (ha)', 'Maïs produit / an (t)', 'Coopérative', 'ATE', 'Statut suivi', 'Inscrit au projet', 'Validation', 'Validé le', 'Validé par', 'Source', 'Consentement'];
+  function refRow(r) {
+    const g = geoFind(r.localite) || {};
+    return [r.id, r.date, profCode(r), r.public || r.profil || '', r.nom || '', telInt(r.tel), r.email || '', locCode(r.localite), g.ville || r.localite || '', g.region || '', depCode(g.depot), g.depot || '', g.km != null ? g.km : '',
+      r.chair || 0, r.pondeuse || 0, r.porc || 0, rd1(r.alimAn || r.aliment), rd1(r.maisDecl || r.mais), r.maisClasse || '', r.surface || 0, rd1(r.maisP), r.coop || r.org || '', r.ate || '', r.statut || '', r.inscription || '', valOf(r), r.validLe || '', r.validPar || '', r.source || '', r.consent ? 'Oui' : 'Non'];
+  }
+  async function refExport() {
+    if (!state.pros.length) { status('Aucune inscription à exporter.', 'err'); return; }
+    const L = state.pros.filter((r) => !r.test), V = L.filter((r) => valOf(r) === 'Validé'), P = L.filter((r) => valOf(r) !== 'Validé');
+    const W = [14, 16, 8, 20, 26, 16, 24, 10, 18, 26, 10, 16, 10, 10, 10, 10, 10, 10, 8, 10, 10, 20, 22, 14, 10, 12, 16, 16, 16, 10];
+    const used = new Set(L.map((r) => locCode(r.localite)).filter(Boolean));
+    const sheets = [
+      { name: 'LISEZMOI', head: ['Rubrique', 'Contenu'], widths: [30, 110], rows: [
+        ['Base', 'SISSÊ~KABA • inscriptions des visiteurs (stand SELAB SHOW 2026, fiche publique, WhatsApp)'], ['Extraction', today().fr + ' • ' + L.length + ' fiche(s), dont ' + V.length + ' validée(s) et ' + P.length + ' à valider ou à corriger'],
+        ['T_Inscrits_valides', 'Table principale : une ligne par visiteur validé, avec codes de référence (localité, dépôt, profil)'], ['T_Eleveurs / T_Producteurs', 'Vues par métier des fiches validées'],
+        ['A_valider', 'Fiches en attente ou à corriger, avec les contrôles automatiques'], ['R_Localites', 'Référentiel des localités : code, région, coordonnées approchées, dépôt conseillé et distance'],
+        ['R_Depots, R_Profils, R_Classes_mais, R_Statuts, R_ATE', 'Tables de référence pour les jointures et les listes déroulantes'],
+        ['Clés', 'ID = identifiant unique de la fiche (base de l’artefact) ; Code localité → R_Localites ; Code dépôt → R_Depots ; Code profil → R_Profils'],
+        ['Confidentialité', 'Données personnelles : usage interne SOLEVO Côte d’Ivoire, uniquement pour les visiteurs ayant donné leur consentement']] },
+      { name: 'T_Inscrits_valides', head: REF_HEAD, widths: W, rows: V.map(refRow) },
+      { name: 'T_Eleveurs', head: REF_HEAD, widths: W, rows: V.filter(isElev).map(refRow) },
+      { name: 'T_Producteurs', head: REF_HEAD, widths: W, rows: V.filter(isProd).map(refRow) },
+      { name: 'A_valider', head: ['Contrôles automatiques'].concat(REF_HEAD), widths: [40].concat(W), rows: P.map((r) => [valChecks(r).join(' • ') || 'Conforme'].concat(refRow(r))) },
+      { name: 'R_Localites', head: ['Code localité', 'Localité', 'Région ou district', 'Latitude', 'Longitude', 'Code dépôt conseillé', 'Dépôt conseillé', 'Distance (km)', 'Utilisée'], widths: [12, 22, 30, 10, 10, 12, 16, 10, 9],
+        rows: GEO_CI.map((x, i) => { const c = 'LOC' + String(i + 1).padStart(3, '0'); const g = geoFind(x[0]) || {}; return [c, x[0], x[1], x[2], x[3], depCode(g.depot), g.depot || '', g.km != null ? g.km : '', used.has(c) ? 'Oui' : '']; }) },
+      { name: 'R_Depots', head: ['Code dépôt', 'Dépôt FEED', 'Statut', 'Latitude', 'Longitude'], widths: [10, 18, 16, 10, 10], rows: DEPOTS_GEO.map((d, i) => ['DEP' + String(i + 1).padStart(2, '0'), d[0], d[3] ? 'Actif' : 'En installation', d[1], d[2]]) },
+      { name: 'R_Profils', head: ['Code profil', 'Profil'], widths: [10, 26], rows: [['EL', 'Éleveur'], ['PR', 'Producteur'], ['EP', 'Éleveur et producteur'], ['AU', 'Autre']] },
+      { name: 'R_Classes_mais', head: ['Classe', 'Maïs déclaré / an', 'Traitement'], widths: [8, 22, 40], rows: [['A', '≥ 100 t', 'Prioritaire P1, suivi KAM'], ['B', '25 à 100 t', 'Suivi ATE'], ['C', '< 25 t', 'Suivi groupé (coopérative)']] },
+      { name: 'R_Statuts', head: ['Liste', 'Valeur'], widths: [16, 22], rows: VALS.map((v) => ['Validation', v]).concat(STATUTS.map((v) => ['Statut suivi', v]), ETATS.map((v) => ['Entretien', v])) },
+      { name: 'R_ATE', head: ['ATE / agent'], widths: [30], rows: ATES.filter((a) => a !== 'À attribuer' && a !== 'Autre').map((a) => [a]) }];
+    await save('SISSE_KABA_Base_reference_inscriptions_' + today().iso + '.xlsx', await SKG.xlsxBook(JSZip, sheets));
+  }
+  /* --- sauvegarde en ligne : Google Sheets par Zapier (compte Google connecté à Zapier) --- */
+  const GS_API = 'GoogleSheetsV2CLIAPI';
+  const GS_TABS = { j: 'Journal_inscriptions', v: 'T_Inscrits_valides' };
+  async function gsReq(method, url, body) {
+    if (!state.mcp) throw new Error('sauvegarde en ligne disponible uniquement dans claude.ai');
+    const res = await state.mcp.callTool('Zapier', 'execute_zapier_write_action', { selected_api: GS_API, action: '_zap_raw_request', params: { url, method, body: body ? JSON.stringify(body) : '', fail_on_errors: 'true' } });
+    return res;
+  }
+  function findKey(x, k) { if (!x) return null; if (typeof x === 'string') { const m = x.match(new RegExp('"' + k + '"\\s*:\\s*"([^"]+)"')); return m ? m[1] : null; } if (Array.isArray(x)) { for (const y of x) { const v = findKey(y, k); if (v) return v; } return null; } if (typeof x === 'object') { if (typeof x[k] === 'string') return x[k]; for (const v of Object.values(x)) { const f = findKey(v, k); if (f) return f; } } return null; }
+  async function gsCreate() {
+    const t = 'SISSÊ~KABA • Base des inscriptions (' + today().fr + ')';
+    const res = await gsReq('POST', 'https://sheets.googleapis.com/v4/spreadsheets', { properties: { title: t, locale: 'fr_FR' }, sheets: [GS_TABS.j, GS_TABS.v, 'R_Localites', 'R_Depots'].map((s) => ({ properties: { title: s, gridProperties: { frozenRowCount: 1 } } })) });
+    const id = findKey(res, 'spreadsheetId'); if (!id) throw new Error('identifiant de la feuille introuvable dans la réponse');
+    const base = 'https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values:batchUpdate';
+    await gsReq('POST', base, { valueInputOption: 'RAW', data: [
+      { range: GS_TABS.j + '!A1', values: [['Enregistré le'].concat(REF_HEAD)] }, { range: GS_TABS.v + '!A1', values: [['Validé (horodatage)'].concat(REF_HEAD)] },
+      { range: 'R_Localites!A1', values: [['Code localité', 'Localité', 'Région ou district', 'Latitude', 'Longitude', 'Code dépôt conseillé', 'Dépôt conseillé', 'Distance (km)']].concat(GEO_CI.map((x, i) => { const g = geoFind(x[0]) || {}; return ['LOC' + String(i + 1).padStart(3, '0'), x[0], x[1], x[2], x[3], depCode(g.depot), g.depot || '', g.km != null ? g.km : '']; })) },
+      { range: 'R_Depots!A1', values: [['Code dépôt', 'Dépôt FEED', 'Statut']].concat(DEPOTS_GEO.map((d, i) => ['DEP' + String(i + 1).padStart(2, '0'), d[0], d[3] ? 'Actif' : 'En installation'])) }] });
+    state.standCfg.gsId = id; state.standCfg.gsOn = true; await cfgSave();
+    return id;
+  }
+  async function gsAppend(tab, rows) {
+    const id = state.standCfg.gsId; if (!id || !rows.length) return;
+    await gsReq('POST', 'https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1') + ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS', { values: rows });
+  }
+  const stamp = () => new Date().toISOString().replace('T', ' ').slice(0, 16);
+  async function gsPush(r, kind) {
+    const c = state.standCfg; if (!c.gsOn || !c.gsId || !state.mcp || r.test) return false;
+    const flag = kind === 'v' ? 'gsV' : 'gsJ'; if (r[flag]) return true;
+    try { await gsAppend(GS_TABS[kind], [[stamp()].concat(refRow(r))]); r[flag] = stamp(); if (dbOn()) { try { await state.db.collection('prospects').doc(r.id).update({ [flag]: r[flag] }); } catch (e) { /* */ } } else prosLocal(); return true; }
+    catch (e) { console.error(e); c.gsErr = String((e && e.message) || e).slice(0, 120); return false; }
+  }
+  async function gsSyncAll() {
+    let n = 0; for (const r of state.pros) { if (r.test) continue; if (!r.gsJ && await gsPush(r, 'j')) n++; if (valOf(r) === 'Validé' && !r.gsV && await gsPush(r, 'v')) n++; }
+    return n;
+  }
+  /* --- validation --- */
+  async function valSet(r, v, extra) {
+    const patch = Object.assign({ valid: v, validLe: v === 'Validé' ? today().fr + ' ' + new Date().toTimeString().slice(0, 5) : '', validPar: state.standCfg.validBy || 'Elvis LEHITO' }, extra || {});
+    await prosUpdate(r.id, patch); Object.assign(r, patch);
+    if (v === 'Validé') gsPush(r, 'v');
+  }
+  function valOpen() {
+    const c = state.standCfg; const sel = c.valFilt || 'À traiter';
+    const L0 = state.pros.filter((r) => !r.test);
+    const cnt = { 'À valider': L0.filter((r) => valOf(r) === 'À valider').length, 'À corriger': L0.filter((r) => valOf(r) === 'À corriger').length, 'Validé': L0.filter((r) => valOf(r) === 'Validé').length };
+    const L = L0.filter((r) => sel === 'Toutes' ? true : sel === 'À traiter' ? valOf(r) !== 'Validé' : valOf(r) === sel);
+    const ok = L0.filter((r) => valOf(r) === 'À valider' && conforme(r));
+    const gs = c.gsOn && c.gsId;
+    const b = modal('✔ Validation des inscriptions', `
+      <div class="simk"><div><b>${cnt['À valider']}</b><span>à valider</span></div><div><b>${cnt['À corriger']}</b><span>à corriger</span></div><div><b>${cnt['Validé']}</b><span>validées</span></div><div><b>${dbOn() ? '●' : '○'}</b><span>${dbOn() ? 'base de l’artefact connectée' : 'base locale (cet appareil)'}</span></div><div><b>${gs ? '●' : '○'}</b><span>${gs ? 'sauvegarde Google Sheets active' : 'sauvegarde en ligne inactive'}</span></div></div>
+      <div class="mbar" style="flex-wrap:wrap;gap:8px">
+        <button type="button" class="pri" id="vAll" ${ok.length ? '' : 'disabled'}>✔ Valider les ${ok.length} fiche(s) conforme(s)</button>
+        <select id="vF">${['À traiter', 'À valider', 'À corriger', 'Validé', 'Toutes'].map((x) => `<option ${x === sel ? 'selected' : ''}>${x}</option>`).join('')}</select>
+        <label style="display:flex;gap:6px;align-items:center">Validé par <input id="vBy" value="${esc(c.validBy || 'Elvis LEHITO')}" style="width:160px"></label>
+        <button type="button" id="vRef">⬇ Base de référence (Excel)</button>
+        <button type="button" id="vGs">${gs ? '↻ Synchroniser Google Sheets' : '☁ Créer la base en ligne (Google Sheets)'}</button>
+        ${gs ? `<a href="https://docs.google.com/spreadsheets/d/${esc(c.gsId)}" target="_blank" rel="noopener">Ouvrir la feuille en ligne</a>` : ''}</div>
+      <p class="note">Une fiche est <b>conforme</b> si le profil, le nom, le téléphone (+225, 10 chiffres) et la localité sont renseignés, sans doublon. Les autres alertes (localité hors référentiel, besoin maïs incohérent, consentement) n’empêchent pas la validation : vérifiez-les d’un coup d’œil. ${c.gsErr ? '<br><b style="color:#b42318">Dernière erreur de sauvegarde en ligne : ' + esc(c.gsErr) + '</b>' : ''}</p>
+      <div class="tw"><table class="sim"><thead><tr><th>Fiche</th><th>Contrôles</th><th>Validation</th><th></th></tr></thead><tbody>${L.length ? L.map((r) => { const pb = valChecks(r); const v = valOf(r);
+        return `<tr><td><b>${esc(r.nom || '—')}</b><br><small>${esc(r.public || r.profil || '')} • ${esc(r.localite || '')} • ${esc(r.tel || '')}<br>${esc(r.date || '')} • ${esc(r.source || '')}</small></td>
+        <td>${pb.length ? pb.map((p) => `<span class="vchip ${BLOQUANT.test(p) ? 'ko' : 'wa'}">${esc(p)}</span>`).join(' ') : '<span class="vchip ok">✓ Conforme</span>'}${r.validMotif ? '<br><small>Motif : ' + esc(r.validMotif) + '</small>' : ''}</td>
+        <td><span class="vchip ${v === 'Validé' ? 'ok' : v === 'À corriger' ? 'ko' : 'wa'}">${v}</span>${r.validLe ? '<br><small>' + esc(r.validLe) + '</small>' : ''}${r.gsV ? '<br><small>☁ en ligne</small>' : ''}</td>
+        <td class="acts"><button data-vok="${r.id}" title="Valider">✔</button><button data-ved="${r.id}" title="Corriger la fiche">✎</button><button data-vko="${r.id}" title="Marquer à corriger">✗</button></td></tr>`; }).join('') : '<tr><td colspan="4" class="muted">Aucune fiche dans ce filtre.</td></tr>'}</tbody></table></div>`, true);
+    const by = () => { c.validBy = $('#vBy', b).value.trim() || 'Elvis LEHITO'; };
+    $('#vF', b).addEventListener('change', async () => { c.valFilt = $('#vF', b).value; valOpen(); });
+    $('#vBy', b).addEventListener('change', async () => { by(); await cfgSave(); });
+    $('#vAll', b).addEventListener('click', async () => { by(); for (const r of ok) await valSet(r, 'Validé'); status(ok.length + ' fiche(s) validée(s).', 'ok'); valOpen(); renderPros(); });
+    $$('[data-vok]', b).forEach((x) => x.addEventListener('click', async () => { by(); const r = state.pros.find((y) => y.id === x.dataset.vok); if (!r) return; if (!conforme(r) && !confirm('Cette fiche a des contrôles bloquants (' + valChecks(r).filter((p) => BLOQUANT.test(p)).join(', ') + '). La valider quand même ?')) return; await valSet(r, 'Validé'); valOpen(); renderPros(); }));
+    $$('[data-vko]', b).forEach((x) => x.addEventListener('click', async () => { by(); const r = state.pros.find((y) => y.id === x.dataset.vko); if (!r) return; const m = prompt('Motif (ce qu’il faut corriger) :', valChecks(r).join(', ')); if (m === null) return; await valSet(r, 'À corriger', { validMotif: m }); valOpen(); renderPros(); }));
+    $$('[data-ved]', b).forEach((x) => x.addEventListener('click', () => { modalClose(); editVisitor(x.dataset.ved); }));
+    $('#vRef', b).addEventListener('click', refExport);
+    $('#vGs', b).addEventListener('click', async () => {
+      const bt = $('#vGs', b); bt.disabled = true;
+      try {
+        if (!(c.gsOn && c.gsId)) { if (!confirm('Créer une feuille Google Sheets « SISSÊ~KABA • Base des inscriptions » avec le compte Google connecté à Zapier, puis y enregistrer automatiquement chaque nouvelle inscription et chaque validation ?')) { bt.disabled = false; return; } bt.textContent = 'Création en cours…'; await gsCreate(); }
+        bt.textContent = 'Synchronisation…'; c.gsErr = ''; const n = await gsSyncAll(); await cfgSave(); status('Base en ligne à jour : ' + n + ' ligne(s) ajoutée(s).', 'ok');
+      } catch (e) { console.error(e); c.gsErr = String((e && e.message) || e).slice(0, 120); await cfgSave(); status('Sauvegarde en ligne impossible : ' + c.gsErr, 'err'); }
+      valOpen();
+    });
   }
   function renderTeam() {
     const el = $('#teamBox'); if (!el) return;
@@ -2604,7 +2744,7 @@
   }
   function initStand() {
     renderTeam();
-    $('#prosExport').addEventListener('click', prosExport); $('#prosFilter').addEventListener('change', renderPros); { const bm = $('#prosMais'); if (bm) bm.addEventListener('click', () => { state.prosMaisSort = !state.prosMaisSort; renderPros(); }); }
+    $('#prosExport').addEventListener('click', prosExport); { const bv = $('#prosVal'); if (bv) bv.addEventListener('click', valOpen); const br = $('#prosRef'); if (br) br.addEventListener('click', refExport); } $('#prosFilter').addEventListener('change', renderPros); { const bm = $('#prosMais'); if (bm) bm.addEventListener('click', () => { state.prosMaisSort = !state.prosMaisSort; renderPros(); }); }
     $('#prosAdd').addEventListener('click', () => editVisitor(null));
     $('#prosImport').addEventListener('click', importWa);
     $('#prosCfg').addEventListener('click', editCfg);
