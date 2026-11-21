@@ -2297,6 +2297,82 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
       ${k.dev.bad.length ? '<p><b>Appareils à faire synchroniser</b> (ouvrir l’application, attendre le bandeau 🟢) :</p><ul>' + k.dev.bad.map((d) => '<li>' + esc(d.nom) + ' : ' + d.pending + ' en attente (vu à ' + new Date(d.lastSeen).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + ')</li>').join('') + '</ul>' : ''}
       <p class="note">${ok ? '✅ Objectif atteint : aucune fiche en attente.' : '⚠️ Objectif non atteint : rouvrez les appareils listés et relancez « ⇩ Importer les fiches publiques ».'} Les appareils hors claude.ai (version GitHub) ne sont pas comptés ici : regardez leur bandeau en haut de l’écran.${k.mails === null ? ' Comptage des e-mails possible seulement dans claude.ai avec Gmail connecté.' : ''}</p>`;
   }
+  /* ===== import d’un fichier Excel « Visiteurs stand » (export d’un appareil) dans la base commune ===== */
+  const XI_UNESC = (s) => String(s).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#(\d+);/g, (m, n) => String.fromCharCode(+n)).replace(/&amp;/g, '&');
+  const XI_COL = (ref) => { let n = 0; for (const ch of String(ref).replace(/\d+/g, '')) n = n * 26 + (ch.charCodeAt(0) - 64); return n - 1; };
+  async function xlsxRows(buf) {
+    const zip = await JSZip.loadAsync(buf);
+    const ssF = zip.file('xl/sharedStrings.xml'); const ss = [];
+    if (ssF) { const x = await ssF.async('string'); for (const si of x.match(/<si>[\s\S]*?<\/si>/g) || []) ss.push(XI_UNESC((si.match(/<t[^>]*>([\s\S]*?)<\/t>/g) || []).map((t) => t.replace(/<[^>]+>/g, '')).join(''))); }
+    const shN = Object.keys(zip.files).filter((f) => /^xl\/worksheets\/sheet\d+\.xml$/.test(f)).sort()[0];
+    if (!shN) throw new Error('aucune feuille trouvée');
+    const x = await zip.file(shN).async('string'); const rows = [];
+    for (const rw of x.match(/<row[^>]*>[\s\S]*?<\/row>/g) || []) {
+      const row = [];
+      for (const c of rw.match(/<c [^>]*?(?:\/>|>[\s\S]*?<\/c>)/g) || []) {
+        const ref = (c.match(/ r="([A-Z]+)\d+"/) || [])[1]; if (!ref) continue;
+        const t = (c.match(/ t="(\w+)"/) || [])[1]; let v = '';
+        if (t === 'inlineStr') v = XI_UNESC((c.match(/<t[^>]*>([\s\S]*?)<\/t>/g) || []).map((s) => s.replace(/<[^>]+>/g, '')).join(''));
+        else { const m = c.match(/<v>([\s\S]*?)<\/v>/); if (m) v = t === 's' ? (ss[+m[1]] || '') : t === 'str' || t === 'b' ? XI_UNESC(m[1]) : (isNaN(+m[1]) ? XI_UNESC(m[1]) : +m[1]); }
+        row[XI_COL(ref)] = v;
+      }
+      rows.push(row);
+    }
+    return rows;
+  }
+  const XI_NUM = (v) => { if (v === undefined || v === null || v === '') return 0; if (typeof v === 'number') return v; const n = +String(v).replace(/[\s ]/g, '').replace(',', '.'); return isNaN(n) ? 0 : n; };
+  const XI_TXT = (v) => (v === undefined || v === null ? '' : String(v).trim());
+  const XI_ID = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } let h2 = 5381; for (let i = 0; i < s.length; i++) h2 = (Math.imul(h2, 33) + s.charCodeAt(i)) >>> 0; return 'x' + h.toString(36) + h2.toString(36); };
+  function xlsxToRec(o) {
+    const g = (k) => o[k]; const date = XI_TXT(g('Date')); const tel = XI_TXT(g('Téléphone')); const nom = XI_TXT(g('Nom'));
+    const m = date.match(/(\d\d)\/(\d\d)\/(\d{4}) (\d\d):(\d\d)/);
+    const r = { id: XI_ID(tel + '|' + date + '|' + nom), at: m ? new Date(Date.UTC(+m[3], +m[2] - 1, +m[1], +m[4], +m[5])).toISOString() : new Date().toISOString(), date: date || (today().fr + ' 00:00'),
+      source: XI_TXT(g('Source')) || 'Import Excel', profil: XI_TXT(g('Profil')), nom, tel, email: XI_TXT(g('E-mail')), localite: XI_TXT(g('Localité')), depot: XI_TXT(g('Dépôt le plus proche')),
+      chair: XI_NUM(g('Poulets de chair')), pondeuse: XI_NUM(g('Pondeuses')), porc: XI_NUM(g('Porcs / an')), fabrique: XI_TXT(g('Aliment')), maisMois: XI_NUM(g('Maïs acheté / mois (t)')),
+      fournisseur: XI_TXT(g('Prémix ou aliment actuel')), surface: XI_NUM(g('Surface maïs (ha)')), coop: XI_TXT(g('Coopérative')), intrants: XI_TXT(g('Achète des intrants')),
+      prios: XI_TXT(g('Priorités')).split(',').map((s) => s.trim()).filter(Boolean), contact: XI_TXT(g('Contact préféré')) || 'WhatsApp', visite: XI_TXT(g('Visite')) || 'Seul(e)', nb: XI_NUM(g('Personnes')) || 1,
+      org: XI_TXT(g('Coopérative ou association')), kam: XI_TXT(g('KAM demandé')), agent: XI_TXT(g('Agent')), etat: XI_TXT(g('Entretien')) || 'En attente', interet: XI_TXT(g('Intérêt')),
+      inscription: XI_TXT(g('Inscription au projet')), action: XI_TXT(g('Prochaine action')), ate: XI_TXT(g('ATE de suivi')) || 'À attribuer', statut: XI_TXT(g('Statut')), msgTable: XI_TXT(g('Message table')),
+      msgMerci: XI_TXT(g('Message merci')), mailMerci: XI_TXT(g('E-mail merci')), consent: XI_TXT(g('Consentement')) === 'Oui', test: false, valid: 'À valider', accueil: [], servi: '',
+      note: (XI_TXT(g('Note')) + ' Importée le ' + today().fr + ' depuis un export Excel d’appareil.').trim() };
+    const tb = XI_TXT(g('Table')); const mt = tb.match(/^Table\s+(\d+)/); r.table = mt ? +mt[1] : ''; if (!mt && tb && tb !== '—') r.tableVoulue = tb;
+    const ma = XI_TXT(g('Aliment déclaré')).match(/^([\d.,]+)\s+(.+?)\s+(par\s+\S+)$/); if (ma) { r.alimQ = XI_NUM(ma[1]); r.alimU = ma[2]; r.alimP = ma[3]; }
+    [['alimAn', 'Aliment déclaré / an (t)'], ['maisDecl', 'Besoin réel en maïs déclaré / an (t)'], ['aliment', 'Aliment / an (t)'], ['sacs', 'Sacs de prémix / an'], ['eco', 'Économies maïs / an (FCFA)'], ['gain', 'Gain recettes / an (FCFA)']].forEach(([k, c]) => { const v = XI_NUM(g(c)); if (v) r[k] = v; });
+    if (XI_TXT(g('Classe maïs'))) r.maisClasse = XI_TXT(g('Classe maïs'));
+    if (/^(Cohérent|À vérifier|Effectif non renseigné)$/.test(XI_TXT(g('Contrôle besoin maïs')))) r.maisCtrl = XI_TXT(g('Contrôle besoin maïs'));
+    if (r.surface) r.maisP = r.surface * ficheTha();
+    { const tot = XI_NUM(g('Maïs / an (t)')); if (tot) r.mais = Math.max(0, tot - (r.maisP || 0)); }
+    const vx = {}; for (const [k, l, u] of VEILLE) { const v = XI_NUM(g('Prix ' + l + ' (' + u + ')')); if (v) vx[k] = v; }
+    if (XI_NUM(g('Sac prémix chair (kg)'))) vx.pxChairKg = XI_NUM(g('Sac prémix chair (kg)')); if (XI_NUM(g('Sac prémix ponte (kg)'))) vx.pxPonteKg = XI_NUM(g('Sac prémix ponte (kg)'));
+    if (Object.keys(vx).length) r.veille = vx;
+    const ms = XI_TXT(g('Simulation MG2MIX')).match(/^(Chair|Ponte)\s+([\d\s ]+)\s+sujets\s+•\s+(.+?)\s+•\s+coût\s+([\d\s ]+)\s*F/);
+    if (ms) r.simu = { sp: ms[1] === 'Chair' ? 'chair' : 'ponte', effectif: XI_NUM(ms[2]), formule: ms[3], cout: XI_NUM(ms[4]), margeAn: XI_NUM(g('Marge annuelle simulée (FCFA)')), premixKg: XI_NUM(g('Prémix MG2MIX simulé (kg/cycle)')) };
+    if (XI_TXT(g('Accueil offert'))) r.accueilTxt = XI_TXT(g('Accueil offert'));
+    const mtr = XI_TXT(g('Transfert vers KAM')).match(/^(.+?)\s+→\s+(.+?)\s+\((.*)\)$/); if (mtr) r.transfert = { de: mtr[1], vers: mtr[2], motif: mtr[3] };
+    r.public = isElev(r) && isProd(r) ? 'Éleveur et producteur' : isProd(r) ? 'Producteur' : isElev(r) ? 'Éleveur' : (r.profil || 'Autre');
+    { const pc = skPromo(tel); if (pc) { r.promo = pc; r.promoFin = PROMO_FIN; } }
+    return r;
+  }
+  async function xlsxImport(file) {
+    if (!file) return;
+    let rows; try { rows = await xlsxRows(await file.arrayBuffer()); } catch (e) { status('Fichier illisible : ' + ((e && e.message) || e), 'err'); return; }
+    const hi = rows.findIndex((r) => r && r.includes('Nom') && r.includes('Téléphone'));
+    if (hi < 0) { status('Ce fichier n’est pas un export « Visiteurs stand » (colonnes Nom et Téléphone introuvables).', 'err'); return; }
+    const H = rows[hi]; let n = 0, dup = 0, vide = 0;
+    status('Import en cours…');
+    for (const row of rows.slice(hi + 1)) {
+      if (!row || !row.some((v) => v !== '' && v !== undefined)) continue;
+      const o = {}; H.forEach((h, i) => { if (h) o[h] = row[i]; });
+      if (!XI_TXT(o['Nom']) && !XI_TXT(o['Téléphone'])) { vide++; continue; }
+      const r = xlsxToRec(o);
+      const t = waNum(r.tel);
+      if (state.pros.some((x) => x.id === r.id || (t && waNum(x.tel) === t && String(x.date || '').slice(0, 10) === String(r.date).slice(0, 10)))) { dup++; continue; }
+      await prosPut(r); n++;
+    }
+    status(n + ' fiche(s) importée(s) dans la base' + (dup ? ', ' + dup + ' déjà présente(s)' : '') + (vide ? ', ' + vide + ' ligne(s) vide(s)' : '') + '.', n ? 'ok' : '');
+    return n;
+  }
+  function xlsxPick() { const i = document.createElement('input'); i.type = 'file'; i.accept = '.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'; i.onchange = async () => { await xlsxImport(i.files[0]); if (document.querySelector('#vXls')) valOpen(); }; i.click(); }
   async function importAll(manual) { const a = await mailImport(manual); const b = await gsImport(false); if (manual && !a && b) status(b + ' fiche(s) importée(s) depuis la feuille en ligne.', 'ok'); }
   setInterval(() => { if (state.mcp && navigator.onLine) mailImport(false).catch(() => {}); }, 120000);
   setTimeout(() => { if (state.mcp && navigator.onLine) mailImport(false).catch(() => {}); }, 20000);
@@ -2421,7 +2497,7 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
         <button type="button" class="pri" id="vAll" ${ok.length ? '' : 'disabled'}>✔ Valider les ${ok.length} fiche(s) conforme(s)</button>
         <select id="vF">${['À traiter', 'À valider', 'À corriger', 'Validé', 'Toutes'].map((x) => `<option ${x === sel ? 'selected' : ''}>${x}</option>`).join('')}</select>
         <label style="display:flex;gap:6px;align-items:center">Validé par <input id="vBy" value="${esc(c.validBy || 'Elvis LEHITO')}" style="width:160px"></label>
-        <button type="button" id="vMail">⇩ Importer les fiches publiques</button><button type="button" id="vSoir">🌙 Contrôle du soir</button><button type="button" id="vDev">🏷 Nommer cet appareil</button><button type="button" id="vVer">🔎 Vérifier un enregistrement</button><button type="button" id="vRef">⬇ Base de référence (Excel)</button>
+        <button type="button" id="vMail">⇩ Importer les fiches publiques</button><button type="button" id="vXls">📥 Importer un Excel visiteurs</button><button type="button" id="vSoir">🌙 Contrôle du soir</button><button type="button" id="vDev">🏷 Nommer cet appareil</button><button type="button" id="vVer">🔎 Vérifier un enregistrement</button><button type="button" id="vRef">⬇ Base de référence (Excel)</button>
         <button type="button" id="vGs">${gs ? '↻ Synchroniser Google Sheets' : '☁ Créer la base en ligne (Google Sheets)'}</button>
         ${gs ? `<a href="https://docs.google.com/spreadsheets/d/${esc(c.gsId)}" target="_blank" rel="noopener">Ouvrir la feuille en ligne</a><button type="button" id="vLists">☰ Listes déroulantes (tables R_)</button><button type="button" id="vImp">⇩ Importer les fiches publiques en ligne</button><button type="button" id="vHook">🔗 Brancher la fiche publique sur la feuille</button>` : ''}</div>
       <div class="mbar" style="flex-wrap:wrap;gap:8px"><label class="consent" style="margin:0"><input type="checkbox" id="vRefAuto" ${c.refAuto !== false ? 'checked' : ''}> Envoyer chaque soir la base de référence à <input id="vRefTo" value="${esc(c.refTo || 'elvis.lehito@solevogroup.com')}" style="width:230px"> à <input id="vRefH" type="time" value="${esc(c.refHour || '20:00')}" style="width:auto"></label><button type="button" id="vRefNow">✉ Envoyer maintenant</button><small class="muted">${c.refLast ? 'Dernier envoi : ' + esc(c.refLast) : 'Aucun envoi pour l’instant'} • envoi automatique si le simulateur est ouvert à l’heure choisie (borne ou écran d’appel)</small></div>
@@ -2441,6 +2517,7 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
     $('#vRef', b).addEventListener('click', refExport);
     $('#vVer', b).addEventListener('click', () => verOpen());
     $('#vMail', b).addEventListener('click', async () => { await importAll(true); valOpen(); });
+    $('#vXls', b).addEventListener('click', () => xlsxPick());
     $('#vSoir', b).addEventListener('click', () => soirOpen());
     $('#vDev', b).addEventListener('click', () => { const n = prompt('Nom de cet appareil (ex. Tablette accueil 1) :', devName()); if (n === null) return; try { localStorage.setItem('sk_dev_nom', n.trim()); } catch (e) { /* */ } devBeat(); status('Appareil nommé : ' + (n.trim() || '(sans nom)'), 'ok'); });
     const refKeep = async () => { c.refAuto = $('#vRefAuto', b).checked; c.refTo = $('#vRefTo', b).value.trim() || 'elvis.lehito@solevogroup.com'; c.refHour = $('#vRefH', b).value || '20:00'; await cfgSave(); };
@@ -3106,6 +3183,7 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
     $('#prosExport').addEventListener('click', prosExport); { const bx = $('#prosVer'); if (bx) bx.addEventListener('click', () => verOpen()); const bp = $('#prosPrix'); if (bp) bp.addEventListener('click', prixOpen); } { const bv = $('#prosVal'); if (bv) bv.addEventListener('click', valOpen); const br = $('#prosRef'); if (br) br.addEventListener('click', refExport); } $('#prosFilter').addEventListener('change', renderPros); { const bm = $('#prosMais'); if (bm) bm.addEventListener('click', () => { state.prosMaisSort = !state.prosMaisSort; renderPros(); }); }
     $('#prosAdd').addEventListener('click', () => editVisitor(null));
     $('#prosImport').addEventListener('click', importWa);
+    $('#prosXls').addEventListener('click', () => xlsxPick());
     $('#prosCfg').addEventListener('click', editCfg);
     $('#prosKiosk').addEventListener('click', kioskOpen);
     $('#prosKioskWa').addEventListener('click', sendKioskLink);
