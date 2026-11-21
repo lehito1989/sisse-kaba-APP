@@ -4,6 +4,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=0.5, maximum-scale=5, user-scalable=yes">
 <title>SISSÊ~KABA — Simulateur de scénarios 2027–2029</title>
+<script>
+/* Porte d'entrée unique (décision du 21/11/2026) : hors claude.ai, les fiches ne rejoignent pas la base commune.
+   Sur GitHub Pages, la saisie est bloquée et l'agent est envoyé vers l'artefact connecté. ?libre=1 = consultation (vidéos, écran). */
+(function () {
+  if (!/github\.io$/i.test(location.hostname) || /[?&]libre=1/.test(location.search)) return;
+  var URL_OK = 'https://claude.ai/artifact/TUnnsq3KPaGHqWqgX2PpWF';
+  document.addEventListener('DOMContentLoaded', function () {
+    var n = 0; try { n = JSON.parse(localStorage.getItem('sk_pros') || '[]').length; } catch (e) {}
+    var d = document.createElement('div');
+    d.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#002060;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center;font:16px/1.45 "Segoe UI",Arial,sans-serif';
+    d.innerHTML = '<div style="font-size:44px">⛔</div><h1 style="margin:0;font-size:22px">Ne saisissez pas les visiteurs ici</h1>'
+      + '<p style="max-width:520px;margin:0">Cette version n’envoie pas les fiches dans la base commune SISSÊ~KABA. Toutes les inscriptions se font désormais dans l’application connectée à claude.ai.</p>'
+      + '<a id="skGo" style="background:#37A028;color:#fff;padding:14px 22px;border-radius:12px;font-weight:700;text-decoration:none;font-size:18px">Ouvrir l’application connectée</a>'
+      + (n ? '<p style="max-width:520px;margin:0;background:#B42318;padding:10px 14px;border-radius:10px">⚠️ ' + n + ' fiche(s) sont encore sur cet appareil. Ne videz pas le navigateur : exportez-les avant (lien ci-dessous) et envoyez le fichier au KAM FEED.</p><a href="?libre=1" style="color:#CADCFC">Ouvrir quand même pour exporter les fiches de cet appareil</a>' : '<a href="?libre=1" style="color:#CADCFC;font-size:13px">Consultation seulement (vidéos, documents)</a>');
+    d.querySelector('#skGo').href = URL_OK;
+    document.body.appendChild(d);
+  });
+})();
+</script>
 <style>
 :root{--navy:#002060;--blue:#0B5FA1;--green:#37A028;--lg:#9BBB59;--bg:#F4F7FB;--line:#D9DEE7;--ink:#1d2433;--mut:#5b6476}
 *{box-sizing:border-box}
