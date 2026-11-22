@@ -2372,7 +2372,20 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
     status(n + ' fiche(s) importée(s) dans la base' + (dup ? ', ' + dup + ' déjà présente(s)' : '') + (vide ? ', ' + vide + ' ligne(s) vide(s)' : '') + '.', n ? 'ok' : '');
     return n;
   }
-  function xlsxPick() { const i = document.createElement('input'); i.type = 'file'; i.accept = '.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'; i.onchange = async () => { await xlsxImport(i.files[0]); if (document.querySelector('#vXls')) valOpen(); }; i.click(); }
+  /* sélecteur de fichier : un champ réel, attaché à la page (sur téléphone, un champ détaché ne s’ouvre pas toujours dans l’artefact) ; pas de filtre de type, sinon certains téléphones grisent les .xlsx reçus par WhatsApp */
+  function xlsxPick() {
+    let i = document.getElementById('xlsPickIn');
+    if (!i) { i = document.createElement('input'); i.type = 'file'; i.id = 'xlsPickIn'; i.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0'; document.body.appendChild(i); }
+    i.value = '';
+    i.onchange = async () => {
+      const f = i.files && i.files[0]; if (!f) return;
+      if (!/\.xlsx$/i.test(f.name) && !/spreadsheetml/.test(f.type || '')) { status('Choisissez le fichier Excel (.xlsx) « Visiteurs stand ».', 'err'); return; }
+      status('Lecture de ' + f.name + '…');
+      try { await xlsxImport(f); } catch (e) { console.error(e); status('Import impossible : ' + String((e && e.message) || e).slice(0, 120), 'err'); }
+      if (document.querySelector('#vXls')) valOpen();
+    };
+    i.click();
+  }
   async function importAll(manual) { const a = await mailImport(manual); const b = await gsImport(false); if (manual && !a && b) status(b + ' fiche(s) importée(s) depuis la feuille en ligne.', 'ok'); }
   setInterval(() => { if (state.mcp && navigator.onLine) mailImport(false).catch(() => {}); }, 120000);
   setTimeout(() => { if (state.mcp && navigator.onLine) mailImport(false).catch(() => {}); }, 20000);
