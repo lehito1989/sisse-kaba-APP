@@ -2372,6 +2372,36 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
     status(n + ' fiche(s) importée(s) dans la base' + (dup ? ', ' + dup + ' déjà présente(s)' : '') + (vide ? ', ' + vide + ' ligne(s) vide(s)' : '') + '.', n ? 'ok' : '');
     return n;
   }
+  /* import des fiches consolidées du salon, sans sélecteur de fichier (téléphones) : fichier chiffré servi par l’artefact, ouvert avec un code donné au KAM FEED */
+  const PACK_URL = 'data/selab_2026.enc.json';
+  async function packDecrypt(code) {
+    const res = await fetch(PACK_URL, { cache: 'no-store' }); if (!res.ok) throw new Error('fichier des fiches introuvable (' + res.status + ')');
+    const p = await res.json(); const b64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(code), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64(p.salt), iterations: p.it, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    let pt; try { pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(p.iv) }, key, b64(p.ct)); } catch (e) { throw new Error('code incorrect'); }
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+  function packOpen() {
+    const b = modal('📥 Fiches du SELAB SHOW 2026', `<p>Importe dans la base les visiteurs consolidés du salon (20 au 23/11/2026). Les fiches déjà présentes sont ignorées.</p>
+      <label>Code d’import<input id="pkCode" type="text" autocomplete="off" autocapitalize="characters" placeholder="XXXX-XXXX-XXXX" style="width:100%;font-size:18px;letter-spacing:2px"></label>
+      <p><button type="button" id="pkGo" class="prezbtn">Importer</button></p><p id="pkSt" class="note"></p>`);
+    $('#pkGo', b).addEventListener('click', async () => {
+      const st = $('#pkSt', b); const code = $('#pkCode', b).value.trim().toUpperCase();
+      if (!code) { st.textContent = 'Saisissez le code.'; return; }
+      $('#pkGo', b).disabled = true; st.textContent = 'Ouverture du fichier…';
+      try {
+        const d = await packDecrypt(code); let n = 0, dup = 0;
+        for (const o of d.rows) {
+          const r = xlsxToRec(o); const t = waNum(r.tel);
+          if (state.pros.some((x) => x.id === r.id || (t && waNum(x.tel) === t && String(x.date || '').slice(0, 10) === String(r.date).slice(0, 10)))) { dup++; continue; }
+          await prosPut(r); n++; if (n % 20 === 0) st.textContent = n + ' fiche(s) importée(s)…';
+        }
+        st.textContent = '✅ ' + n + ' fiche(s) importée(s) dans la base' + (dup ? ', ' + dup + ' déjà présente(s)' : '') + '.';
+        status(st.textContent, 'ok');
+      } catch (e) { st.textContent = '⚠️ ' + String((e && e.message) || e); $('#pkGo', b).disabled = false; }
+    });
+  }
   /* sélecteur de fichier : un champ réel, attaché à la page (sur téléphone, un champ détaché ne s’ouvre pas toujours dans l’artefact) ; pas de filtre de type, sinon certains téléphones grisent les .xlsx reçus par WhatsApp */
   function xlsxPick() {
     let i = document.getElementById('xlsPickIn');
@@ -3197,6 +3227,7 @@ function doGet() { return ContentService.createTextOutput('SISSÊ~KABA : point d
     $('#prosAdd').addEventListener('click', () => editVisitor(null));
     $('#prosImport').addEventListener('click', importWa);
     $('#prosXls').addEventListener('click', () => xlsxPick());
+    $('#prosPack').addEventListener('click', () => packOpen());
     $('#prosCfg').addEventListener('click', editCfg);
     $('#prosKiosk').addEventListener('click', kioskOpen);
     $('#prosKioskWa').addEventListener('click', sendKioskLink);
